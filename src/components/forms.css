@@ -1,0 +1,101 @@
+/* Header/logo Title */
+/* .header {
+    padding: 1px;
+    text-align: center;
+    background: rgb(255, 221, 210);
+    color: rgb(0, 109, 119);
+} */
+
+/* Increase the font size of the heading */
+/* .header h1 {
+    font-size: 25px;
+} */
+
+/* Display the model representation/plot */
+.img-center {
+    display: block;
+    margin: auto;
+}
+
+.button-submit {
+    background-color: #ff845b;
+    margin: auto;
+    display: block;
+    border: none;
+    color: white;
+    padding: 8px;
+    text-align: center;
+    font: inherit;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.button-submit:disabled {
+    background-color: #ffa78a;
+}
+
+.button-submit:hover:enabled, .button-submit:focus:enabled  {
+    /* background-color: #ff6636; */
+    box-shadow: 0 0 2px 4px #ff6636;
+}
+
+.button-submit:active:enabled {
+    background-color: #ff6636;
+    /* border: 4px solid #03bffe; */
+    /* color: #03bffe; */
+    /* padding: 4px; */
+}
+
+.grid-container {
+    /* border: 1px solid red;
+    width: auto;
+    column-width: 100px;
+    column-gap: 10px; */
+    /* display: flex;
+    flex-wrap: wrap; */
+    /* grid-auto-flow: column; */
+    /* grid-template-rows: repeat(auto-fill, 1fr);
+    grid-template-columns: repeat(auto-fill, 1fr); */
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-rows: repeat(auto-fill, 1fr);
+    /* column-gap: 10px;
+    row-gap: 10px; */
+    /* display: flex;
+    flex-wrap: wrap;
+    --columns: 4; */
+    /* display: grid;
+    grid-gap: 10px;
+    --columns: 4; 
+    grid-template-columns: repeat(auto-fit, minmax(calc(100% / var(--columns) - 20px), 1fr)); */
+}
+
+.grid-item {
+    /* grid-column: 1; */
+    /* flex: 0 0 ;
+    background-color: yellow;
+    margin: 4px;
+    text-align: left;
+    width: 100px;
+    height: 25px;
+    break-inside: avoid-column;
+    page-break-inside: avoid; */
+    /* background: lime;
+    width: auto;
+    height: 25px;
+    margin-bottom: 10px; */
+    height: 20px;
+    text-align: left;
+    /* background-color: green;
+    height: 20px;
+    margin: 10px;
+    flex-basis: calc(100% / var(--columns) - 20px); */
+    /* background-color: green;
+    height: 20px; */
+}
+
+/* 
+.repre {
+    background-image: url(../../tmp/SquareLogo.png);
+} */
