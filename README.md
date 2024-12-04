@@ -1,3 +1,9 @@
+# To run the site once built/in a container
+Run `docker run -it -p 5000:5000 mywebsite`
+
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

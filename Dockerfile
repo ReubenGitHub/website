@@ -52,5 +52,3 @@ EXPOSE 5000 3000
 ENV FLASK_APP=api/api.py
 # Command to run both the frontend (React) and backend (Flask) concurrently
 CMD ["sh", "-c", "python3 -m flask run --host=0.0.0.0 --port=5000"]
-
-# docker run -it -p 5000:5000 mywebsite
