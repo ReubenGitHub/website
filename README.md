@@ -6,8 +6,10 @@
 `docker run -it mywebsite /bin/bash`
 # Run flask api just with python for debugging:
 `python3 api/api.py`
-
-`python3 setup.py build_ext --inplace`
+# Prune builder caches (can grow quite large)
+`docker builder prune`
+# View disk usage
+`docker system df`
 
 
 
