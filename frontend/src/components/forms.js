@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import './forms.css';
-import representationIcon from '../ModelData/Workings/repres_icon.png';
-import representationNAIcon from '../ModelData/Workings/repres_na_icon.png';
+import representationIcon from '../images/repres_icon.png';
+import representationNAIcon from '../images/repres_na_icon.png';
 
 export function FormDataset(props) {
     
@@ -458,16 +458,17 @@ export function FormModelOutputs(props) {
     const accuracyTest = modelOutputs['accuracyTest']
     const precsRecs = modelOutputs['precsRecs']
     const repImageCreated = modelOutputs['repImageCreated']
+    const repImageBase64 = modelOutputs['repImageBase64']
 
-    var loc = window.location.pathname;
+    const repImageSrc = !accuracyTrain ? representationIcon
+        : !repImageCreated ? representationNAIcon
+        : `data:image/png;base64,${repImageBase64}`
+
     return (
         <div>
             
             <br></br>
-            { !accuracyTrain ? <img class="img-center" src={representationIcon} alt="Model Representation Icon" width="80%" border="1px"></img>
-                : (!repImageCreated) ? <img class="img-center" src={representationNAIcon} alt="Model Representation" width="80%" border="1px"></img>
-                : <img class="img-center" src={'/static/media/representation' + String(props.sessionID) + ".png?" + Date.now()} alt="Model Representation" width="80%" border="1px"></img>
-            }
+            <img class="img-center" src={repImageSrc} alt="Model Representation" width="80%" border="1px"></img>
             <br></br>
             <hr color="#03bffe"></hr>
             <h3 align="center">Model Metrics</h3>

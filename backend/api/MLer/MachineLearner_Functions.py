@@ -25,19 +25,19 @@ import sys
 import os
 import colorsys
 from contextlib import contextmanager
+import io
+import base64
 # import threading
 # import _thread
 # import multiprocessing
 
-def datasetSave(filename, file):
-    #print("WWWWWWWWWW DATASET SAVE START DIRECTORY")
-    os.chdir(sys.path[0]+'/..')
-    #print(os.getcwd())
+from api import API_ROOT_DIRECTORY
+MODEL_DATA_DIRECTORY = os.path.join(API_ROOT_DIRECTORY, 'ModelData')
+DATASETS_DIRECTORY = os.path.join(MODEL_DATA_DIRECTORY, 'Datasets')
+WORKINGS_DIRECTORY = os.path.join(MODEL_DATA_DIRECTORY, 'Workings')
 
-    os.chdir('./src/ModelData/Datasets')
-    nwd = os.getcwd()
-    
-    #FILE SIZE SERVER-SIDE VALIDATION
+def datasetSave(filename, file):
+    # Prevent files that are too big from being uploaded
     if len(file.encode("utf8")) > 2000000:
         return None
 
@@ -46,34 +46,17 @@ def datasetSave(filename, file):
     for row in csv.reader(filecsv, delimiter=","):
         filecsvTest.append(row)
     filedf = pandas.DataFrame(filecsvTest)
-    filedf.to_csv(nwd+"/"+filename, index=False, header=False)
-
-    os.chdir(sys.path[0]+'/..')
+    filedf.to_csv(DATASETS_DIRECTORY+"/"+filename, index=False, header=False)
 
     fields = fieldIdentifier(filename)
 
-    # print("WWWWWWWWWW DATASET SAVE FINAL DIRECTORY")
-    # print(os.getcwd())
     return fields
 
 
 def fieldIdentifier(filename):
-    #print("WWWWWWWWWW FIELD IDENTIFY START DIRECTORY")
-    os.chdir(sys.path[0]+'/..')
-    #print(os.getcwd())
-
-    # print(os.listdir())
-    os.chdir('./src/ModelData/Datasets/')
-    nwd = os.getcwd()
-
-    dataSet = pandas.read_csv(nwd + "/" + filename)
+    dataSet = pandas.read_csv(DATASETS_DIRECTORY+"/"+filename)
     fields = dataSet.columns.values.tolist()
     nonCtsFields = list(dataSet.dtypes[ (dataSet.dtypes != "int64") & (dataSet.dtypes != "float64")].index)
-
-    os.chdir(sys.path[0]+'/..')
-
-    # print("WWWWWWWWWW FIELD IDENTIFY FINAL DIRECTORY")
-    # print(os.getcwd())
     return {'fields': fields, 'nonCtsFields': nonCtsFields}
 
 
@@ -143,12 +126,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
     #Specific value of interest/to predict, 1 entry per feature
 
     dictionary = {}
-    # print("WWWWWWWWWW MLER START DIRECTORY")
-    os.chdir(sys.path[0]+'/..')
-    # print(os.getcwd())
 
-    os.chdir('./src/ModelData/Datasets/')
-    nwd = os.getcwd()
     # print("AAAAAAAAAAAAAAAAAAAAAAAAA DATASET NAME IS: " + datasetName)
     # if problemType=="classification":
     #     strTypes = cateParams+[result]
@@ -158,10 +136,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
     # dict_dtypes = {x : 'str'  for x in strTypes}
     # dataSet = pandas.read_csv(nwd + '/' + datasetName, dtype=dict_dtypes)
 
-    dataSet = pandas.read_csv(nwd + '/' + datasetName)
-    os.chdir("../Workings")
-    # print(os.listdir(os.getcwd()))
-
+    dataSet = pandas.read_csv(DATASETS_DIRECTORY+'/'+datasetName)
     dataSet = dataSet.dropna(axis=0, how='any', thresh=None, subset=fieldsOfInterest, inplace=False)
     if methodML in ['DT', 'KNN']:
         cateIndicators = False #False: converts each option to integers sequentially.
@@ -236,16 +211,15 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 # print('You have not selected any features')                                                       #6: No params
                 raise SystemExit(0)
 
-    print("DATA SORTED AND SETS DEFINED, NOW FITTING MODEL")
-
     #Create model (decision tree, linear regression etc)
+    print("DATA SORTED AND SETS DEFINED, NOW FITTING MODEL")
     if methodML == 'DT':
         if problemType == "classification":
             decTree = DecisionTreeClassifier()#max_depth=7) #Add parameters for max depth, criterion etc
         elif problemType == "regression":
             decTree = DecisionTreeRegressor()#max_depth=7) #Add parameters for max depth, criterion etc
         decTree = decTree.fit(trainFinalX.values,trainy.values)
-        dump(decTree, "model"+str(sessionID)+".joblib") 
+        dump(decTree, WORKINGS_DIRECTORY+"/model"+str(sessionID)+".joblib")
     elif methodML == "KNN": # USES STANDARD SCALING ON CTS FEATURES - to get closer to a Gaussian distribution        
         if problemType == "classification":
             if ncts == ntotal:
@@ -263,24 +237,23 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 KNN = KNeighborsRegressor(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric=mydist, metric_params={"ncts": ncts, "ncate": ncate}, algorithm='ball_tree', leaf_size=2)
         #print(trainFinalX)
         KNN.fit(trainFinalX,trainy)
-        dump(KNN, "model"+str(sessionID)+".joblib")
+        dump(KNN, WORKINGS_DIRECTORY+"/model"+str(sessionID)+".joblib")
     elif methodML == "LinReg":
         regr = linear_model.LinearRegression()
         if len(ctsParams) == 0:
             trainFinalX = trainFinalX.to_numpy()
             testFinalX = testFinalX.to_numpy()
             regr.fit(trainFinalX, trainy)
-            dump(regr, "model"+str(sessionID)+".joblib") 
+            dump(regr, WORKINGS_DIRECTORY+"/model"+str(sessionID)+".joblib")
         else:
             regr.fit(trainFinalX, trainy)
-            dump(regr, "model"+str(sessionID)+".joblib") 
+            dump(regr, WORKINGS_DIRECTORY+"/model"+str(sessionID)+".joblib")
     elif methodML == "PolyFit":
         polyModel1d = numpy.poly1d(numpy.polyfit(trainFinalX.ravel(), trainy, polyDeg))
-        dump(polyModel1d, "model"+str(sessionID)+".joblib") 
-
-    print("MODEL FITTED AND SAVED, MEASURING ACCURACY OF MODEL")
+        dump(polyModel1d, WORKINGS_DIRECTORY+"/model"+str(sessionID)+".joblib")
 
     #Measure fit of model
+    print("MODEL FITTED AND SAVED, MEASURING ACCURACY OF MODEL")
     if methodML == 'DT': #Look at "accuracy_score", based on matching result labels
         if problemType == "classification":
             predictedTrain = decTree.predict(trainFinalX.values)
@@ -331,38 +304,11 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
     print("ACCURACY MEASURED, NOW CHECKING IF REPRESENTATION ALREADY EXISTS")
 
     #Draw/plot the model tree/3d training data
-
-    #Avoid repImageNumberCurrent and any numbers indicated by txt files in Static/Media
-    os.chdir('../../../build/static/media/')
-    directory = os.listdir(os.getcwd())
-    # print("DIRECTORY BEFORE EDITING REPRESENTATION")
-    # print(os.getcwd())
-    # print(directory)
-
-    # print(os.listdir(os.getcwd()))
-
-    repExists=False
-    for fname in directory:
-        # print(fname)
-        if ('representation' + str(sessionID)) in fname:
-            # print("FOUND MATCHING REPRESENTATION FILE, SO READ THEN CLEAR AND SAVE")
-            # print(fname)
-            repExists = True
-            break
-
-    repImageName = 'representation' + str(sessionID) + '.png'
-
-    # print(repImageName)
-
     print("NOW CREATING REPRESENTATION")
-
     repImageCreated=True
     if methodML == "DT":
         if problemType == "classification":
             if len(ctsParams) == 2 and len(cateParams) == 0:
-                if repExists:
-                    plt.imread(repImageName)
-                    plt.clf()
                 trainy = trainy.reset_index(drop=True)
                 testy = testy.reset_index(drop=True)
                 xsTest = testx.iloc[:, 0].reset_index(drop=True)
@@ -398,16 +344,13 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 plt.xlabel(trainx.columns[0])
                 plt.ylabel(trainx.columns[1])
                 plt.legend(bbox_to_anchor=(1,1), loc="upper left")
-                plt.savefig(repImageName, bbox_inches='tight')
+                repImageBase64 = encodeRepImage('plt', plt, format='png')
             else:
                 data = tree.export_graphviz(decTree, out_file=None, feature_names=features, class_names=list(dictionaryResult), max_depth=4, filled=True)
                 graph = pydotplus.graph_from_dot_data(data)
-                graph.write_png(repImageName)
+                repImageBase64 = encodeRepImage('graph', graph)
         elif problemType == "regression":
             if len(ctsParams) == 1 and len(cateParams) == 0:
-                if repExists:
-                    plt.imread(repImageName)
-                    plt.clf()
                 plt.scatter(trainx, trainy, marker='o', color='#03bffe', label='Training Data')
                 xs = x.iloc[:, 0]
                 xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200).reshape(-1,1)
@@ -417,11 +360,8 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 plt.plot( xs, zs, color="#fe4203", label='Model')
                 plt.scatter(testx, testy, marker='x', color='#ff845b', label='Testing Data')
                 plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-                plt.savefig(repImageName, bbox_inches='tight')
+                repImageBase64 = encodeRepImage('plt', plt, format='png')
             elif len(ctsParams) == 2 and len(cateParams) == 0:
-                if repExists:
-                    plt.imread(repImageName)
-                    plt.clf()
                 fig = plt.figure()
                 ax = fig.add_subplot(projection='3d')
                 xs = trainx.iloc[:, 0].reset_index(drop=True)
@@ -448,18 +388,15 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 surf._edgecolors2d = surf._edgecolor3d
                 surf._facecolors2d = surf._facecolor3d
                 ax.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-                plt.savefig(repImageName, bbox_inches='tight')
+                repImageBase64 = encodeRepImage('plt', plt, format='png')
             else:
                 data = tree.export_graphviz(decTree, out_file=None, feature_names=features, max_depth=4, filled=True)
                 graph = pydotplus.graph_from_dot_data(data)
-                graph.write_png(repImageName)
+                repImageBase64 = encodeRepImage('graph', graph)
         else:
             repImageCreated=False
     elif methodML == "KNN":
         if problemType == "classification" and len(ctsParams) == 2 and len(cateParams) == 0:
-            if repExists:
-                plt.imread(repImageName)
-                plt.clf()
             trainy = trainy.reset_index(drop=True)
             testy = testy.reset_index(drop=True)
             xsTest = testx.iloc[:, 0].reset_index(drop=True)
@@ -496,11 +433,8 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             plt.xlabel(trainx.columns[0])
             plt.ylabel(trainx.columns[1])
             plt.legend(bbox_to_anchor=(1,1), loc="upper left")
-            plt.savefig(repImageName, bbox_inches='tight')
+            repImageBase64 = encodeRepImage('plt', plt, format='png')
         elif problemType == "regression" and len(ctsParams) == 1 and len(cateParams) == 0:
-            if repExists:
-                plt.imread(repImageName)
-                plt.clf()
             plt.scatter(trainx, trainy, marker='o', color='#03bffe', label='Training Data')
             xs = x.iloc[:, 0]
             xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
@@ -511,11 +445,8 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             plt.plot( xs, zs, color="#fe4203", label='Model')
             plt.scatter(testx, testy, marker='x', color='#ff845b', label='Testing Data')
             plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-            plt.savefig(repImageName, bbox_inches='tight')
+            repImageBase64 = encodeRepImage('plt', plt, format='png')
         elif problemType == "regression" and len(ctsParams) == 2 and len(cateParams) == 0:
-            if repExists:
-                plt.imread(repImageName)
-                plt.clf()
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
             xs = trainx.iloc[:, 0].reset_index(drop=True)
@@ -543,14 +474,11 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             surf._edgecolors2d = surf._edgecolor3d
             surf._facecolors2d = surf._facecolor3d
             ax.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-            plt.savefig(repImageName, bbox_inches='tight')
+            repImageBase64 = encodeRepImage('plt', plt, format='png')
         else:
             repImageCreated=False
     elif methodML == "LinReg":
         if len(features) == 1 and len(cateParams) == 0:
-            if repExists:
-                plt.imread(repImageName)
-                plt.clf()
             plt.scatter(trainx, trainy, marker='o', color='#03bffe', label='Training Data')
             xs = numpy.linspace(numpy.floor(min(trainx.iloc[:, 0])),numpy.ceil(max(trainx.iloc[:, 0])),100)
             xsScaled = scale.transform(xs.reshape(-1,1))
@@ -559,11 +487,8 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             plt.plot( xs, regr.coef_[0]*xsScaled + regr.predict(numpy.array([[0]])), color="#fe4203", label='Model')
             plt.scatter(testx, testy, marker='x', color='#ff845b', label='Testing Data')
             plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-            plt.savefig(repImageName, bbox_inches='tight')
+            repImageBase64 = encodeRepImage('plt', plt, format='png')
         elif len(ctsParams) == 2 and len(cateParams) == 0:
-            if repExists:
-                plt.imread(repImageName)
-                plt.clf()
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
             xs = trainx.iloc[:, 0]
@@ -590,14 +515,11 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             surf._edgecolors2d = surf._edgecolor3d
             surf._facecolors2d = surf._facecolor3d
             ax.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-            plt.savefig(repImageName, bbox_inches='tight')
+            repImageBase64 = encodeRepImage('plt', plt, format='png')
         else:
             repImageCreated=False
     elif methodML == "PolyFit":
         if len(features) == 1:
-            if repExists:
-                plt.imread(repImageName)
-                plt.clf()
             plt.scatter(trainx, trainy, marker='o', color='#03bffe', label='Training Data')
             xs = numpy.linspace(numpy.floor(min(trainx.iloc[:, 0])),numpy.ceil(max(trainx.iloc[:, 0])),100)
             xsScaled = scale.transform(xs.reshape(-1,1))
@@ -606,12 +528,12 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             plt.plot( xs, polyModel1d(xsScaled), color="#fe4203", label='Model')
             plt.scatter(testx, testy, marker='x', color='#ff845b', label='Testing Data')
             plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-            plt.savefig(repImageName, bbox_inches='tight')
+            repImageBase64 = encodeRepImage('plt', plt, format='png')
         else:
             repImageCreated=False
 
     print("REPRESENTATION CREATED AND SAVED, NOW SAVING MODEL SETTINGS/PARAMS")
-    os.chdir('../../../src/ModelData/Workings')
+    # os.chdir('../../../src/ModelData/Workings')
     # print(os.getcwd())
     # print(os.listdir(os.getcwd()))
     # os.chdir('./src/ModelData/Workings')
@@ -629,7 +551,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
         "scaler": scale
     }
     
-    dump(settings, "settings"+str(sessionID)+".joblib")
+    dump(settings, WORKINGS_DIRECTORY+"/settings"+str(sessionID)+".joblib")
 
     print("SETTINGS SAVED, NOW SETTING UP INPUT VALIDATION AND EXPORTING")
 
@@ -638,7 +560,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
     for i in range(0, len(cateParams)):
         inputValidation.append(list(dictionary[cateParams[i]].keys()))
 
-    os.chdir(sys.path[0]+'/..')
+    # os.chdir(sys.path[0]+'/..')
 
     # print("WWWWWWWWWW MLER FINAL DIRECTORY")
     # print(os.getcwd())
@@ -667,6 +589,9 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 "precsRecs": "",
                 "repImageCreated": repImageCreated
         }
+
+    if (repImageBase64):
+        mlOuts['repImageBase64'] = repImageBase64
 
     return {"mlOuts": mlOuts, "inputValidation": inputValidation}
 
@@ -698,10 +623,32 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
 #         print(inpVal)
 #         return {"accuracyTrain": accTrain, "accuracyTest": accTest, "inputValidation": inpVal}
 
+def encodeRepImage(type, imageObject, **options):
+    """
+    Encodes a model representation image object to a base64 string.
+
+    Args:
+        imageObject: The image object (Matplotlib plot or graph).
+        **options: Additional keyword arguments to pass to `savefig` if using plt.
+
+    Returns:
+        A base64-encoded string of the image.
+    """
+    repImageBuffer = io.BytesIO()
+
+    if (type == 'plt'):
+        imageObject.savefig(repImageBuffer, bbox_inches='tight', **options)
+    elif (type == 'graph'):
+        imageObject.write_png(repImageBuffer)
+
+    repImageBuffer.seek(0)
+    repImageBase64 = base64.b64encode(repImageBuffer.read()).decode('utf-8')
+    repImageBuffer.close()
+
+    return repImageBase64
 
 
 #Evaluate model at some particular value
-
 def modelPrediction(predictAt, sessionID):
     #print("WWWWWWWWWW PREDICT START DIRECTORY")
     os.chdir(sys.path[0]+'/..')

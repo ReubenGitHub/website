@@ -3,17 +3,13 @@ from flask_cors import CORS, cross_origin
 import time
 
 import os
-import sys
+# import sys
 
-#Adds MachineLearner_Functions to Path for access
-print("ADDING PYTHON PATHS")
-api_dir = os.path.dirname( __file__ )
-modules_dir = os.path.join( api_dir, '..', 'src' )
-metric_dir = os.path.join( api_dir, '..', 'src/MLer' )
-libs_dir = os.path.join( api_dir, '..', '/.heroku/python/lib/python3.9/site-packages')
-sys.path.append(modules_dir)
-sys.path.append(metric_dir)
-sys.path.append(libs_dir)
+# Add MachineLearner_Functions to Path for access
+API_ROOT_DIRECTORY = os.path.dirname( __file__ )
+# ml_dir = os.path.join(API_ROOT_DIRECTORY, 'MLer')
+# sys.path.append(ml_dir)
+
 import MLer.MachineLearner_Functions as MachineLearner_Functions
 
 app = Flask(__name__, static_folder="../build", static_url_path='/')
