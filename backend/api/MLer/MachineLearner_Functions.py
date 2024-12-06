@@ -590,6 +590,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 "repImageCreated": repImageCreated
         }
 
+    # TODO: Prevent plt/graph simply drawing over the previous image as it is currently doing. (need plt.clf or .close or smth)
     if (repImageBase64):
         mlOuts['repImageBase64'] = repImageBase64
 
