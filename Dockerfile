@@ -19,8 +19,8 @@ RUN npm run build
 # Step 2: Build the Python (Flask) application
 FROM python:${PYTHON_IMAGE_VERSION} AS backend-build
 # Install global dependencies for compiling C
-RUN apt-get update
-RUN apt-get install -y build-essential
+RUN apt-get update && \
+    apt-get install -y build-essential
 # Set working directory for backend
 WORKDIR /backend
 # Copy the backend requirements (before source code so can keep dependencies cached through code changes)
@@ -37,8 +37,8 @@ RUN python3 setup.py build_ext --inplace
 FROM python:${PYTHON_IMAGE_VERSION}
 ARG PYTHON_VERSION_NUMER
 # Install global dependencies for running both backend and frontend
-# RUN apt-get update
-# RUN apt-get install -y build-essential
+RUN apt-get update && \
+    apt-get install -y graphviz
 # Install Node.js (since the final container will run both backend and frontend)
 # RUN apt-get install -y curl && \
 #     curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \

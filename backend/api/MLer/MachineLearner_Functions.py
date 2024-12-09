@@ -532,6 +532,9 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
         else:
             repImageCreated=False
 
+    # Ensure plot object always clear for next request
+    plt.clf()
+
     print("REPRESENTATION CREATED AND SAVED, NOW SAVING MODEL SETTINGS/PARAMS")
     # os.chdir('../../../src/ModelData/Workings')
     # print(os.getcwd())
@@ -732,22 +735,9 @@ def modelPrediction(predictAt, sessionID):
 # Ensure this is called when the website is closed or page refreshed
 # So that a fresh user does not see a random display
 # # FOR 2D PLOTS: possibly save multiple images from different angles and create a slider rotation effect
+# TODO: Remove the need for this function by making models saved in memory of application rather than to file system
 def clearRepresentation(sessionID):
     os.chdir(sys.path[0]+'/..')
-
-    os.chdir('./build/static/media/')
-
-    # if repImageNumber!=0:
-    directory = os.listdir(os.getcwd())
-    for fname in directory:
-        if ('representation' + str(sessionID)) in fname:
-            os.remove(fname)
-            break
-        # os.remove('rep'+str(repImageNumber)+'taken.txt')
-        # plt.imread('representation.png')
-        # plt.clf()
-        # plt.savefig('representation.png')
-    
     os.chdir('../../../src/ModelData/Workings')
     directory = os.listdir(os.getcwd())
     for fname in directory:
