@@ -30,7 +30,7 @@ RUN pip install -r requirements.txt
 # Copy the backend source code
 COPY backend/ ./
 # Run setup.py to build Cython module
-WORKDIR /backend/api/MLer
+WORKDIR /backend/api/src/machineLearning
 RUN python3 setup.py build_ext --inplace
 
 # Step 3: Final image with both Node.js and Python

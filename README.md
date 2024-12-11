@@ -10,6 +10,10 @@
 `docker builder prune`
 # View disk usage
 `docker system df`
+# Prune all
+`docker system prune -a`
+# Bash terminal recursive directories
+`ls -R`
 
 
 

@@ -1,3 +1,4 @@
+from .ModelManager import ModelManager
 from xml.dom.minicompat import StringTypes
 import numpy
 import matplotlib
@@ -27,14 +28,16 @@ import colorsys
 from contextlib import contextmanager
 import io
 import base64
+import re
 # import threading
 # import _thread
 # import multiprocessing
 
-from api import API_ROOT_DIRECTORY
+from api.rootDirectory import API_ROOT_DIRECTORY
 MODEL_DATA_DIRECTORY = os.path.join(API_ROOT_DIRECTORY, 'ModelData')
 DATASETS_DIRECTORY = os.path.join(MODEL_DATA_DIRECTORY, 'Datasets')
-WORKINGS_DIRECTORY = os.path.join(MODEL_DATA_DIRECTORY, 'Workings')
+
+model_manager = ModelManager()
 
 def datasetSave(filename, file):
     # Prevent files that are too big from being uploaded
@@ -219,7 +222,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
         elif problemType == "regression":
             decTree = DecisionTreeRegressor()#max_depth=7) #Add parameters for max depth, criterion etc
         decTree = decTree.fit(trainFinalX.values,trainy.values)
-        dump(decTree, WORKINGS_DIRECTORY+"/model"+str(sessionID)+".joblib")
+        model_manager.add_model(sessionID, decTree)
     elif methodML == "KNN": # USES STANDARD SCALING ON CTS FEATURES - to get closer to a Gaussian distribution        
         if problemType == "classification":
             if ncts == ntotal:
@@ -237,20 +240,20 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 KNN = KNeighborsRegressor(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric=mydist, metric_params={"ncts": ncts, "ncate": ncate}, algorithm='ball_tree', leaf_size=2)
         #print(trainFinalX)
         KNN.fit(trainFinalX,trainy)
-        dump(KNN, WORKINGS_DIRECTORY+"/model"+str(sessionID)+".joblib")
+        model_manager.add_model(sessionID, KNN)
     elif methodML == "LinReg":
         regr = linear_model.LinearRegression()
         if len(ctsParams) == 0:
             trainFinalX = trainFinalX.to_numpy()
             testFinalX = testFinalX.to_numpy()
             regr.fit(trainFinalX, trainy)
-            dump(regr, WORKINGS_DIRECTORY+"/model"+str(sessionID)+".joblib")
+            model_manager.add_model(sessionID, regr)
         else:
             regr.fit(trainFinalX, trainy)
-            dump(regr, WORKINGS_DIRECTORY+"/model"+str(sessionID)+".joblib")
+            model_manager.add_model(sessionID, regr)
     elif methodML == "PolyFit":
         polyModel1d = numpy.poly1d(numpy.polyfit(trainFinalX.ravel(), trainy, polyDeg))
-        dump(polyModel1d, WORKINGS_DIRECTORY+"/model"+str(sessionID)+".joblib")
+        model_manager.add_model(sessionID, polyModel1d)
 
     #Measure fit of model
     print("MODEL FITTED AND SAVED, MEASURING ACCURACY OF MODEL")
@@ -348,6 +351,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             else:
                 data = tree.export_graphviz(decTree, out_file=None, feature_names=features, class_names=list(dictionaryResult), max_depth=4, filled=True)
                 graph = pydotplus.graph_from_dot_data(data)
+                removeValuesFromNodes(graph)
                 repImageBase64 = encodeRepImage('graph', graph)
         elif problemType == "regression":
             if len(ctsParams) == 1 and len(cateParams) == 0:
@@ -392,6 +396,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             else:
                 data = tree.export_graphviz(decTree, out_file=None, feature_names=features, max_depth=4, filled=True)
                 graph = pydotplus.graph_from_dot_data(data)
+                removeValuesFromNodes(graph)
                 repImageBase64 = encodeRepImage('graph', graph)
         else:
             repImageCreated=False
@@ -542,7 +547,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
     # os.chdir('./src/ModelData/Workings')
     # print("DIRECTORY AFTER EDITING REPRESENTATION")
     # print(os.getcwd())
-    settings = {
+    modelSettings = {
         "probType": problemType,
         "methodML": methodML,
         "features": features,
@@ -554,7 +559,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
         "scaler": scale
     }
     
-    dump(settings, WORKINGS_DIRECTORY+"/settings"+str(sessionID)+".joblib")
+    model_manager.add_model_settings(sessionID, modelSettings)
 
     print("SETTINGS SAVED, NOW SETTING UP INPUT VALIDATION AND EXPORTING")
 
@@ -563,11 +568,6 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
     for i in range(0, len(cateParams)):
         inputValidation.append(list(dictionary[cateParams[i]].keys()))
 
-    # os.chdir(sys.path[0]+'/..')
-
-    # print("WWWWWWWWWW MLER FINAL DIRECTORY")
-    # print(os.getcwd())
-    
     # accTrain.value = accuracyTrain
     # accTest.value = accuracyTest
     # inpVal = inputValidation
@@ -593,7 +593,6 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 "repImageCreated": repImageCreated
         }
 
-    # TODO: Prevent plt/graph simply drawing over the previous image as it is currently doing. (need plt.clf or .close or smth)
     if (repImageBase64):
         mlOuts['repImageBase64'] = repImageBase64
 
@@ -651,27 +650,47 @@ def encodeRepImage(type, imageObject, **options):
 
     return repImageBase64
 
+def removeValuesFromNodes(graph):
+    for node in graph.get_node_list():
+        label = node.get('label')
+        if label:
+            # Assumes values are in "value = [...]" format, remove "value = [...]\\n"
+            newLabel = re.sub(r"value = \[.*?\]\\n", "", label)
+            node.set("label", newLabel)
+
+    graph.write_png("updated_tree.png")
 
 #Evaluate model at some particular value
 def modelPrediction(predictAt, sessionID):
     #print("WWWWWWWWWW PREDICT START DIRECTORY")
-    os.chdir(sys.path[0]+'/..')
+    # os.chdir(sys.path[0]+'/..')
     #print(os.getcwd())
 
-    os.chdir('./src/ModelData/Workings')
+    # os.chdir('./src/ModelData/Workings')
 
-    settings = load("settings"+str(sessionID)+".joblib")
-    problemType = settings["probType"]
-    methodML = settings["methodML"]
-    features = settings["features"]
-    ctsParams = settings["ctsParams"]
-    cateParams = settings["cateParams"]
-    dictionary = settings["cateDict"]
-    dictionaryResult = settings["resDict"]
-    dataSet = settings["dataSet"]
-    scale = settings["scaler"]
+    modelData = model_manager.get_model(sessionID)
 
-    model = load("model"+str(sessionID)+".joblib")
+    if modelData is None:
+        # Handle the case where the model isn't found
+        print(f"Model with session ID {sessionID} not found.")
+        # Raise an exception, return an error response, or take other appropriate action
+        raise ValueError(f"Model with session ID {sessionID} does not exist.")
+
+    model = modelData['model']
+    modelSettings = modelData['settings']
+    # modelSettings = load("settings"+str(sessionID)+".joblib")
+
+    problemType = modelSettings["probType"]
+    methodML = modelSettings["methodML"]
+    features = modelSettings["features"]
+    ctsParams = modelSettings["ctsParams"]
+    cateParams = modelSettings["cateParams"]
+    dictionary = modelSettings["cateDict"]
+    dictionaryResult = modelSettings["resDict"]
+    dataSet = modelSettings["dataSet"]
+    scale = modelSettings["scaler"]
+
+    # model = load("model"+str(sessionID)+".joblib")
 
     # print("AAAAAAAAAAAAAAAAAA METHOD IS: " + methodML)
     # print("PREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEDICT AT IS:")
@@ -722,7 +741,7 @@ def modelPrediction(predictAt, sessionID):
         # print("AAAAAAAAAAAAAAAAAAAAAAA RESULT IS: ")
         # print(predicted)
 
-    os.chdir(sys.path[0]+'/..')
+    # os.chdir(sys.path[0]+'/..')
     
     #POSSIBLY ROUND Predicted 
     #round_to_n = lambda x, n: round(x, -int(floor(log10(x))) + (n - 1))

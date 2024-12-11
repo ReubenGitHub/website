@@ -2,15 +2,7 @@ from flask import Flask, render_template, request, send_from_directory
 from flask_cors import CORS, cross_origin
 import time
 
-import os
-# import sys
-
-# Add MachineLearner_Functions to Path for access
-API_ROOT_DIRECTORY = os.path.dirname( __file__ )
-# ml_dir = os.path.join(API_ROOT_DIRECTORY, 'MLer')
-# sys.path.append(ml_dir)
-
-import MLer.MachineLearner_Functions as MachineLearner_Functions
+import api.src.machineLearning.MachineLearner_Functions as MachineLearner_Functions
 
 app = Flask(__name__, static_folder="../build", static_url_path='/')
 cors = CORS(app)
@@ -63,3 +55,19 @@ def mlDatasetSaver():
 @cross_origin()
 def mlClearRepresentation():
     return {'mlClearRepresentation': MachineLearner_Functions.clearRepresentation( request.get_json()['sessionid'])}
+
+
+# Test adding a route
+from api.routes.machineLearning import ml_routes
+app.register_blueprint(ml_routes, url_prefix='/api/ml')
+
+
+
+# Error handling
+# @app.errorhandler(404)
+# def not_found_error(error):
+#     return jsonify({'error': 'Not Found'}), 404
+
+# @app.errorhandler(500)
+# def internal_error(error):
+#     return jsonify({'error': 'Internal Server Error'}), 500
