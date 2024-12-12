@@ -106,9 +106,7 @@ def fieldIdentifier(filename):
 
 
 def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName, sessionID): #, accTrain, accTest, inpVal):
-
-    print("CALLED MACHINE LEARNER")
-    #Disable pandas warning "A value is trying to be set on a copy of a slice from a DataFrame"
+    # Disable pandas warning "A value is trying to be set on a copy of a slice from a DataFrame"
     pandas.options.mode.chained_assignment = None  # default='warn'
 
     #Scale to use: StandardScaler(), PowerTransformer(,), ...
@@ -238,7 +236,6 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 KNN = KNeighborsRegressor(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric='hamming')
             else:
                 KNN = KNeighborsRegressor(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric=mydist, metric_params={"ncts": ncts, "ncate": ncate}, algorithm='ball_tree', leaf_size=2)
-        #print(trainFinalX)
         KNN.fit(trainFinalX,trainy)
         model_manager.add_model(sessionID, KNN)
     elif methodML == "LinReg":
@@ -272,10 +269,8 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             macroRecallTest = recall_score(testy, predictedTest, average="macro")
             microRecallTest = recall_score(testy, predictedTest, average="micro")
         elif problemType == "regression":
-            accuracyTrain = r2_score(trainy, decTree.predict(trainFinalX.values))  #Coefficient of Determination
+            accuracyTrain = r2_score(trainy, decTree.predict(trainFinalX.values)) # Coefficient of Determination
             accuracyTest = r2_score(testy, decTree.predict(testFinalX.values))
-        # print("The model accuracy on training data is " + accuracyTrain)
-        # print("The model accuracy on test data is.... " + accuracyTest)
     elif methodML == "KNN":
         if problemType == "classification":
             predictedTrain = KNN.predict( numpy.array(trainFinalX) )
@@ -291,23 +286,20 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             macroRecallTest = recall_score(testy, predictedTest, average="macro")
             microRecallTest = recall_score(testy, predictedTest, average="micro")
         elif problemType =="regression":
-            accuracyTrain = r2_score(trainy, KNN.predict( numpy.array(trainFinalX) ) )  #Coefficient of Determination
+            accuracyTrain = r2_score(trainy, KNN.predict( numpy.array(trainFinalX) ) ) # Coefficient of Determination
             accuracyTest = r2_score(testy, KNN.predict( numpy.array(testFinalX) ) )
-    elif methodML == "LinReg": #r-squared, measure of how well model fits data (Coefficient of Determination, greater is better fit). Ideally R^2 will be similar for the training and testing data sets. When R2<0, a horizontal line (mean) explains the data better than your model.
+    elif methodML == "LinReg":
+        # r-squared, measure of how well model fits data (Coefficient of Determination, greater is better fit). Ideally R^2 will be similar for the training and testing data sets. When R2<0, a horizontal line (mean) explains the data better than your model.
         accuracyTrain = r2_score(trainy, regr.predict( numpy.array(trainFinalX) ))
         accuracyTest = r2_score(testy, regr.predict( numpy.array(testFinalX) ))
-        # print("r^2 on training set: " + str(r2_score(trainy, regr.predict( numpy.array(trainFinalX) ))) )
-        # print("r^2 on testing set: " + str(r2_score(testy, regr.predict( numpy.array(testFinalX) ))) )
     elif methodML == "PolyFit":
         accuracyTrain = r2_score(trainy, polyModel1d( numpy.array(trainFinalX) ))
         accuracyTest = r2_score(testy, polyModel1d( numpy.array(testFinalX) ))
-        # print("r^2 on training set: " + str(r2_score(trainy, polyModel1d( numpy.array(trainFinalX) ))) )
-        # print("r^2 on testing set: " + str(r2_score(testy, polyModel1d( numpy.array(testFinalX) ))) )
 
-    print("ACCURACY MEASURED, NOW CHECKING IF REPRESENTATION ALREADY EXISTS")
+    # Default initialization to avoid checking for non-existence later
+    repImageBase64 = None
 
-    #Draw/plot the model tree/3d training data
-    print("NOW CREATING REPRESENTATION")
+    # Draw/plot the model tree/3d training data
     repImageCreated=True
     if methodML == "DT":
         if problemType == "classification":
@@ -752,22 +744,6 @@ def modelPrediction(predictAt, sessionID):
 
 
 # Ensure this is called when the website is closed or page refreshed
-# So that a fresh user does not see a random display
-# # FOR 2D PLOTS: possibly save multiple images from different angles and create a slider rotation effect
-# TODO: Remove the need for this function by making models saved in memory of application rather than to file system
-def clearRepresentation(sessionID):
-    os.chdir(sys.path[0]+'/..')
-    os.chdir('../../../src/ModelData/Workings')
-    directory = os.listdir(os.getcwd())
-    for fname in directory:
-        if ("model"+str(sessionID)+".joblib") in fname:
-            os.remove(fname)
-            break
-    for fname in directory:
-        if ("settings"+str(sessionID)+".joblib") in fname:
-            os.remove(fname)
-            break
-
-    os.chdir(sys.path[0]+'/..')
-
-    return 
+def clearModel(sessionID):
+    model_manager.remove_model(sessionID)
+    return

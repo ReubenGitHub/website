@@ -89,28 +89,30 @@ export function MLerPage(props) {
         if (predictionTitle) {
             // console.log("PREDICTION API FUNCTION TRIGGERED");
             setLoadingModelPredict(true);
-            fetch('/api/mlModelPredict', {
+            fetch('/api/ml/predict', {
                 method: 'post',
                 headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    predictAt: predictAt,
-                    sessionid: sessionID
+                    predictAt,
+                    sessionId: sessionID
                 })
-            }).then(res => res.json())
-                .then(data => {setPrediction(data.mlModelPrediction);
-                    setLoadingModelPredict(false);
-            });
+            })
+                .then(res => res.json())
+                .then(data => {
+                    setPrediction(data.prediction)
+                    setLoadingModelPredict(false)
+                })
         }
-    }, [predictFlag]);
+    }, [predictFlag])
 
     //clear the model plot on unload, so they aren't presented with a random map image
     window.onbeforeunload = () => {
         // console.log("SCRIPT FOR UNLOAD ALREADY STARTED")
         // console.log("SCRIPT FOR UNLOAD PRE_FETCH FINISHED")
-        fetch('/api/clearRepresentation', {
+        fetch('/api/clearModel', {
             method: 'post',
             headers: {
             'Accept': 'application/json',

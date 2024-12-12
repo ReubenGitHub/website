@@ -1,20 +1,21 @@
-from api.src.machineLearning import MachineLearner_Functions
-
-# @ml_routes.route('/predict', methods=['POST'])
-# def predict():
-#     data = request.get_json()
-#     prediction = model_prediction(data)
-#     return {'prediction': prediction}
-
-
-
 from flask import Blueprint, request, jsonify
 from werkzeug.exceptions import BadRequest
+from api.src.machineLearning import MachineLearner_Functions
 
 ml_routes = Blueprint('ml_routes', __name__)
 
 @ml_routes.route('/predict', methods=['POST'])
 def mlModelPredict():
+    """
+    Predict the outcome of a machine learning model
+
+    Request JSON should contain the following fields:
+
+    - predictAt: the input features to predict
+    - sessionid: the session ID for the model
+
+    Returns a JSON object with the prediction result
+    """
     try:
         # Parse and validate request JSON
         request_data = request.get_json()
@@ -23,13 +24,13 @@ def mlModelPredict():
 
         # Extract fields
         predict_at = request_data['predictAt']
-        session_id = request_data['sessionid']
+        session_id = request_data['sessionId']
 
         # Perform the prediction
-        prediction_result = MachineLearner_Functions.modelPrediction(predict_at, session_id)
+        prediction = MachineLearner_Functions.modelPrediction(predict_at, session_id)
 
         # Return the result
-        return jsonify({'mlModelPrediction': prediction_result}), 200
+        return jsonify({ 'prediction': prediction }), 200
 
     except BadRequest as e:
         # Handle missing or invalid input

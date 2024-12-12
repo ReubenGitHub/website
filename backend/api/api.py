@@ -36,11 +36,6 @@ def mlModelFit():
         request.get_json()['sessionid'])
     }
 
-@app.route('/api/mlModelPredict', methods=['POST'])
-@cross_origin()
-def mlModelPredict():
-    return {'mlModelPrediction': MachineLearner_Functions.modelPrediction(request.get_json()['predictAt'], request.get_json()['sessionid'])}
-
 @app.route('/api/mlFieldIdentifier', methods=['POST'])
 @cross_origin()
 def mlFieldIdentifier():
@@ -51,10 +46,10 @@ def mlFieldIdentifier():
 def mlDatasetSaver():
     return {'mlDatasetFields': MachineLearner_Functions.datasetSave( request.json["filename"], request.json["dataset"] )}
 
-@app.route('/api/clearRepresentation', methods=['POST'])
+@app.route('/api/clearModel', methods=['POST'])
 @cross_origin()
 def mlClearRepresentation():
-    return {'mlClearRepresentation': MachineLearner_Functions.clearRepresentation( request.get_json()['sessionid'])}
+    return {'mlClearRepresentation': MachineLearner_Functions.clearModel( request.get_json()['sessionid'])}
 
 
 # Test adding a route
