@@ -34,8 +34,7 @@ import re
 # import multiprocessing
 
 from api.rootDirectory import API_ROOT_DIRECTORY
-MODEL_DATA_DIRECTORY = os.path.join(API_ROOT_DIRECTORY, 'ModelData')
-DATASETS_DIRECTORY = os.path.join(MODEL_DATA_DIRECTORY, 'Datasets')
+DATASETS_DIRECTORY = os.path.join(API_ROOT_DIRECTORY, 'data')
 
 model_manager = ModelManager()
 

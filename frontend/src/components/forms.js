@@ -12,12 +12,65 @@ export function FormDataset(props) {
     const [count, setCount] = useState(0);
     
     const handleSubmit = () => {
+
+        // WORK IN PROGRESS REFACTOR:
+        // Want to make datasets not saved to file system. But can't add model data to model because model won't exist before data is uploaded
+        // const handleDataset = (datasetText) => {
+        //     const filename = datasetIsUpload ? dataset.name : "Examples/CO2 Emissions.csv"
+        //     console.log("DATASET IS")
+        //     console.log(dataset)
+        //     console.log("DATASET TEXT IS")
+        //     console.log(datasetText)
+        //     // const datasetText = datasetIsUpload ? dataset : null
+        //     const fetchUrl = datasetIsUpload ? '/api/mlDatasetSaver' : '/api/mlFieldIdentifier'
+
+        //     setDatasetName(filename)
+
+        //     fetch(fetchUrl, {
+        //         method: 'post',
+        //         headers: {
+        //             'Accept': 'application/json',
+        //             'Content-Type': 'application/json'
+        //         },
+        //         body: JSON.stringify({
+        //             filename,
+        //             ...(datasetIsUpload ? { dataset: datasetText } : {})
+        //         })
+        //     })
+        //         .then(res => res.json())
+        //         .then(data => {
+        //             if (datasetIsUpload && data.mlDatasetFields == null) {
+        //                 alert('Please upload a dataset no bigger than 2MB  :)')
+        //             } else {
+        //                 setDatasetFields(data.mlDatasetFields)
+        //             }
+        //         })
+        // }
+        
+        // if (datasetIsUpload) {
+        //     const file = dataset
+        //     const reader = new FileReader()
+            
+        //     reader.onload = function(e) {
+        //         const datasetText = e.target.result
+        //         handleDataset(datasetText)
+        //     }
+            
+        //     reader.readAsText(file)
+        // } else {
+        //     handleDataset(dataset)
+        // }
+
+
+
+
+
         
         //Handle if a default dataset chosen
         if (!datasetIsUpload) {
             const filenameDef = "Examples/CO2 Emissions.csv"
 
-            setDatasetName(filenameDef);
+            setDatasetName(filenameDef)
             fetch('/api/mlFieldIdentifier', {
                 method: 'post',
                 headers: {
