@@ -44,7 +44,11 @@ def mlFieldIdentifier():
 @app.route('/api/mlDatasetSaver', methods=['POST'])
 @cross_origin()
 def mlDatasetSaver():
-    return {'mlDatasetFields': MachineLearner_Functions.datasetSave( request.json["filename"], request.json["dataset"] )}
+    return {'mlDatasetFields': MachineLearner_Functions.add_dataset_to_session_data(
+        request.json["filename"],
+        request.json["dataset"],
+        request.json['sessionid']
+    )}
 
 @app.route('/api/clearModel', methods=['POST'])
 @cross_origin()

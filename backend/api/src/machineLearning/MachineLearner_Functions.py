@@ -1,4 +1,4 @@
-from .ModelManager import ModelManager
+from .SessionDataManager import SessionDataManager
 from xml.dom.minicompat import StringTypes
 import numpy
 import matplotlib
@@ -36,32 +36,78 @@ import re
 from api.rootDirectory import API_ROOT_DIRECTORY
 DATASETS_DIRECTORY = os.path.join(API_ROOT_DIRECTORY, 'data')
 
-model_manager = ModelManager()
+session_data_manager = SessionDataManager()
 
-def datasetSave(filename, file):
+def choose_dataset(session_id, filename, file):
+    if filename.startswith("Examples/"):
+        session_data_manager.add_dataset(session_id, {
+            'filename': filename,
+            'is_default_dataset': True
+        })
+    else:
+        add_dataset_to_session_data(session_id, filename, file)
+
+    dataset = get_dataset(session_id)
+
+    # Identify and return the field names
+    fields = dataset.columns.values.tolist()
+    nonCtsFields = list(dataset.dtypes[ (dataset.dtypes != "int64") & (dataset.dtypes != "float64")].index)
+    return {'fields': fields, 'nonCtsFields': nonCtsFields}
+
+def get_dataset(session_id):
+    """
+    Return the dataset associated with the given session ID.
+
+    If the dataset is one of the example datasets, it is read from disk.
+    Otherwise, it is retrieved from the session data.
+
+    Parameters
+    ----------
+    session_id : str
+        Session ID to retrieve the dataset for.
+
+    Returns
+    -------
+    dataset : pandas.DataFrame
+        The dataset associated with the given session ID.
+    """
+    dataset = session_data_manager.get_session_data(session_id)['dataset']
+
+    if dataset['is_default_dataset']:
+        return pandas.read_csv(DATASETS_DIRECTORY+"/CO2 Emissions.csv")
+    else:
+        return dataset['dataset']
+
+def add_dataset_to_session_data(session_id, filename, file):
+    """
+    Add a dataset to the session data.
+
+    Parameters
+    ----------
+    session_id : str
+        Session ID to add the dataset to.
+    filename : str
+        Name of the file to add.
+    file : str
+        The contents of the file to add.
+    """
+    
     # Prevent files that are too big from being uploaded
     if len(file.encode("utf8")) > 2000000:
         return None
 
-    filecsv = [x  for x in file.split('\n')]
-    filecsvTest = []
-    for row in csv.reader(filecsv, delimiter=","):
-        filecsvTest.append(row)
-    filedf = pandas.DataFrame(filecsvTest)
-    filedf.to_csv(DATASETS_DIRECTORY+"/"+filename, index=False, header=False)
+    file_lines = [x  for x in file.split('\n')]
+    file_entries = []
+    for row in csv.reader(file_lines, delimiter=","):
+        file_entries.append(row)
 
-    fields = fieldIdentifier(filename)
+    dataset_as_dataframe = pandas.DataFrame(file_entries)
+    dataset = {
+        'filename': filename,
+        'dataset': dataset_as_dataframe
+    }
 
-    return fields
-
-
-def fieldIdentifier(filename):
-    dataSet = pandas.read_csv(DATASETS_DIRECTORY+"/"+filename)
-    fields = dataSet.columns.values.tolist()
-    nonCtsFields = list(dataSet.dtypes[ (dataSet.dtypes != "int64") & (dataSet.dtypes != "float64")].index)
-    return {'fields': fields, 'nonCtsFields': nonCtsFields}
-
-
+    session_data_manager.add_dataset(session_id, dataset)
 
 # class TimeoutException(Exception):
 #     def __init__(self, msg=''):
@@ -136,8 +182,10 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
     # dict_dtypes = {x : 'str'  for x in strTypes}
     # dataSet = pandas.read_csv(nwd + '/' + datasetName, dtype=dict_dtypes)
 
+    # Todo: Refactor this to get data from csv if default dataset, or from session_data_manager otherwise
     dataSet = pandas.read_csv(DATASETS_DIRECTORY+'/'+datasetName)
     dataSet = dataSet.dropna(axis=0, how='any', thresh=None, subset=fieldsOfInterest, inplace=False)
+
     if methodML in ['DT', 'KNN']:
         cateIndicators = False #False: converts each option to integers sequentially.
     else: #LinReg or PolyFit etc, need a cts result, and indicator dummy variables (unless categories are sequential, e.g. cold, medium, hot)
@@ -219,7 +267,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
         elif problemType == "regression":
             decTree = DecisionTreeRegressor()#max_depth=7) #Add parameters for max depth, criterion etc
         decTree = decTree.fit(trainFinalX.values,trainy.values)
-        model_manager.add_model(sessionID, decTree)
+        session_data_manager.add_model(sessionID, decTree)
     elif methodML == "KNN": # USES STANDARD SCALING ON CTS FEATURES - to get closer to a Gaussian distribution        
         if problemType == "classification":
             if ncts == ntotal:
@@ -236,20 +284,20 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             else:
                 KNN = KNeighborsRegressor(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric=mydist, metric_params={"ncts": ncts, "ncate": ncate}, algorithm='ball_tree', leaf_size=2)
         KNN.fit(trainFinalX,trainy)
-        model_manager.add_model(sessionID, KNN)
+        session_data_manager.add_model(sessionID, KNN)
     elif methodML == "LinReg":
         regr = linear_model.LinearRegression()
         if len(ctsParams) == 0:
             trainFinalX = trainFinalX.to_numpy()
             testFinalX = testFinalX.to_numpy()
             regr.fit(trainFinalX, trainy)
-            model_manager.add_model(sessionID, regr)
+            session_data_manager.add_model(sessionID, regr)
         else:
             regr.fit(trainFinalX, trainy)
-            model_manager.add_model(sessionID, regr)
+            session_data_manager.add_model(sessionID, regr)
     elif methodML == "PolyFit":
         polyModel1d = numpy.poly1d(numpy.polyfit(trainFinalX.ravel(), trainy, polyDeg))
-        model_manager.add_model(sessionID, polyModel1d)
+        session_data_manager.add_model(sessionID, polyModel1d)
 
     #Measure fit of model
     print("MODEL FITTED AND SAVED, MEASURING ACCURACY OF MODEL")
@@ -550,7 +598,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
         "scaler": scale
     }
     
-    model_manager.add_model_settings(sessionID, modelSettings)
+    session_data_manager.add_model_settings(sessionID, modelSettings)
 
     print("SETTINGS SAVED, NOW SETTING UP INPUT VALIDATION AND EXPORTING")
 
@@ -659,7 +707,7 @@ def modelPrediction(predictAt, sessionID):
 
     # os.chdir('./src/ModelData/Workings')
 
-    modelData = model_manager.get_model(sessionID)
+    modelData = session_data_manager.get_session_data(sessionID)
 
     if modelData is None:
         # Handle the case where the model isn't found
@@ -744,5 +792,5 @@ def modelPrediction(predictAt, sessionID):
 
 # Ensure this is called when the website is closed or page refreshed
 def clearModel(sessionID):
-    model_manager.remove_model(sessionID)
+    session_data_manager.remove_session_data(sessionID)
     return
