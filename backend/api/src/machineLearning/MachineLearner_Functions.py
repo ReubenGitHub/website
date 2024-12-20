@@ -1,4 +1,4 @@
-from .SessionDataManager import SessionDataManager
+from .session_data_manager import SessionDataManager
 from xml.dom.minicompat import StringTypes
 import numpy
 import matplotlib
@@ -20,10 +20,6 @@ from .custom_metric import mydist
 import pandas
 import pydotplus
 from ordered_set import OrderedSet
-from joblib import dump, load
-import csv
-import sys
-import os
 import colorsys
 from contextlib import contextmanager
 import io
@@ -33,81 +29,16 @@ import re
 # import _thread
 # import multiprocessing
 
-from api.rootDirectory import API_ROOT_DIRECTORY
-DATASETS_DIRECTORY = os.path.join(API_ROOT_DIRECTORY, 'data')
-
 session_data_manager = SessionDataManager()
 
 def choose_dataset(session_id, filename, file):
-    if filename.startswith("Examples/"):
-        session_data_manager.add_dataset(session_id, {
-            'filename': filename,
-            'is_default_dataset': True
-        })
-    else:
-        add_dataset_to_session_data(session_id, filename, file)
-
-    dataset = get_dataset(session_id)
+    session_data_manager.add_dataset(session_id, filename, file)
+    dataset = session_data_manager.get_session_data(session_id)['dataset']
 
     # Identify and return the field names
     fields = dataset.columns.values.tolist()
     nonCtsFields = list(dataset.dtypes[ (dataset.dtypes != "int64") & (dataset.dtypes != "float64")].index)
     return {'fields': fields, 'nonCtsFields': nonCtsFields}
-
-def get_dataset(session_id):
-    """
-    Return the dataset associated with the given session ID.
-
-    If the dataset is one of the example datasets, it is read from disk.
-    Otherwise, it is retrieved from the session data.
-
-    Parameters
-    ----------
-    session_id : str
-        Session ID to retrieve the dataset for.
-
-    Returns
-    -------
-    dataset : pandas.DataFrame
-        The dataset associated with the given session ID.
-    """
-    dataset = session_data_manager.get_session_data(session_id)['dataset']
-
-    if dataset['is_default_dataset']:
-        return pandas.read_csv(DATASETS_DIRECTORY+"/CO2 Emissions.csv")
-    else:
-        return dataset['dataset']
-
-def add_dataset_to_session_data(session_id, filename, file):
-    """
-    Add a dataset to the session data.
-
-    Parameters
-    ----------
-    session_id : str
-        Session ID to add the dataset to.
-    filename : str
-        Name of the file to add.
-    file : str
-        The contents of the file to add.
-    """
-    
-    # Prevent files that are too big from being uploaded
-    if len(file.encode("utf8")) > 2000000:
-        return None
-
-    file_lines = [x  for x in file.split('\n')]
-    file_entries = []
-    for row in csv.reader(file_lines, delimiter=","):
-        file_entries.append(row)
-
-    dataset_as_dataframe = pandas.DataFrame(file_entries)
-    dataset = {
-        'filename': filename,
-        'dataset': dataset_as_dataframe
-    }
-
-    session_data_manager.add_dataset(session_id, dataset)
 
 # class TimeoutException(Exception):
 #     def __init__(self, msg=''):
@@ -128,8 +59,6 @@ def add_dataset_to_session_data(session_id, filename, file):
 #         # yield
 #         yield
 #     except MyException:
-#         # os.chdir(cwd)
-#         # print(os.getcwd())
 #         print("TIMED OUT SO CANCELLED")
 #         raise TimeoutException("Timed out for operation {}".format(msg)) 
 #     finally:
@@ -138,7 +67,6 @@ def add_dataset_to_session_data(session_id, filename, file):
 
 # def machineLearnerTimed(supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName):
 #     cwd = os.getcwd()
-#     print(cwd)
 #     try:
 #         print("KICKING OFF ML WITH TIME LIMIT")
 #         with time_limit(cwd, 5, 'sleep'):
@@ -150,7 +78,7 @@ def add_dataset_to_session_data(session_id, filename, file):
 #     print("HERE 4")
 
 
-def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName, sessionID): #, accTrain, accTest, inpVal):
+def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName, session_id): #, accTrain, accTest, inpVal):
     # Disable pandas warning "A value is trying to be set on a copy of a slice from a DataFrame"
     pandas.options.mode.chained_assignment = None  # default='warn'
 
@@ -173,18 +101,9 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
 
     dictionary = {}
 
-    # print("AAAAAAAAAAAAAAAAAAAAAAAAA DATASET NAME IS: " + datasetName)
-    # if problemType=="classification":
-    #     strTypes = cateParams+[result]
-    # else:
-    #     strTypes = cateParams
-    # # print(strTypes)
-    # dict_dtypes = {x : 'str'  for x in strTypes}
-    # dataSet = pandas.read_csv(nwd + '/' + datasetName, dtype=dict_dtypes)
-
     # Todo: Refactor this to get data from csv if default dataset, or from session_data_manager otherwise
-    dataSet = pandas.read_csv(DATASETS_DIRECTORY+'/'+datasetName)
-    dataSet = dataSet.dropna(axis=0, how='any', thresh=None, subset=fieldsOfInterest, inplace=False)
+    dataset = session_data_manager.get_session_data(session_id)['dataset']
+    dataset = dataset.dropna(axis=0, how='any', thresh=None, subset=fieldsOfInterest, inplace=False)
 
     if methodML in ['DT', 'KNN']:
         cateIndicators = False #False: converts each option to integers sequentially.
@@ -192,10 +111,10 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
         cateIndicators = True  #True: Convert category parameters to (n-1) indicator dummy variables, 1 for each n options, minus 1 to drop the first column which is not independent of the rest.
 
     #Define training data, independent upper case X, dependent lower case y
-    x = dataSet[features]
+    x = dataset[features]
     dict_dtypes = {x : 'str'  for x in cateParams}
     x = x.astype(dtype = dict_dtypes, copy=True)
-    y = dataSet[result]
+    y = dataset[result]
     if problemType == "classification":
         y = y.astype(dtype = 'str', copy=True)
     dictionaryResult = dict()
@@ -267,7 +186,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
         elif problemType == "regression":
             decTree = DecisionTreeRegressor()#max_depth=7) #Add parameters for max depth, criterion etc
         decTree = decTree.fit(trainFinalX.values,trainy.values)
-        session_data_manager.add_model(sessionID, decTree)
+        session_data_manager.add_model(session_id, decTree)
     elif methodML == "KNN": # USES STANDARD SCALING ON CTS FEATURES - to get closer to a Gaussian distribution        
         if problemType == "classification":
             if ncts == ntotal:
@@ -284,20 +203,20 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             else:
                 KNN = KNeighborsRegressor(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric=mydist, metric_params={"ncts": ncts, "ncate": ncate}, algorithm='ball_tree', leaf_size=2)
         KNN.fit(trainFinalX,trainy)
-        session_data_manager.add_model(sessionID, KNN)
+        session_data_manager.add_model(session_id, KNN)
     elif methodML == "LinReg":
         regr = linear_model.LinearRegression()
         if len(ctsParams) == 0:
             trainFinalX = trainFinalX.to_numpy()
             testFinalX = testFinalX.to_numpy()
             regr.fit(trainFinalX, trainy)
-            session_data_manager.add_model(sessionID, regr)
+            session_data_manager.add_model(session_id, regr)
         else:
             regr.fit(trainFinalX, trainy)
-            session_data_manager.add_model(sessionID, regr)
+            session_data_manager.add_model(session_id, regr)
     elif methodML == "PolyFit":
         polyModel1d = numpy.poly1d(numpy.polyfit(trainFinalX.ravel(), trainy, polyDeg))
-        session_data_manager.add_model(sessionID, polyModel1d)
+        session_data_manager.add_model(session_id, polyModel1d)
 
     #Measure fit of model
     print("MODEL FITTED AND SAVED, MEASURING ACCURACY OF MODEL")
@@ -580,12 +499,6 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
     plt.clf()
 
     print("REPRESENTATION CREATED AND SAVED, NOW SAVING MODEL SETTINGS/PARAMS")
-    # os.chdir('../../../src/ModelData/Workings')
-    # print(os.getcwd())
-    # print(os.listdir(os.getcwd()))
-    # os.chdir('./src/ModelData/Workings')
-    # print("DIRECTORY AFTER EDITING REPRESENTATION")
-    # print(os.getcwd())
     modelSettings = {
         "probType": problemType,
         "methodML": methodML,
@@ -594,11 +507,11 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
         "cateParams": cateParams,
         "cateDict": dictionary,
         "resDict": dictionaryResult,
-        "dataSet": dataSet,
+        "dataset": dataset,
         "scaler": scale
     }
     
-    session_data_manager.add_model_settings(sessionID, modelSettings)
+    session_data_manager.add_model_settings(session_id, modelSettings)
 
     print("SETTINGS SAVED, NOW SETTING UP INPUT VALIDATION AND EXPORTING")
 
@@ -639,7 +552,6 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
 
 # def machineLearnerTimed(supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName):
 #     cwd = os.getcwd()
-#     print(cwd)
 
 #     accTrain = multiprocessing.Value('d')
 #     accTest = multiprocessing.Value('d')
@@ -653,13 +565,10 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
 
 #     if p.is_alive():
 #         print("Terminating fit thread")
-#         os.chdir(cwd)
-#         print(os.getcwd())
 #         p.terminate()
 #         p.join()
 #         return
 #     else:
-#         print(os.getcwd())
 #         print(accTrain)
 #         print(accTest)
 #         print(inpVal)
@@ -700,24 +609,10 @@ def removeValuesFromNodes(graph):
     graph.write_png("updated_tree.png")
 
 #Evaluate model at some particular value
-def modelPrediction(predictAt, sessionID):
-    #print("WWWWWWWWWW PREDICT START DIRECTORY")
-    # os.chdir(sys.path[0]+'/..')
-    #print(os.getcwd())
-
-    # os.chdir('./src/ModelData/Workings')
-
-    modelData = session_data_manager.get_session_data(sessionID)
-
-    if modelData is None:
-        # Handle the case where the model isn't found
-        print(f"Model with session ID {sessionID} not found.")
-        # Raise an exception, return an error response, or take other appropriate action
-        raise ValueError(f"Model with session ID {sessionID} does not exist.")
-
-    model = modelData['model']
-    modelSettings = modelData['settings']
-    # modelSettings = load("settings"+str(sessionID)+".joblib")
+def modelPrediction(predictAt, session_id):
+    session_data = session_data_manager.get_session_data(session_id)
+    model = session_data['model']
+    modelSettings = session_data['settings']
 
     problemType = modelSettings["probType"]
     methodML = modelSettings["methodML"]
@@ -726,24 +621,14 @@ def modelPrediction(predictAt, sessionID):
     cateParams = modelSettings["cateParams"]
     dictionary = modelSettings["cateDict"]
     dictionaryResult = modelSettings["resDict"]
-    dataSet = modelSettings["dataSet"]
+    dataset = modelSettings["dataset"]
     scale = modelSettings["scaler"]
-
-    # model = load("model"+str(sessionID)+".joblib")
-
-    # print("AAAAAAAAAAAAAAAAAA METHOD IS: " + methodML)
-    # print("PREEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEDICT AT IS:")
-    # print(predictAt)
 
     if methodML == 'DT':
         predictAtNumerical = predictAt.copy()
         for i in range(0,len(features)):
             if features[i] in cateParams:
                 category = features[i]
-                # print("WWWWWWWWWWWWWWWWWWWWWWWWWW TRYING TO CONVERT: ")
-                # print(category)
-                # print(predictAtNumerical[i])
-                # print(dictionary)
                 predictAtNumerical[i] = dictionary[category][predictAtNumerical[i]]
         predicted = model.predict([predictAtNumerical])
         if problemType == "classification":
@@ -767,8 +652,8 @@ def modelPrediction(predictAt, sessionID):
             scaled = scaled.ravel()
         if len(cateParams) > 0:
             for i in range(0,len(cateParams)):
-                dummyCate = [0] * ( len(set(dataSet[cateParams[i]])) - 1 )
-                onePos = sorted(set(dataSet[cateParams[i]])).index(predictAt[len(ctsParams)+i]) - 1
+                dummyCate = [0] * ( len(set(dataset[cateParams[i]])) - 1 )
+                onePos = sorted(set(dataset[cateParams[i]])).index(predictAt[len(ctsParams)+i]) - 1
                 if onePos > -1:
                     dummyCate[onePos] = 1
                 predictCates = predictCates + dummyCate
@@ -777,20 +662,14 @@ def modelPrediction(predictAt, sessionID):
     elif methodML == "PolyFit":
         scaled = scale.transform([predictAt])
         predicted = model(scaled)[0]
-        # print("AAAAAAAAAAAAAAAAAAAAAAA RESULT IS: ")
-        # print(predicted)
 
-    # os.chdir(sys.path[0]+'/..')
-    
     #POSSIBLY ROUND Predicted 
     #round_to_n = lambda x, n: round(x, -int(floor(log10(x))) + (n - 1))
     
-    # print("WWWWWWWWWW PREDICT FINAL DIRECTORY")
-    # print(os.getcwd())
     return {"predictAt": predictAt, "prediction": predicted[0]}
 
 
 # Ensure this is called when the website is closed or page refreshed
-def clearModel(sessionID):
-    session_data_manager.remove_session_data(sessionID)
+def clear_session_data(session_id):
+    session_data_manager.remove_session_data(session_id)
     return

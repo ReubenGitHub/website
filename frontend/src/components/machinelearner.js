@@ -112,7 +112,7 @@ export function MLerPage(props) {
     window.onbeforeunload = () => {
         // console.log("SCRIPT FOR UNLOAD ALREADY STARTED")
         // console.log("SCRIPT FOR UNLOAD PRE_FETCH FINISHED")
-        fetch('/api/clearModel', {
+        fetch('/api/clearSessionData', {
             method: 'post',
             headers: {
             'Accept': 'application/json',

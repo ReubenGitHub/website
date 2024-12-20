@@ -22,7 +22,7 @@ export function FormDataset(props) {
         //     console.log("DATASET TEXT IS")
         //     console.log(datasetText)
         //     // const datasetText = datasetIsUpload ? dataset : null
-        //     const fetchUrl = datasetIsUpload ? '/api/mlDatasetSaver' : '/api/mlFieldIdentifier'
+        //     const fetchUrl = '/api/uploadDataset'
 
         //     setDatasetName(filename)
 
@@ -71,11 +71,11 @@ export function FormDataset(props) {
             const filenameDef = "Examples/CO2 Emissions.csv"
 
             setDatasetName(filenameDef)
-            fetch('/api/mlFieldIdentifier', {
+            fetch('/api/uploadDataset', {
                 method: 'post',
                 headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 body:  JSON.stringify( {
                     filename: filenameDef
@@ -99,7 +99,7 @@ export function FormDataset(props) {
                     alert('Please upload a dataset no bigger than ' + maxFileSize/1000000 + 'MB  :)');
                 } else {
                     setDatasetName(filename);
-                    fetch('/api/mlDatasetSaver', {
+                    fetch('/api/uploadDataset', {
                         method: 'post',
                         headers: {
                         'Accept': 'application/json',

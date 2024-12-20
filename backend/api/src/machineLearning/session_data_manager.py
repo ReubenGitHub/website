@@ -1,5 +1,13 @@
 import time
 import threading
+import pandas
+import csv
+import os
+from api.rootDirectory import API_ROOT_DIRECTORY
+
+DATASETS_DIRECTORY = os.path.join(API_ROOT_DIRECTORY, 'data')
+DATASET_SIZE_LIMIT = 2000000 # Bytes
+DEFAULT_DATASET = pandas.read_csv(DATASETS_DIRECTORY+"/CO2 Emissions.csv")
 
 class SessionDataManager:
     def __init__(self):
@@ -10,7 +18,31 @@ class SessionDataManager:
         self.lock = threading.Lock()
         self._start_expiration_thread()
 
-    def add_dataset(self, session_id, dataset):
+    def add_dataset(self, session_id, filename, file):
+        """
+        Add a dataset to the session data.
+
+        Args:
+            session_id (str): The id of the session to add the dataset to.
+            filename (str): The name of the file. If it starts with "Examples/",
+                it is considered a default dataset. Otherwise, it's a user-uploaded
+                dataset.
+            file (str): The contents of the file.
+        """
+        if filename.startswith("Examples/"):
+            dataset = DEFAULT_DATASET
+        else:
+            if len(file.encode("utf8")) > DATASET_SIZE_LIMIT:
+                raise ValueError("File size limit exceeded. Please upload a smaller file.")
+
+            file_lines = [x  for x in file.split('\n')]
+            file_entries = []
+            for row in csv.reader(file_lines, delimiter=","):
+                file_entries.append(row)
+
+            dataset_as_dataframe = pandas.DataFrame(file_entries)
+            dataset = dataset_as_dataframe
+
         self._add_session_data(session_id, 'dataset', dataset)
     
     def add_model(self, session_id, model):
@@ -36,7 +68,7 @@ class SessionDataManager:
                 self.sessions[session_id]['last_used'] = time.time()
                 return self.sessions[session_id]
             else:
-                return None
+                raise KeyError(f"Data for session ID '{session_id}' does not exist.")
 
     def remove_session_data(self, session_id):
         """Remove data for a given session ID."""

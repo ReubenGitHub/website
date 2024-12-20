@@ -41,19 +41,19 @@ def mlModelFit():
 def mlFieldIdentifier():
     return {'mlDatasetFields': MachineLearner_Functions.fieldIdentifier(request.json["filename"])}
 
-@app.route('/api/mlDatasetSaver', methods=['POST'])
+@app.route('/api/uploadDataset', methods=['POST'])
 @cross_origin()
 def mlDatasetSaver():
-    return {'mlDatasetFields': MachineLearner_Functions.add_dataset_to_session_data(
-        request.json["filename"],
-        request.json["dataset"],
-        request.json['sessionid']
+    return {'mlDatasetFields': MachineLearner_Functions.choose_dataset(
+        request.json['sessionid'],
+        request.json['filename'],
+        request.json['dataset']
     )}
 
-@app.route('/api/clearModel', methods=['POST'])
+@app.route('/api/clearSessionData', methods=['POST'])
 @cross_origin()
 def mlClearRepresentation():
-    return {'mlClearRepresentation': MachineLearner_Functions.clearModel( request.get_json()['sessionid'])}
+    return {'mlClearRepresentation': MachineLearner_Functions.clear_session_data( request.get_json()['sessionid'])}
 
 
 # Test adding a route
