@@ -12,15 +12,15 @@ def mlModelPredict():
     Request JSON should contain the following fields:
 
     - predictAt: the input features to predict
-    - sessionid: the session ID for the model
+    - sessionId: the session ID for the model
 
     Returns a JSON object with the prediction result
     """
     try:
         # Parse and validate request JSON
         request_data = request.get_json()
-        if not request_data or 'predictAt' not in request_data or 'sessionid' not in request_data:
-            raise BadRequest("Missing required fields 'predictAt' or 'sessionid'.")
+        if not request_data or 'predictAt' not in request_data or 'sessionId' not in request_data:
+            raise BadRequest("Missing required fields 'predictAt' or 'sessionId'.")
 
         # Extract fields
         predict_at = request_data['predictAt']

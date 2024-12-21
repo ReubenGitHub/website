@@ -31,13 +31,14 @@ import re
 
 session_data_manager = SessionDataManager()
 
-def choose_dataset(session_id, filename, file):
-    session_data_manager.add_dataset(session_id, filename, file)
+def choose_dataset(session_id, use_default_dataset=True, file=None):
+    session_data_manager.add_dataset(session_id, use_default_dataset, file)
+
     dataset = session_data_manager.get_session_data(session_id)['dataset']
 
     # Identify and return the field names
     fields = dataset.columns.values.tolist()
-    nonCtsFields = list(dataset.dtypes[ (dataset.dtypes != "int64") & (dataset.dtypes != "float64")].index)
+    nonCtsFields = list(dataset.dtypes[(dataset.dtypes != "int64") & (dataset.dtypes != "float64")].index)
     return {'fields': fields, 'nonCtsFields': nonCtsFields}
 
 # class TimeoutException(Exception):
@@ -612,7 +613,7 @@ def removeValuesFromNodes(graph):
 def modelPrediction(predictAt, session_id):
     session_data = session_data_manager.get_session_data(session_id)
     model = session_data['model']
-    modelSettings = session_data['settings']
+    modelSettings = session_data['model_settings']
 
     problemType = modelSettings["probType"]
     methodML = modelSettings["methodML"]

@@ -4,7 +4,7 @@ import React, {useState, useEffect, useCallback} from 'react';
 
 export function MLerPage(props) {
     const [instTab, setInstTab] = useState(["active"]);
-    const [sessionID, setSessionID] = useState(0);
+    const [sessionId, setSessionId] = useState(0);
     const [inputs, setInputs] = useState();
     const [mlOuts, setMlOuts] = useState(0);
     const [predictAt, setPredictAt] = useState([]);
@@ -44,7 +44,7 @@ export function MLerPage(props) {
     
     //Set session ID only once, on initial loading
     useEffect(() => {
-        setSessionID(Date.now());
+        setSessionId(Date.now());
     }, []);
 
     //Update model outputs and output-loading status upon trigger of inputs changing
@@ -67,7 +67,7 @@ export function MLerPage(props) {
                     resultparam: inputs[6],
                     testprop: inputs[7],
                     datasetname: datasetName,
-                    sessionid: sessionID
+                    sessionId: sessionId
                 })
             }).then(res => res.json())
                 .then(data => {setMlOuts(data.mlModelOutputs['mlOuts']);
@@ -97,7 +97,7 @@ export function MLerPage(props) {
                 },
                 body: JSON.stringify({
                     predictAt,
-                    sessionId: sessionID
+                    sessionId: sessionId
                 })
             })
                 .then(res => res.json())
@@ -119,7 +119,7 @@ export function MLerPage(props) {
             'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                sessionid: sessionID
+                sessionId: sessionId
             })
         })
         return ''; // Legacy method for cross browser support
@@ -361,7 +361,7 @@ export function MLerPage(props) {
                     </div>
                     <div class="container">
                         <h3 align="center">Data Selection</h3>
-                        <FormDataset parentCallback = {callbackFunctionDataset} />
+                        <FormDataset parentCallback = {callbackFunctionDataset} sessionId={sessionId} />
                         <br></br>
                         <hr color="#03bffe"></hr>
                         {!(datasetName) && <h3 align="center">Please select a dataset...</h3> }
@@ -384,7 +384,7 @@ export function MLerPage(props) {
                     </div>
                     <div class="container">
                         <h3 align="center">Model Representation</h3>
-                        <FormModelOutputs modelOutputs={mlOuts} sessionID={sessionID} />
+                        <FormModelOutputs modelOutputs={mlOuts} sessionId={sessionId} />
                         <br></br>
                         <hr color="#03bffe"></hr>
                         <FormModelPrediction modelPrediction={prediction} datasetFeatures = {datasetFeatures} datasetResultParam = {datasetResultParam} />

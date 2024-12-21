@@ -24,36 +24,33 @@ def get_current_time():
 @cross_origin()
 def mlModelFit():
     return {'mlModelOutputs': MachineLearner_Functions.machineLearner(
-        request.get_json()['supervision'],
-        request.get_json()['problemtype'],
-        request.get_json()['mlmethod'],
-        request.get_json()['polydeg'],
-        request.get_json()['ctsparams'],
-        request.get_json()['cateparams'],
-        request.get_json()['resultparam'],
-        request.get_json()['testprop'],
-        request.get_json()['datasetname'],
-        request.get_json()['sessionid'])
+        request.json['supervision'],
+        request.json['problemtype'],
+        request.json['mlmethod'],
+        request.json['polydeg'],
+        request.json['ctsparams'],
+        request.json['cateparams'],
+        request.json['resultparam'],
+        request.json['testprop'],
+        request.json['datasetname'],
+        request.json['sessionId'])
     }
-
-@app.route('/api/mlFieldIdentifier', methods=['POST'])
-@cross_origin()
-def mlFieldIdentifier():
-    return {'mlDatasetFields': MachineLearner_Functions.fieldIdentifier(request.json["filename"])}
 
 @app.route('/api/uploadDataset', methods=['POST'])
 @cross_origin()
 def mlDatasetSaver():
-    return {'mlDatasetFields': MachineLearner_Functions.choose_dataset(
-        request.json['sessionid'],
-        request.json['filename'],
-        request.json['dataset']
-    )}
+    return {
+        'datasetFields': MachineLearner_Functions.choose_dataset(
+            request.json['sessionId'],
+            request.json['useDefaultDataset'],
+            request.json.get('dataset', None) # dataset may not exist if useDefaultDataset is true
+        )
+    }
 
 @app.route('/api/clearSessionData', methods=['POST'])
 @cross_origin()
 def mlClearRepresentation():
-    return {'mlClearRepresentation': MachineLearner_Functions.clear_session_data( request.get_json()['sessionid'])}
+    return {'mlClearRepresentation': MachineLearner_Functions.clear_session_data(request.json['sessionId'])}
 
 
 # Test adding a route

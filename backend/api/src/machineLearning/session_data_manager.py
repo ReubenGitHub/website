@@ -6,8 +6,8 @@ import os
 from api.rootDirectory import API_ROOT_DIRECTORY
 
 DATASETS_DIRECTORY = os.path.join(API_ROOT_DIRECTORY, 'data')
-DATASET_SIZE_LIMIT = 2000000 # Bytes
 DEFAULT_DATASET = pandas.read_csv(DATASETS_DIRECTORY+"/CO2 Emissions.csv")
+DATASET_SIZE_LIMIT = 2000000 # Bytes
 
 class SessionDataManager:
     def __init__(self):
@@ -18,18 +18,8 @@ class SessionDataManager:
         self.lock = threading.Lock()
         self._start_expiration_thread()
 
-    def add_dataset(self, session_id, filename, file):
-        """
-        Add a dataset to the session data.
-
-        Args:
-            session_id (str): The id of the session to add the dataset to.
-            filename (str): The name of the file. If it starts with "Examples/",
-                it is considered a default dataset. Otherwise, it's a user-uploaded
-                dataset.
-            file (str): The contents of the file.
-        """
-        if filename.startswith("Examples/"):
+    def add_dataset(self, session_id, use_default_dataset, file):
+        if use_default_dataset:
             dataset = DEFAULT_DATASET
         else:
             if len(file.encode("utf8")) > DATASET_SIZE_LIMIT:
