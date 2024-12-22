@@ -1,4 +1,5 @@
 from .session_data_manager import session_data_manager
+from .preprocess_data import preprocess_data
 from xml.dom.minicompat import StringTypes
 import numpy
 import matplotlib
@@ -38,7 +39,7 @@ import re
 
 # @contextmanager
 # def time_limit(cwd, seconds, msg=''):
-# # def time_limit(supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName, cwd, seconds, msg=''):
+# # def time_limit(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName, cwd, seconds, msg=''):
 #     # timer = threading.Timer(seconds, lambda: _thread.interrupt_main())
 #     timer = threading.Timer( seconds, lambda: (print("TIMED OUT SO CANCELLED"), MyException) )
 #     timer.start()
@@ -54,20 +55,20 @@ import re
 #         timer.cancel()
 #         print("STOPPED?")
 
-# def machineLearnerTimed(supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName):
+# def machineLearnerTimed(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName):
 #     cwd = os.getcwd()
 #     try:
 #         print("KICKING OFF ML WITH TIME LIMIT")
 #         with time_limit(cwd, 5, 'sleep'):
-#         # return time_limit(supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName, cwd, 5, 'sleep')
-#             return machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName)
+#         # return time_limit(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName, cwd, 5, 'sleep')
+#             return machineLearner(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName)
 #     except TimeoutException:
 #         print("TIME RAN OUT EXCEPTION, RETURNING NOTHING")
 #         return
 #     print("HERE 4")
 
 
-def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName, session_id): #, accTrain, accTest, inpVal):
+def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, session_id): #, accTrain, accTest, inpVal):
     # Disable pandas warning "A value is trying to be set on a copy of a slice from a DataFrame"
     pandas.options.mode.chained_assignment = None  # default='warn'
 
@@ -75,92 +76,60 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
     scale = StandardScaler()
     #Method of learning: DT, LinReg, PolyFit (1d), ...  . polyDeg degress of polynomial if PolyFit selected
     #Features to analyse, independent X, and proportion of test vs train. Cts followed by categorical
-    features = ctsParams + cateParams
+    features = continuous_features + categorical_features
     fieldsOfInterest = features + [result]
     global ncts
     global ncate
     global ntotal
-    ncts = len(ctsParams)
-    ncate = len(cateParams)
+    ncts = len(continuous_features)
+    ncate = len(categorical_features)
     ntotal = ncts+ncate
-    #ctsParams = [feat for feat in features if feat not in cateParams]
+    #continuous_features = [feat for feat in features if feat not in categorical_features]
     #Result of interest, dependent y, and is the result continuous or categorical?
     #Features which are categorical - to be converted to integers
     #Specific value of interest/to predict, 1 entry per feature
 
-    dictionary = {}
+    categorical_features_category_maps = {}
 
-    # Todo: Refactor this to get data from csv if default dataset, or from session_data_manager otherwise
+    # Get dataset from session data
     dataset = session_data_manager.get_session_data(session_id)['dataset']
     dataset = dataset.dropna(axis=0, how='any', thresh=None, subset=fieldsOfInterest, inplace=False)
 
-    if methodML in ['DT', 'KNN']:
-        cateIndicators = False #False: converts each option to integers sequentially.
-    else: #LinReg or PolyFit etc, need a cts result, and indicator dummy variables (unless categories are sequential, e.g. cold, medium, hot)
-        cateIndicators = True  #True: Convert category parameters to (n-1) indicator dummy variables, 1 for each n options, minus 1 to drop the first column which is not independent of the rest.
-
-    #Define training data, independent upper case X, dependent lower case y
-    x = dataset[features]
-    dict_dtypes = {x : 'str'  for x in cateParams}
-    x = x.astype(dtype = dict_dtypes, copy=True)
-    y = dataset[result]
-    if problemType == "classification":
-        y = y.astype(dtype = 'str', copy=True)
-    dictionaryResult = dict()
-    if problemType == "classification":
-        value = 0
-        for option in OrderedSet(y):
-            dictionaryResult[option] = value
-            value += 1
-        y = y.map(dictionaryResult)
-    catex = x[cateParams]
-    ctsx = x[ctsParams]
-    for category in cateParams:
-        if cateIndicators == True:  # One Hot Encoding
-            value = 0   #----------------- Dictionary not used here, just for input validation
-            dictionary[category] = dict()
-            for option in OrderedSet(catex[category]):
-                dictionary[category][option] = value
-                value += 1
-            catex = pandas.get_dummies(data=catex, drop_first=True, columns = [category])
-        else:
-            value = 0
-            dictionary[category] = dict()
-            for option in OrderedSet(catex[category]):
-                dictionary[category][option] = value
-                value += 1
-            catex[category] = catex[category].map(dictionary[category])
+    # Preprocess data to split out feature and result data, and handle category encoding (for categorical features or results)
+    feature_data, categorical_feature_data, continuous_feature_data, categorical_features_category_maps, result_data, result_categories_map = preprocess_data(
+        dataset, categorical_features, continuous_features, result, model_type, problem_type
+    )
     
-    testSize = round( min( max(2, testProp*len(x)), len(x)-2 ) ) # Need at least 2 test/train sample (for measuring regression accuracy). Borderline case.
-    trainCtsx, testCtsx, trainCatex, testCatex, trainy, testy = train_test_split(ctsx, catex, y, test_size = testSize)
+    testSize = round( min( max(2, testProp*len(feature_data)), len(feature_data)-2 ) ) # Need at least 2 test/train sample (for measuring regression accuracy). Borderline case.
+    trainCtsx, testCtsx, trainCatex, testCatex, trainy, testy = train_test_split(continuous_feature_data, categorical_feature_data, result_data, test_size = testSize)
     cateCols = trainCatex.columns
     trainx = pandas.concat([trainCtsx, trainCatex], axis=1)
     testx = pandas.concat([testCtsx, testCatex], axis=1)
-    if len(ctsParams) > 0: #Scaling and assembling the FinalX sets
-        if methodML in ["LinReg", "PolyFit", "KNN"]: #Any model requiring scaling
+    if len(continuous_features) > 0: #Scaling and assembling the FinalX sets
+        if model_type in ["LinReg", "PolyFit", "KNN"]: #Any model requiring scaling
             trainScaledX = scale.fit_transform(trainCtsx.values) #Scaling is defined here, by the training dataset
-            trainScaledX = pandas.DataFrame(trainScaledX, columns=ctsParams)
+            trainScaledX = pandas.DataFrame(trainScaledX, columns=continuous_features)
             testScaledX = scale.transform(testCtsx.values)       #And applied as defined here, to the testing dataset
-            testScaledX = pandas.DataFrame(testScaledX, columns=ctsParams)
+            testScaledX = pandas.DataFrame(testScaledX, columns=continuous_features)
             trainCatex = trainCatex.reset_index(drop=True)
             testCatex = testCatex.reset_index(drop=True)
             trainy = trainy.reset_index(drop=True)
             testy = testy.reset_index(drop=True)
-            if len(cateParams) > 0:
+            if len(categorical_features) > 0:
                 trainFinalX = pandas.concat([trainScaledX, trainCatex], axis=1).to_numpy()   #1: Cts params, scaling, cate params
                 testFinalX = pandas.concat([testScaledX, testCatex], axis=1).to_numpy()      #1: Cts params, scaling, cate params
             else:
                 trainFinalX = trainScaledX.to_numpy()                                                               #2: Cts params, scaling, no cate params
                 testFinalX = testScaledX.to_numpy()                                                                 #2: Cts params, scaling, no cate params
         else: #No scaling required
-            if len(cateParams) > 0:
+            if len(categorical_features) > 0:
                 trainFinalX = pandas.concat([trainCtsx, trainCatex], axis=1)                                        #3: Cts params, no scaling, cate params
                 testFinalX = pandas.concat([testCtsx, testCatex], axis=1)                                           #3: Cts params, no scaling, cate params
             else:
                 trainFinalX = trainCtsx                                                                             #4: Cts params, no scaling, no cate params
                 testFinalX = testCtsx                                                                               #4: Cts params, no scaling, no cate params
     else:
-            if len(cateParams) > 0:
+            if len(categorical_features) > 0:
                 trainFinalX = trainCatex                                                                            #5: No cts params, no scaling, cate params
                 testFinalX = testCatex                                                                              #5: No cts params, no scaling, cate params
             else:
@@ -169,22 +138,22 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
 
     #Create model (decision tree, linear regression etc)
     print("DATA SORTED AND SETS DEFINED, NOW FITTING MODEL")
-    if methodML == 'DT':
-        if problemType == "classification":
+    if model_type == 'DT':
+        if problem_type == "classification":
             decTree = DecisionTreeClassifier()#max_depth=7) #Add parameters for max depth, criterion etc
-        elif problemType == "regression":
+        elif problem_type == "regression":
             decTree = DecisionTreeRegressor()#max_depth=7) #Add parameters for max depth, criterion etc
         decTree = decTree.fit(trainFinalX.values,trainy.values)
         session_data_manager.add_model(session_id, decTree)
-    elif methodML == "KNN": # USES STANDARD SCALING ON CTS FEATURES - to get closer to a Gaussian distribution        
-        if problemType == "classification":
+    elif model_type == "KNN": # USES STANDARD SCALING ON CTS FEATURES - to get closer to a Gaussian distribution        
+        if problem_type == "classification":
             if ncts == ntotal:
                 KNN = KNeighborsClassifier(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric='minkowski')
             elif ncate == ntotal:
                 KNN = KNeighborsClassifier(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric='hamming')
             else:
                 KNN = KNeighborsClassifier(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric=mydist, metric_params={"ncts": ncts, "ncate": ncate}, algorithm='ball_tree', leaf_size=2)
-        elif problemType == "regression":
+        elif problem_type == "regression":
             if ncts == ntotal:
                 KNN = KNeighborsRegressor(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric='minkowski')
             elif ncate == ntotal:
@@ -193,9 +162,9 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 KNN = KNeighborsRegressor(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric=mydist, metric_params={"ncts": ncts, "ncate": ncate}, algorithm='ball_tree', leaf_size=2)
         KNN.fit(trainFinalX,trainy)
         session_data_manager.add_model(session_id, KNN)
-    elif methodML == "LinReg":
+    elif model_type == "LinReg":
         regr = linear_model.LinearRegression()
-        if len(ctsParams) == 0:
+        if len(continuous_features) == 0:
             trainFinalX = trainFinalX.to_numpy()
             testFinalX = testFinalX.to_numpy()
             regr.fit(trainFinalX, trainy)
@@ -203,14 +172,14 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
         else:
             regr.fit(trainFinalX, trainy)
             session_data_manager.add_model(session_id, regr)
-    elif methodML == "PolyFit":
+    elif model_type == "PolyFit":
         polyModel1d = numpy.poly1d(numpy.polyfit(trainFinalX.ravel(), trainy, polyDeg))
         session_data_manager.add_model(session_id, polyModel1d)
 
     #Measure fit of model
     print("MODEL FITTED AND SAVED, MEASURING ACCURACY OF MODEL")
-    if methodML == 'DT': #Look at "accuracy_score", based on matching result labels
-        if problemType == "classification":
+    if model_type == 'DT': #Look at "accuracy_score", based on matching result labels
+        if problem_type == "classification":
             predictedTrain = decTree.predict(trainFinalX.values)
             predictedTest = decTree.predict(testFinalX.values)
             accuracyTrain = accuracy_score(trainy, predictedTrain)
@@ -223,11 +192,11 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             microPrecTest = precision_score(testy, predictedTest, average="micro", zero_division=0)
             macroRecallTest = recall_score(testy, predictedTest, average="macro", zero_division=0)
             microRecallTest = recall_score(testy, predictedTest, average="micro", zero_division=0)
-        elif problemType == "regression":
+        elif problem_type == "regression":
             accuracyTrain = r2_score(trainy, decTree.predict(trainFinalX.values)) # Coefficient of Determination
             accuracyTest = r2_score(testy, decTree.predict(testFinalX.values))
-    elif methodML == "KNN":
-        if problemType == "classification":
+    elif model_type == "KNN":
+        if problem_type == "classification":
             predictedTrain = KNN.predict( numpy.array(trainFinalX) )
             predictedTest = KNN.predict( numpy.array(testFinalX) )
             accuracyTrain = accuracy_score(trainy, predictedTrain)
@@ -240,14 +209,14 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             microPrecTest = precision_score(testy, predictedTest, average="micro", zero_division=0)
             macroRecallTest = recall_score(testy, predictedTest, average="macro", zero_division=0)
             microRecallTest = recall_score(testy, predictedTest, average="micro", zero_division=0)
-        elif problemType =="regression":
+        elif problem_type =="regression":
             accuracyTrain = r2_score(trainy, KNN.predict( numpy.array(trainFinalX) ) ) # Coefficient of Determination
             accuracyTest = r2_score(testy, KNN.predict( numpy.array(testFinalX) ) )
-    elif methodML == "LinReg":
+    elif model_type == "LinReg":
         # r-squared, measure of how well model fits data (Coefficient of Determination, greater is better fit). Ideally R^2 will be similar for the training and testing data sets. When R2<0, a horizontal line (mean) explains the data better than your model.
         accuracyTrain = r2_score(trainy, regr.predict( numpy.array(trainFinalX) ))
         accuracyTest = r2_score(testy, regr.predict( numpy.array(testFinalX) ))
-    elif methodML == "PolyFit":
+    elif model_type == "PolyFit":
         accuracyTrain = r2_score(trainy, polyModel1d( numpy.array(trainFinalX) ))
         accuracyTest = r2_score(testy, polyModel1d( numpy.array(testFinalX) ))
 
@@ -256,37 +225,37 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
 
     # Draw/plot the model tree/3d training data
     repImageCreated=True
-    if methodML == "DT":
-        if problemType == "classification":
-            if len(ctsParams) == 2 and len(cateParams) == 0:
+    if model_type == "DT":
+        if problem_type == "classification":
+            if len(continuous_features) == 2 and len(categorical_features) == 0:
                 trainy = trainy.reset_index(drop=True)
                 testy = testy.reset_index(drop=True)
                 xsTest = testx.iloc[:, 0].reset_index(drop=True)
                 ysTest = testx.iloc[:, 1].reset_index(drop=True)
                 xsTrain = trainx.iloc[:, 0].reset_index(drop=True)
                 ysTrain = trainx.iloc[:, 1].reset_index(drop=True)
-                xs = x.iloc[:, 0]
-                ys = x.iloc[:, 1]
+                xs = feature_data.iloc[:, 0]
+                ys = feature_data.iloc[:, 1]
                 xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
                 ys = numpy.linspace(int(numpy.floor(min(ys)))-1,int(numpy.ceil(max(ys)))+1,200)
                 xs, ys = numpy.meshgrid( xs, ys )
                 coords = numpy.vstack([xs.ravel(), ys.ravel()]).transpose()
                 zs = decTree.predict(coords)
-                lightcmap = cm.get_cmap('rainbow', len(dictionaryResult))
-                darkcmap = cm.get_cmap('rainbow', len(dictionaryResult))
+                lightcmap = cm.get_cmap('rainbow', len(result_categories_map))
+                darkcmap = cm.get_cmap('rainbow', len(result_categories_map))
                 lightcolours=[]
                 listOfzs = list(set(zs))
                 listOfzs.sort()
-                for ind in range(len(dictionaryResult)):
+                for ind in range(len(result_categories_map)):
                     c = colorsys.rgb_to_hls(lightcmap(ind)[0], lightcmap(ind)[1], lightcmap(ind)[2])
                     lightcolours.append( tuple(colorsys.hls_to_rgb(c[0], 1 - 0.5 * (1 - c[1]), c[2]*0.7)) )
                 lightcmap = cm.colors.ListedColormap(lightcolours)
                 zs = zs.reshape(xs.shape)
-                plt.pcolormesh(xs, ys, zs, cmap=lightcmap, vmin=min(dictionaryResult.values()), vmax=max(dictionaryResult.values()))
+                plt.pcolormesh(xs, ys, zs, cmap=lightcmap, vmin=min(result_categories_map.values()), vmax=max(result_categories_map.values()))
                 count = 0
-                for res in dictionaryResult:
+                for res in result_categories_map:
                     count += 1
-                    dictRes = dictionaryResult[res]
+                    dictRes = result_categories_map[res]
                     indices = numpy.where(trainy == dictRes)[0]
                     plt.scatter(xsTrain[indices], ysTrain[indices], color=darkcmap(dictRes), marker='o', label=(count>18)*"_"+res[0:8])
                     indices = numpy.where(testy == dictRes)[0]
@@ -296,14 +265,14 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 plt.legend(bbox_to_anchor=(1,1), loc="upper left")
                 repImageBase64 = encodeRepImage('plt', plt, format='png')
             else:
-                data = tree.export_graphviz(decTree, out_file=None, feature_names=features, class_names=list(dictionaryResult), max_depth=4, filled=True)
+                data = tree.export_graphviz(decTree, out_file=None, feature_names=features, class_names=list(result_categories_map), max_depth=4, filled=True)
                 graph = pydotplus.graph_from_dot_data(data)
                 removeValuesFromNodes(graph)
                 repImageBase64 = encodeRepImage('graph', graph)
-        elif problemType == "regression":
-            if len(ctsParams) == 1 and len(cateParams) == 0:
+        elif problem_type == "regression":
+            if len(continuous_features) == 1 and len(categorical_features) == 0:
                 plt.scatter(trainx, trainy, marker='o', color='#03bffe', label='Training Data')
-                xs = x.iloc[:, 0]
+                xs = feature_data.iloc[:, 0]
                 xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200).reshape(-1,1)
                 zs = decTree.predict(xs)
                 plt.xlabel(trainx.columns[0])
@@ -312,15 +281,15 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 plt.scatter(testx, testy, marker='x', color='#ff845b', label='Testing Data')
                 plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
                 repImageBase64 = encodeRepImage('plt', plt, format='png')
-            elif len(ctsParams) == 2 and len(cateParams) == 0:
+            elif len(continuous_features) == 2 and len(categorical_features) == 0:
                 fig = plt.figure()
                 ax = fig.add_subplot(projection='3d')
                 xs = trainx.iloc[:, 0].reset_index(drop=True)
                 ys = trainx.iloc[:, 1].reset_index(drop=True)
                 zs = trainy.reset_index(drop=True)
                 ax.scatter(xs, ys, zs, marker='o', color='#03bffe', label='Training Data')
-                xs = x.iloc[:, 0]
-                ys = x.iloc[:, 1]
+                xs = feature_data.iloc[:, 0]
+                ys = feature_data.iloc[:, 1]
                 xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
                 ys = numpy.linspace(int(numpy.floor(min(ys)))-1,int(numpy.ceil(max(ys)))+1,200)
                 xs, ys = numpy.meshgrid( xs, ys )
@@ -347,37 +316,37 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
                 repImageBase64 = encodeRepImage('graph', graph)
         else:
             repImageCreated=False
-    elif methodML == "KNN":
-        if problemType == "classification" and len(ctsParams) == 2 and len(cateParams) == 0:
+    elif model_type == "KNN":
+        if problem_type == "classification" and len(continuous_features) == 2 and len(categorical_features) == 0:
             trainy = trainy.reset_index(drop=True)
             testy = testy.reset_index(drop=True)
             xsTest = testx.iloc[:, 0].reset_index(drop=True)
             ysTest = testx.iloc[:, 1].reset_index(drop=True)
             xsTrain = trainx.iloc[:, 0].reset_index(drop=True)
             ysTrain = trainx.iloc[:, 1].reset_index(drop=True)
-            xs = x.iloc[:, 0]
-            ys = x.iloc[:, 1]
+            xs = feature_data.iloc[:, 0]
+            ys = feature_data.iloc[:, 1]
             xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
             ys = numpy.linspace(int(numpy.floor(min(ys)))-1,int(numpy.ceil(max(ys)))+1,200)
             xs, ys = numpy.meshgrid( xs, ys )
             coords = numpy.vstack([xs.ravel(), ys.ravel()])
             coordsScaled = scale.transform( coords.transpose() )
             zs = KNN.predict( coordsScaled )
-            lightcmap = cm.get_cmap('rainbow', len(dictionaryResult))
-            darkcmap = cm.get_cmap('rainbow', len(dictionaryResult))
+            lightcmap = cm.get_cmap('rainbow', len(result_categories_map))
+            darkcmap = cm.get_cmap('rainbow', len(result_categories_map))
             lightcolours=[]
             listOfzs = list(set(zs))
             listOfzs.sort()
-            for ind in range(len(dictionaryResult)):
+            for ind in range(len(result_categories_map)):
                 c = colorsys.rgb_to_hls(lightcmap(ind)[0], lightcmap(ind)[1], lightcmap(ind)[2])
                 lightcolours.append( tuple(colorsys.hls_to_rgb(c[0], 1 - 0.5 * (1 - c[1]), c[2]*0.7)) )
             lightcmap = cm.colors.ListedColormap(lightcolours)
             zs = zs.reshape(xs.shape)
-            plt.pcolormesh(xs, ys, zs, cmap=lightcmap, vmin=min(dictionaryResult.values()), vmax=max(dictionaryResult.values()))
+            plt.pcolormesh(xs, ys, zs, cmap=lightcmap, vmin=min(result_categories_map.values()), vmax=max(result_categories_map.values()))
             count = 0
-            for res in dictionaryResult:
+            for res in result_categories_map:
                 count += 1
-                dictRes = dictionaryResult[res]
+                dictRes = result_categories_map[res]
                 indices = numpy.where(trainy == dictRes)[0]
                 plt.scatter(xsTrain[indices], ysTrain[indices], color=darkcmap(dictRes), marker='o', label=(count>18)*"_"+res[0:8])
                 indices = numpy.where(testy == dictRes)[0]
@@ -386,9 +355,9 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             plt.ylabel(trainx.columns[1])
             plt.legend(bbox_to_anchor=(1,1), loc="upper left")
             repImageBase64 = encodeRepImage('plt', plt, format='png')
-        elif problemType == "regression" and len(ctsParams) == 1 and len(cateParams) == 0:
+        elif problem_type == "regression" and len(continuous_features) == 1 and len(categorical_features) == 0:
             plt.scatter(trainx, trainy, marker='o', color='#03bffe', label='Training Data')
-            xs = x.iloc[:, 0]
+            xs = feature_data.iloc[:, 0]
             xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
             xsScaled = scale.transform(xs.reshape(-1,1))
             zs = KNN.predict( xsScaled )
@@ -398,15 +367,15 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             plt.scatter(testx, testy, marker='x', color='#ff845b', label='Testing Data')
             plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
             repImageBase64 = encodeRepImage('plt', plt, format='png')
-        elif problemType == "regression" and len(ctsParams) == 2 and len(cateParams) == 0:
+        elif problem_type == "regression" and len(continuous_features) == 2 and len(categorical_features) == 0:
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
             xs = trainx.iloc[:, 0].reset_index(drop=True)
             ys = trainx.iloc[:, 1].reset_index(drop=True)
             zs = trainy.reset_index(drop=True)
             ax.scatter(xs, ys, zs, marker='o', color='#03bffe', label='Training Data')
-            xs = x.iloc[:, 0]
-            ys = x.iloc[:, 1]
+            xs = feature_data.iloc[:, 0]
+            ys = feature_data.iloc[:, 1]
             xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
             ys = numpy.linspace(int(numpy.floor(min(ys)))-1,int(numpy.ceil(max(ys)))+1,200)
             xs, ys = numpy.meshgrid( xs, ys )
@@ -429,8 +398,8 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             repImageBase64 = encodeRepImage('plt', plt, format='png')
         else:
             repImageCreated=False
-    elif methodML == "LinReg":
-        if len(features) == 1 and len(cateParams) == 0:
+    elif model_type == "LinReg":
+        if len(features) == 1 and len(categorical_features) == 0:
             plt.scatter(trainx, trainy, marker='o', color='#03bffe', label='Training Data')
             xs = numpy.linspace(numpy.floor(min(trainx.iloc[:, 0])),numpy.ceil(max(trainx.iloc[:, 0])),100)
             xsScaled = scale.transform(xs.reshape(-1,1))
@@ -440,7 +409,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             plt.scatter(testx, testy, marker='x', color='#ff845b', label='Testing Data')
             plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
             repImageBase64 = encodeRepImage('plt', plt, format='png')
-        elif len(ctsParams) == 2 and len(cateParams) == 0:
+        elif len(continuous_features) == 2 and len(categorical_features) == 0:
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
             xs = trainx.iloc[:, 0]
@@ -470,7 +439,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             repImageBase64 = encodeRepImage('plt', plt, format='png')
         else:
             repImageCreated=False
-    elif methodML == "PolyFit":
+    elif model_type == "PolyFit":
         if len(features) == 1:
             plt.scatter(trainx, trainy, marker='o', color='#03bffe', label='Training Data')
             xs = numpy.linspace(numpy.floor(min(trainx.iloc[:, 0])),numpy.ceil(max(trainx.iloc[:, 0])),100)
@@ -489,31 +458,31 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
 
     print("REPRESENTATION CREATED AND SAVED, NOW SAVING MODEL SETTINGS/PARAMS")
     modelSettings = {
-        "probType": problemType,
-        "methodML": methodML,
-        "features": features,
-        "ctsParams": ctsParams,
-        "cateParams": cateParams,
-        "cateDict": dictionary,
-        "resDict": dictionaryResult,
-        "dataset": dataset,
-        "scaler": scale
+        'probType': problem_type,
+        'model_type': model_type,
+        'features': features,
+        'continuous_features': continuous_features,
+        'categorical_features': categorical_features,
+        'categorical_features_category_maps': categorical_features_category_maps,
+        'result_categories_map': result_categories_map,
+        'dataset': dataset,
+        'scaler': scale
     }
-    
+
     session_data_manager.add_model_settings(session_id, modelSettings)
 
     print("SETTINGS SAVED, NOW SETTING UP INPUT VALIDATION AND EXPORTING")
 
     inputValidation = []
 
-    for i in range(0, len(cateParams)):
-        inputValidation.append(list(dictionary[cateParams[i]].keys()))
+    for i in range(0, len(categorical_features)):
+        inputValidation.append(list(categorical_features_category_maps[categorical_features[i]].keys()))
 
     # accTrain.value = accuracyTrain
     # accTest.value = accuracyTest
     # inpVal = inputValidation
 
-    if problemType == "classification":
+    if problem_type == "classification":
         mlOuts = {"accuracyTrain": accuracyTrain,
                 "accuracyTest": accuracyTest,
                 "precsRecs": {"macroPrecTrain": macroPrecTrain,
@@ -539,7 +508,7 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
 
     return {"mlOuts": mlOuts, "inputValidation": inputValidation}
 
-# def machineLearnerTimed(supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName):
+# def machineLearnerTimed(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName):
 #     cwd = os.getcwd()
 
 #     accTrain = multiprocessing.Value('d')
@@ -547,8 +516,8 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
 #     inpVal = multiprocessing.Array('u', [])
     
 #     print("STARTING TIMED FIT THREAD")
-#     # p = threading.Thread(target = machineLearner, args = [supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName])
-#     p = multiprocessing.Process(target = machineLearner, args = [supervision, problemType, methodML, polyDeg, ctsParams, cateParams, result, testProp, datasetName, accTrain, accTest, inpVal])
+#     # p = threading.Thread(target = machineLearner, args = [supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName])
+#     p = multiprocessing.Process(target = machineLearner, args = [supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName, accTrain, accTest, inpVal])
 #     p.start()
 #     p.join(5)
 
@@ -603,52 +572,52 @@ def modelPrediction(predictAt, session_id):
     model = session_data['model']
     modelSettings = session_data['model_settings']
 
-    problemType = modelSettings["probType"]
-    methodML = modelSettings["methodML"]
-    features = modelSettings["features"]
-    ctsParams = modelSettings["ctsParams"]
-    cateParams = modelSettings["cateParams"]
-    dictionary = modelSettings["cateDict"]
-    dictionaryResult = modelSettings["resDict"]
-    dataset = modelSettings["dataset"]
-    scale = modelSettings["scaler"]
+    problem_type = modelSettings['probType']
+    model_type = modelSettings['model_type']
+    features = modelSettings['features']
+    continuous_features = modelSettings['continuous_features']
+    categorical_features = modelSettings['categorical_features']
+    categorical_features_category_maps = modelSettings['categorical_features_category_maps']
+    result_categories_map = modelSettings['result_categories_map']
+    dataset = modelSettings['dataset']
+    scale = modelSettings['scaler']
 
-    if methodML == 'DT':
+    if model_type == 'DT':
         predictAtNumerical = predictAt.copy()
         for i in range(0,len(features)):
-            if features[i] in cateParams:
+            if features[i] in categorical_features:
                 category = features[i]
-                predictAtNumerical[i] = dictionary[category][predictAtNumerical[i]]
+                predictAtNumerical[i] = categorical_features_category_maps[category][predictAtNumerical[i]]
         predicted = model.predict([predictAtNumerical])
-        if problemType == "classification":
-            predicted = [list(dictionaryResult.keys())[predicted[0]]]
-    elif methodML == "KNN":
+        if problem_type == 'classification':
+            predicted = [list(result_categories_map.keys())[predicted[0]]]
+    elif model_type == 'KNN':
         predictAtAdj = []
-        if len(ctsParams) > 0:
-            predictAtAdj[0:len(ctsParams)] = scale.transform([predictAt[0:len(ctsParams)]]).ravel()
-        if len(cateParams) > 0:
-            for i in range(0,len(cateParams)):
-                category = features[len(ctsParams) + i]
-                predictAtAdj.append( dictionary[category][predictAt[len(ctsParams) + i]] )
+        if len(continuous_features) > 0:
+            predictAtAdj[0:len(continuous_features)] = scale.transform([predictAt[0:len(continuous_features)]]).ravel()
+        if len(categorical_features) > 0:
+            for i in range(0,len(categorical_features)):
+                category = features[len(continuous_features) + i]
+                predictAtAdj.append( categorical_features_category_maps[category][predictAt[len(continuous_features) + i]] )
         predicted = model.predict(numpy.array(predictAtAdj).reshape(1, -1))
-        if problemType == "classification":
-            predicted = [list(dictionaryResult.keys())[predicted[0]]]
-    elif methodML == "LinReg":
+        if problem_type == 'classification':
+            predicted = [list(result_categories_map.keys())[predicted[0]]]
+    elif model_type == 'LinReg':
         scaled = []
         predictCates = []
-        if len(ctsParams) > 0:
-            scaled = scale.transform([predictAt[0:len(ctsParams)]])
+        if len(continuous_features) > 0:
+            scaled = scale.transform([predictAt[0:len(continuous_features)]])
             scaled = scaled.ravel()
-        if len(cateParams) > 0:
-            for i in range(0,len(cateParams)):
-                dummyCate = [0] * ( len(set(dataset[cateParams[i]])) - 1 )
-                onePos = sorted(set(dataset[cateParams[i]])).index(predictAt[len(ctsParams)+i]) - 1
+        if len(categorical_features) > 0:
+            for i in range(0,len(categorical_features)):
+                dummyCate = [0] * ( len(set(dataset[categorical_features[i]])) - 1 )
+                onePos = sorted(set(dataset[categorical_features[i]])).index(predictAt[len(continuous_features)+i]) - 1
                 if onePos > -1:
                     dummyCate[onePos] = 1
                 predictCates = predictCates + dummyCate
         predictAtAdj = [*scaled, *predictCates]
         predicted = model.predict([predictAtAdj])
-    elif methodML == "PolyFit":
+    elif model_type == "PolyFit":
         scaled = scale.transform([predictAt])
         predicted = model(scaled)[0]
 

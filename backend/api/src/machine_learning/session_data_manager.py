@@ -14,7 +14,7 @@ class SessionDataManager:
         self.sessions = {}
         # TODO: uncomment this expiration time
         # self.expiration_time = 3600 # 1 hour
-        self.expiration_time = 6
+        self.expiration_time = 20
         self.lock = threading.Lock()
         self._start_expiration_thread()
 
@@ -82,7 +82,7 @@ class SessionDataManager:
             while True:
                 # TODO: uncomment this sleep time
                 # time.sleep(600) # 10 minutes
-                time.sleep(2)
+                time.sleep(5)
                 print("cleanup sessions, current sessions are:")
                 print([key for key, value in self.sessions.items()])
                 self._expire_session_data()

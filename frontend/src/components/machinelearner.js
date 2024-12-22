@@ -66,7 +66,6 @@ export function MLerPage(props) {
                     cateparams: inputs[5],
                     resultparam: inputs[6],
                     testprop: inputs[7],
-                    datasetname: datasetName,
                     sessionId: sessionId
                 })
             }).then(res => res.json())

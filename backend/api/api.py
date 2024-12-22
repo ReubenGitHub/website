@@ -32,7 +32,6 @@ def mlModelFit():
         request.json['cateparams'],
         request.json['resultparam'],
         request.json['testprop'],
-        request.json['datasetname'],
         request.json['sessionId'])
     }
 

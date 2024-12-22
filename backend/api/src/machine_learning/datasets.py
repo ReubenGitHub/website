@@ -25,7 +25,7 @@ def choose_dataset(session_id, use_default_dataset=True, file=None):
 
     # Identify and return the field names
     fields = dataset.columns.values.tolist()
-    nonCtsFields = list(dataset.dtypes[(dataset.dtypes != "int64") & (dataset.dtypes != "float64")].index)
+    nonCtsFields = list(dataset.dtypes[(dataset.dtypes != 'int64') & (dataset.dtypes != 'float64')].index)
 
     return {
         'fields': fields,
