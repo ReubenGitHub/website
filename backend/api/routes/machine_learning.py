@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.exceptions import BadRequest
-from api.src.machineLearning import MachineLearner_Functions
+import api.src.machine_learning as machine_learning
 
 ml_routes = Blueprint('ml_routes', __name__)
 
@@ -27,7 +27,7 @@ def mlModelPredict():
         session_id = request_data['sessionId']
 
         # Perform the prediction
-        prediction = MachineLearner_Functions.modelPrediction(predict_at, session_id)
+        prediction = machine_learning.MachineLearner_Functions.modelPrediction(predict_at, session_id)
 
         # Return the result
         return jsonify({ 'prediction': prediction }), 200

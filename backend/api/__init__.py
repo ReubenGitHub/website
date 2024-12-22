@@ -1,5 +1,5 @@
 # from flask import Flask, jsonify
-# from .routes.machineLearning import ml_routes
+# from .routes.machine_learning import ml_routes
 
 
 

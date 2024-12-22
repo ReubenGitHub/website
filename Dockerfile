@@ -1,4 +1,3 @@
-# Define the Python version as a build argument
 ARG NODE_VERSION_NUMER=18
 ARG PYTHON_VERSION_NUMER=3.9
 ARG PYTHON_IMAGE_VERSION=${PYTHON_VERSION_NUMER}-slim
@@ -30,7 +29,7 @@ RUN pip install -r requirements.txt
 # Copy the backend source code
 COPY backend/ ./
 # Run setup.py to build Cython module
-WORKDIR /backend/api/src/machineLearning
+WORKDIR /backend/api/src/machine_learning
 RUN python3 setup.py build_ext --inplace
 
 # Step 3: Final image with both Node.js and Python

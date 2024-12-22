@@ -1,8 +1,8 @@
 import time
 import threading
 import pandas
-import csv
 import os
+import io
 from api.rootDirectory import API_ROOT_DIRECTORY
 
 DATASETS_DIRECTORY = os.path.join(API_ROOT_DIRECTORY, 'data')
@@ -25,13 +25,8 @@ class SessionDataManager:
             if len(file.encode("utf8")) > DATASET_SIZE_LIMIT:
                 raise ValueError("File size limit exceeded. Please upload a smaller file.")
 
-            file_lines = [x  for x in file.split('\n')]
-            file_entries = []
-            for row in csv.reader(file_lines, delimiter=","):
-                file_entries.append(row)
-
-            dataset_as_dataframe = pandas.DataFrame(file_entries)
-            dataset = dataset_as_dataframe
+            file_like_object = io.StringIO(file)
+            dataset = pandas.read_csv(file_like_object)
 
         self._add_session_data(session_id, 'dataset', dataset)
     
@@ -92,3 +87,5 @@ class SessionDataManager:
                 print([key for key, value in self.sessions.items()])
                 self._expire_session_data()
         threading.Thread(target=run, daemon=True).start()
+
+session_data_manager = SessionDataManager()

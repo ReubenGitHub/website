@@ -1,4 +1,4 @@
-from .session_data_manager import SessionDataManager
+from .session_data_manager import session_data_manager
 from xml.dom.minicompat import StringTypes
 import numpy
 import matplotlib
@@ -28,18 +28,6 @@ import re
 # import threading
 # import _thread
 # import multiprocessing
-
-session_data_manager = SessionDataManager()
-
-def choose_dataset(session_id, use_default_dataset=True, file=None):
-    session_data_manager.add_dataset(session_id, use_default_dataset, file)
-
-    dataset = session_data_manager.get_session_data(session_id)['dataset']
-
-    # Identify and return the field names
-    fields = dataset.columns.values.tolist()
-    nonCtsFields = list(dataset.dtypes[(dataset.dtypes != "int64") & (dataset.dtypes != "float64")].index)
-    return {'fields': fields, 'nonCtsFields': nonCtsFields}
 
 # class TimeoutException(Exception):
 #     def __init__(self, msg=''):
@@ -227,14 +215,14 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             predictedTest = decTree.predict(testFinalX.values)
             accuracyTrain = accuracy_score(trainy, predictedTrain)
             accuracyTest = accuracy_score(testy, predictedTest)
-            macroPrecTrain = precision_score(trainy, predictedTrain, average="macro") # AVERAGE OF INDIV CLASS PRECISIONS = numpy.average( TP / (TP+FP) ), good for spotting poor precision on minority classes
-            microPrecTrain = precision_score(trainy, predictedTrain, average="micro") # WEIGHTED AVERAGE OF INDIV CLASS PRECISIONS = TP.sum() / (TP.sum()+FP.sum()), good if you only care about precision in majority of cases
-            macroRecallTrain = recall_score(trainy, predictedTrain, average="macro")
-            microRecallTrain = recall_score(trainy, predictedTrain, average="micro") # Micro Precision/Micro Recall/Micro F1-score, all equal to Accuracy when items can only have one label each (i.e. non-Multi-Label problem)
-            macroPrecTest = precision_score(testy, predictedTest, average="macro")
-            microPrecTest = precision_score(testy, predictedTest, average="micro")
-            macroRecallTest = recall_score(testy, predictedTest, average="macro")
-            microRecallTest = recall_score(testy, predictedTest, average="micro")
+            macroPrecTrain = precision_score(trainy, predictedTrain, average="macro", zero_division=0) # AVERAGE OF INDIV CLASS PRECISIONS = numpy.average( TP / (TP+FP) ), good for spotting poor precision on minority classes
+            microPrecTrain = precision_score(trainy, predictedTrain, average="micro", zero_division=0) # WEIGHTED AVERAGE OF INDIV CLASS PRECISIONS = TP.sum() / (TP.sum()+FP.sum()), good if you only care about precision in majority of cases
+            macroRecallTrain = recall_score(trainy, predictedTrain, average="macro", zero_division=0)
+            microRecallTrain = recall_score(trainy, predictedTrain, average="micro", zero_division=0) # Micro Precision/Micro Recall/Micro F1-score, all equal to Accuracy when items can only have one label each (i.e. non-Multi-Label problem)
+            macroPrecTest = precision_score(testy, predictedTest, average="macro", zero_division=0)
+            microPrecTest = precision_score(testy, predictedTest, average="micro", zero_division=0)
+            macroRecallTest = recall_score(testy, predictedTest, average="macro", zero_division=0)
+            microRecallTest = recall_score(testy, predictedTest, average="micro", zero_division=0)
         elif problemType == "regression":
             accuracyTrain = r2_score(trainy, decTree.predict(trainFinalX.values)) # Coefficient of Determination
             accuracyTest = r2_score(testy, decTree.predict(testFinalX.values))
@@ -244,14 +232,14 @@ def machineLearner(supervision, problemType, methodML, polyDeg, ctsParams, cateP
             predictedTest = KNN.predict( numpy.array(testFinalX) )
             accuracyTrain = accuracy_score(trainy, predictedTrain)
             accuracyTest = accuracy_score(testy, predictedTest)
-            macroPrecTrain = precision_score(trainy, predictedTrain, average="macro")
-            microPrecTrain = precision_score(trainy, predictedTrain, average="micro")
-            macroRecallTrain = recall_score(trainy, predictedTrain, average="macro")
-            microRecallTrain = recall_score(trainy, predictedTrain, average="micro")
-            macroPrecTest = precision_score(testy, predictedTest, average="macro")
-            microPrecTest = precision_score(testy, predictedTest, average="micro")
-            macroRecallTest = recall_score(testy, predictedTest, average="macro")
-            microRecallTest = recall_score(testy, predictedTest, average="micro")
+            macroPrecTrain = precision_score(trainy, predictedTrain, average="macro", zero_division=0)
+            microPrecTrain = precision_score(trainy, predictedTrain, average="micro", zero_division=0)
+            macroRecallTrain = recall_score(trainy, predictedTrain, average="macro", zero_division=0)
+            microRecallTrain = recall_score(trainy, predictedTrain, average="micro", zero_division=0)
+            macroPrecTest = precision_score(testy, predictedTest, average="macro", zero_division=0)
+            microPrecTest = precision_score(testy, predictedTest, average="micro", zero_division=0)
+            macroRecallTest = recall_score(testy, predictedTest, average="macro", zero_division=0)
+            microRecallTest = recall_score(testy, predictedTest, average="micro", zero_division=0)
         elif problemType =="regression":
             accuracyTrain = r2_score(trainy, KNN.predict( numpy.array(trainFinalX) ) ) # Coefficient of Determination
             accuracyTest = r2_score(testy, KNN.predict( numpy.array(testFinalX) ) )

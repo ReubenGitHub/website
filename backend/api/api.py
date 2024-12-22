@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, send_from_directory
 from flask_cors import CORS, cross_origin
 import time
 
-import api.src.machineLearning.MachineLearner_Functions as MachineLearner_Functions
+import api.src.machine_learning as machine_learning
 
 app = Flask(__name__, static_folder="../build", static_url_path='/')
 cors = CORS(app)
@@ -23,7 +23,7 @@ def get_current_time():
 @app.route('/api/mlModelFit', methods=['POST'])
 @cross_origin()
 def mlModelFit():
-    return {'mlModelOutputs': MachineLearner_Functions.machineLearner(
+    return {'mlModelOutputs': machine_learning.MachineLearner_Functions.machineLearner(
         request.json['supervision'],
         request.json['problemtype'],
         request.json['mlmethod'],
@@ -40,7 +40,7 @@ def mlModelFit():
 @cross_origin()
 def mlDatasetSaver():
     return {
-        'datasetFields': MachineLearner_Functions.choose_dataset(
+        'datasetFields': machine_learning.datasets.choose_dataset(
             request.json['sessionId'],
             request.json['useDefaultDataset'],
             request.json.get('dataset', None) # dataset may not exist if useDefaultDataset is true
@@ -50,11 +50,11 @@ def mlDatasetSaver():
 @app.route('/api/clearSessionData', methods=['POST'])
 @cross_origin()
 def mlClearRepresentation():
-    return {'mlClearRepresentation': MachineLearner_Functions.clear_session_data(request.json['sessionId'])}
+    return {'mlClearRepresentation': machine_learning.MachineLearner_Functions.clear_session_data(request.json['sessionId'])}
 
 
 # Test adding a route
-from api.routes.machineLearning import ml_routes
+from api.routes.machine_learning import ml_routes
 app.register_blueprint(ml_routes, url_prefix='/api/ml')
 
 
