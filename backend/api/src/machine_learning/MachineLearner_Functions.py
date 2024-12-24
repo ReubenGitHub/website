@@ -1,5 +1,7 @@
 from .session_data_manager import session_data_manager
 from .preprocess_data import preprocess_data
+from .split_data import split_data_into_train_and_test
+from .scale_data import scale_data
 from xml.dom.minicompat import StringTypes
 import numpy
 import matplotlib
@@ -39,7 +41,7 @@ import re
 
 # @contextmanager
 # def time_limit(cwd, seconds, msg=''):
-# # def time_limit(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName, cwd, seconds, msg=''):
+# # def time_limit(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, test_proportion, datasetName, cwd, seconds, msg=''):
 #     # timer = threading.Timer(seconds, lambda: _thread.interrupt_main())
 #     timer = threading.Timer( seconds, lambda: (print("TIMED OUT SO CANCELLED"), MyException) )
 #     timer.start()
@@ -55,25 +57,23 @@ import re
 #         timer.cancel()
 #         print("STOPPED?")
 
-# def machineLearnerTimed(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName):
+# def machineLearnerTimed(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, test_proportion, datasetName):
 #     cwd = os.getcwd()
 #     try:
 #         print("KICKING OFF ML WITH TIME LIMIT")
 #         with time_limit(cwd, 5, 'sleep'):
-#         # return time_limit(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName, cwd, 5, 'sleep')
-#             return machineLearner(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName)
+#         # return time_limit(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, test_proportion, datasetName, cwd, 5, 'sleep')
+#             return machineLearner(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, test_proportion, datasetName)
 #     except TimeoutException:
 #         print("TIME RAN OUT EXCEPTION, RETURNING NOTHING")
 #         return
 #     print("HERE 4")
 
 
-def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, session_id): #, accTrain, accTest, inpVal):
+def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, test_proportion, session_id): #, accTrain, accTest, inpVal):
     # Disable pandas warning "A value is trying to be set on a copy of a slice from a DataFrame"
     pandas.options.mode.chained_assignment = None  # default='warn'
 
-    #Scale to use: StandardScaler(), PowerTransformer(,), ...
-    scale = StandardScaler()
     #Method of learning: DT, LinReg, PolyFit (1d), ...  . polyDeg degress of polynomial if PolyFit selected
     #Features to analyse, independent X, and proportion of test vs train. Cts followed by categorical
     features = continuous_features + categorical_features
@@ -96,45 +96,19 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
     dataset = dataset.dropna(axis=0, how='any', thresh=None, subset=fieldsOfInterest, inplace=False)
 
     # Preprocess data to split out feature and result data, and handle category encoding (for categorical features or results)
-    feature_data, categorical_feature_data, continuous_feature_data, categorical_features_category_maps, result_data, result_categories_map = preprocess_data(
+    feature_data, categorical_features_category_maps, result_data, result_categories_map = preprocess_data(
         dataset, categorical_features, continuous_features, result, model_type, problem_type
     )
-    
-    testSize = round( min( max(2, testProp*len(feature_data)), len(feature_data)-2 ) ) # Need at least 2 test/train sample (for measuring regression accuracy). Borderline case.
-    trainCtsx, testCtsx, trainCatex, testCatex, trainy, testy = train_test_split(continuous_feature_data, categorical_feature_data, result_data, test_size = testSize)
-    cateCols = trainCatex.columns
-    trainx = pandas.concat([trainCtsx, trainCatex], axis=1)
-    testx = pandas.concat([testCtsx, testCatex], axis=1)
-    if len(continuous_features) > 0: #Scaling and assembling the FinalX sets
-        if model_type in ["LinReg", "PolyFit", "KNN"]: #Any model requiring scaling
-            trainScaledX = scale.fit_transform(trainCtsx.values) #Scaling is defined here, by the training dataset
-            trainScaledX = pandas.DataFrame(trainScaledX, columns=continuous_features)
-            testScaledX = scale.transform(testCtsx.values)       #And applied as defined here, to the testing dataset
-            testScaledX = pandas.DataFrame(testScaledX, columns=continuous_features)
-            trainCatex = trainCatex.reset_index(drop=True)
-            testCatex = testCatex.reset_index(drop=True)
-            trainy = trainy.reset_index(drop=True)
-            testy = testy.reset_index(drop=True)
-            if len(categorical_features) > 0:
-                trainFinalX = pandas.concat([trainScaledX, trainCatex], axis=1).to_numpy()   #1: Cts params, scaling, cate params
-                testFinalX = pandas.concat([testScaledX, testCatex], axis=1).to_numpy()      #1: Cts params, scaling, cate params
-            else:
-                trainFinalX = trainScaledX.to_numpy()                                                               #2: Cts params, scaling, no cate params
-                testFinalX = testScaledX.to_numpy()                                                                 #2: Cts params, scaling, no cate params
-        else: #No scaling required
-            if len(categorical_features) > 0:
-                trainFinalX = pandas.concat([trainCtsx, trainCatex], axis=1)                                        #3: Cts params, no scaling, cate params
-                testFinalX = pandas.concat([testCtsx, testCatex], axis=1)                                           #3: Cts params, no scaling, cate params
-            else:
-                trainFinalX = trainCtsx                                                                             #4: Cts params, no scaling, no cate params
-                testFinalX = testCtsx                                                                               #4: Cts params, no scaling, no cate params
-    else:
-            if len(categorical_features) > 0:
-                trainFinalX = trainCatex                                                                            #5: No cts params, no scaling, cate params
-                testFinalX = testCatex                                                                              #5: No cts params, no scaling, cate params
-            else:
-                # print('You have not selected any features')                                                       #6: No params
-                raise SystemExit(0)
+
+    # Split data into test and train sets
+    train_feature_data, test_feature_data, train_result_data, test_result_data = split_data_into_train_and_test(
+        feature_data, result_data, test_proportion
+    )
+
+    # Apply scaling to continuous features if required
+    train_feature_data_scaled, test_feature_data_scaled, scale = scale_data(
+        train_feature_data, test_feature_data, continuous_features, model_type
+    )
 
     #Create model (decision tree, linear regression etc)
     print("DATA SORTED AND SETS DEFINED, NOW FITTING MODEL")
@@ -143,82 +117,82 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
             decTree = DecisionTreeClassifier()#max_depth=7) #Add parameters for max depth, criterion etc
         elif problem_type == "regression":
             decTree = DecisionTreeRegressor()#max_depth=7) #Add parameters for max depth, criterion etc
-        decTree = decTree.fit(trainFinalX.values,trainy.values)
+        decTree = decTree.fit(train_feature_data_scaled.values,train_result_data.values)
         session_data_manager.add_model(session_id, decTree)
     elif model_type == "KNN": # USES STANDARD SCALING ON CTS FEATURES - to get closer to a Gaussian distribution        
         if problem_type == "classification":
             if ncts == ntotal:
-                KNN = KNeighborsClassifier(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric='minkowski')
+                KNN = KNeighborsClassifier(n_neighbors=min(4, len(train_feature_data_scaled)), weights="distance", metric='minkowski')
             elif ncate == ntotal:
-                KNN = KNeighborsClassifier(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric='hamming')
+                KNN = KNeighborsClassifier(n_neighbors=min(4, len(train_feature_data_scaled)), weights="distance", metric='hamming')
             else:
-                KNN = KNeighborsClassifier(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric=mydist, metric_params={"ncts": ncts, "ncate": ncate}, algorithm='ball_tree', leaf_size=2)
+                KNN = KNeighborsClassifier(n_neighbors=min(4, len(train_feature_data_scaled)), weights="distance", metric=mydist, metric_params={"ncts": ncts, "ncate": ncate}, algorithm='ball_tree', leaf_size=2)
         elif problem_type == "regression":
             if ncts == ntotal:
-                KNN = KNeighborsRegressor(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric='minkowski')
+                KNN = KNeighborsRegressor(n_neighbors=min(4, len(train_feature_data_scaled)), weights="distance", metric='minkowski')
             elif ncate == ntotal:
-                KNN = KNeighborsRegressor(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric='hamming')
+                KNN = KNeighborsRegressor(n_neighbors=min(4, len(train_feature_data_scaled)), weights="distance", metric='hamming')
             else:
-                KNN = KNeighborsRegressor(n_neighbors=min(4, len(trainFinalX)), weights="distance", metric=mydist, metric_params={"ncts": ncts, "ncate": ncate}, algorithm='ball_tree', leaf_size=2)
-        KNN.fit(trainFinalX,trainy)
+                KNN = KNeighborsRegressor(n_neighbors=min(4, len(train_feature_data_scaled)), weights="distance", metric=mydist, metric_params={"ncts": ncts, "ncate": ncate}, algorithm='ball_tree', leaf_size=2)
+        KNN.fit(train_feature_data_scaled,train_result_data)
         session_data_manager.add_model(session_id, KNN)
     elif model_type == "LinReg":
         regr = linear_model.LinearRegression()
         if len(continuous_features) == 0:
-            trainFinalX = trainFinalX.to_numpy()
-            testFinalX = testFinalX.to_numpy()
-            regr.fit(trainFinalX, trainy)
+            train_feature_data_scaled = train_feature_data_scaled.to_numpy()
+            test_feature_data_scaled = test_feature_data_scaled.to_numpy()
+            regr.fit(train_feature_data_scaled, train_result_data)
             session_data_manager.add_model(session_id, regr)
         else:
-            regr.fit(trainFinalX, trainy)
+            regr.fit(train_feature_data_scaled, train_result_data)
             session_data_manager.add_model(session_id, regr)
     elif model_type == "PolyFit":
-        polyModel1d = numpy.poly1d(numpy.polyfit(trainFinalX.ravel(), trainy, polyDeg))
+        polyModel1d = numpy.poly1d(numpy.polyfit(train_feature_data_scaled.ravel(), train_result_data, polyDeg))
         session_data_manager.add_model(session_id, polyModel1d)
 
     #Measure fit of model
     print("MODEL FITTED AND SAVED, MEASURING ACCURACY OF MODEL")
     if model_type == 'DT': #Look at "accuracy_score", based on matching result labels
         if problem_type == "classification":
-            predictedTrain = decTree.predict(trainFinalX.values)
-            predictedTest = decTree.predict(testFinalX.values)
-            accuracyTrain = accuracy_score(trainy, predictedTrain)
-            accuracyTest = accuracy_score(testy, predictedTest)
-            macroPrecTrain = precision_score(trainy, predictedTrain, average="macro", zero_division=0) # AVERAGE OF INDIV CLASS PRECISIONS = numpy.average( TP / (TP+FP) ), good for spotting poor precision on minority classes
-            microPrecTrain = precision_score(trainy, predictedTrain, average="micro", zero_division=0) # WEIGHTED AVERAGE OF INDIV CLASS PRECISIONS = TP.sum() / (TP.sum()+FP.sum()), good if you only care about precision in majority of cases
-            macroRecallTrain = recall_score(trainy, predictedTrain, average="macro", zero_division=0)
-            microRecallTrain = recall_score(trainy, predictedTrain, average="micro", zero_division=0) # Micro Precision/Micro Recall/Micro F1-score, all equal to Accuracy when items can only have one label each (i.e. non-Multi-Label problem)
-            macroPrecTest = precision_score(testy, predictedTest, average="macro", zero_division=0)
-            microPrecTest = precision_score(testy, predictedTest, average="micro", zero_division=0)
-            macroRecallTest = recall_score(testy, predictedTest, average="macro", zero_division=0)
-            microRecallTest = recall_score(testy, predictedTest, average="micro", zero_division=0)
+            predictedTrain = decTree.predict(train_feature_data_scaled.values)
+            predictedTest = decTree.predict(test_feature_data_scaled.values)
+            accuracyTrain = accuracy_score(train_result_data, predictedTrain)
+            accuracyTest = accuracy_score(test_result_data, predictedTest)
+            macroPrecTrain = precision_score(train_result_data, predictedTrain, average="macro", zero_division=0) # AVERAGE OF INDIV CLASS PRECISIONS = numpy.average( TP / (TP+FP) ), good for spotting poor precision on minority classes
+            microPrecTrain = precision_score(train_result_data, predictedTrain, average="micro", zero_division=0) # WEIGHTED AVERAGE OF INDIV CLASS PRECISIONS = TP.sum() / (TP.sum()+FP.sum()), good if you only care about precision in majority of cases
+            macroRecallTrain = recall_score(train_result_data, predictedTrain, average="macro", zero_division=0)
+            microRecallTrain = recall_score(train_result_data, predictedTrain, average="micro", zero_division=0) # Micro Precision/Micro Recall/Micro F1-score, all equal to Accuracy when items can only have one label each (i.e. non-Multi-Label problem)
+            macroPrecTest = precision_score(test_result_data, predictedTest, average="macro", zero_division=0)
+            microPrecTest = precision_score(test_result_data, predictedTest, average="micro", zero_division=0)
+            macroRecallTest = recall_score(test_result_data, predictedTest, average="macro", zero_division=0)
+            microRecallTest = recall_score(test_result_data, predictedTest, average="micro", zero_division=0)
         elif problem_type == "regression":
-            accuracyTrain = r2_score(trainy, decTree.predict(trainFinalX.values)) # Coefficient of Determination
-            accuracyTest = r2_score(testy, decTree.predict(testFinalX.values))
+            accuracyTrain = r2_score(train_result_data, decTree.predict(train_feature_data_scaled.values)) # Coefficient of Determination
+            accuracyTest = r2_score(test_result_data, decTree.predict(test_feature_data_scaled.values))
     elif model_type == "KNN":
         if problem_type == "classification":
-            predictedTrain = KNN.predict( numpy.array(trainFinalX) )
-            predictedTest = KNN.predict( numpy.array(testFinalX) )
-            accuracyTrain = accuracy_score(trainy, predictedTrain)
-            accuracyTest = accuracy_score(testy, predictedTest)
-            macroPrecTrain = precision_score(trainy, predictedTrain, average="macro", zero_division=0)
-            microPrecTrain = precision_score(trainy, predictedTrain, average="micro", zero_division=0)
-            macroRecallTrain = recall_score(trainy, predictedTrain, average="macro", zero_division=0)
-            microRecallTrain = recall_score(trainy, predictedTrain, average="micro", zero_division=0)
-            macroPrecTest = precision_score(testy, predictedTest, average="macro", zero_division=0)
-            microPrecTest = precision_score(testy, predictedTest, average="micro", zero_division=0)
-            macroRecallTest = recall_score(testy, predictedTest, average="macro", zero_division=0)
-            microRecallTest = recall_score(testy, predictedTest, average="micro", zero_division=0)
+            predictedTrain = KNN.predict( numpy.array(train_feature_data_scaled) )
+            predictedTest = KNN.predict( numpy.array(test_feature_data_scaled) )
+            accuracyTrain = accuracy_score(train_result_data, predictedTrain)
+            accuracyTest = accuracy_score(test_result_data, predictedTest)
+            macroPrecTrain = precision_score(train_result_data, predictedTrain, average="macro", zero_division=0)
+            microPrecTrain = precision_score(train_result_data, predictedTrain, average="micro", zero_division=0)
+            macroRecallTrain = recall_score(train_result_data, predictedTrain, average="macro", zero_division=0)
+            microRecallTrain = recall_score(train_result_data, predictedTrain, average="micro", zero_division=0)
+            macroPrecTest = precision_score(test_result_data, predictedTest, average="macro", zero_division=0)
+            microPrecTest = precision_score(test_result_data, predictedTest, average="micro", zero_division=0)
+            macroRecallTest = recall_score(test_result_data, predictedTest, average="macro", zero_division=0)
+            microRecallTest = recall_score(test_result_data, predictedTest, average="micro", zero_division=0)
         elif problem_type =="regression":
-            accuracyTrain = r2_score(trainy, KNN.predict( numpy.array(trainFinalX) ) ) # Coefficient of Determination
-            accuracyTest = r2_score(testy, KNN.predict( numpy.array(testFinalX) ) )
+            accuracyTrain = r2_score(train_result_data, KNN.predict( numpy.array(train_feature_data_scaled) ) ) # Coefficient of Determination
+            accuracyTest = r2_score(test_result_data, KNN.predict( numpy.array(test_feature_data_scaled) ) )
     elif model_type == "LinReg":
         # r-squared, measure of how well model fits data (Coefficient of Determination, greater is better fit). Ideally R^2 will be similar for the training and testing data sets. When R2<0, a horizontal line (mean) explains the data better than your model.
-        accuracyTrain = r2_score(trainy, regr.predict( numpy.array(trainFinalX) ))
-        accuracyTest = r2_score(testy, regr.predict( numpy.array(testFinalX) ))
+        accuracyTrain = r2_score(train_result_data, regr.predict( numpy.array(train_feature_data_scaled) ))
+        accuracyTest = r2_score(test_result_data, regr.predict( numpy.array(test_feature_data_scaled) ))
     elif model_type == "PolyFit":
-        accuracyTrain = r2_score(trainy, polyModel1d( numpy.array(trainFinalX) ))
-        accuracyTest = r2_score(testy, polyModel1d( numpy.array(testFinalX) ))
+        accuracyTrain = r2_score(train_result_data, polyModel1d( numpy.array(train_feature_data_scaled) ))
+        accuracyTest = r2_score(test_result_data, polyModel1d( numpy.array(test_feature_data_scaled) ))
 
     # Default initialization to avoid checking for non-existence later
     repImageBase64 = None
@@ -228,12 +202,12 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
     if model_type == "DT":
         if problem_type == "classification":
             if len(continuous_features) == 2 and len(categorical_features) == 0:
-                trainy = trainy.reset_index(drop=True)
-                testy = testy.reset_index(drop=True)
-                xsTest = testx.iloc[:, 0].reset_index(drop=True)
-                ysTest = testx.iloc[:, 1].reset_index(drop=True)
-                xsTrain = trainx.iloc[:, 0].reset_index(drop=True)
-                ysTrain = trainx.iloc[:, 1].reset_index(drop=True)
+                train_result_data = train_result_data.reset_index(drop=True)
+                test_result_data = test_result_data.reset_index(drop=True)
+                xsTest = test_feature_data.iloc[:, 0].reset_index(drop=True)
+                ysTest = test_feature_data.iloc[:, 1].reset_index(drop=True)
+                xsTrain = train_feature_data.iloc[:, 0].reset_index(drop=True)
+                ysTrain = train_feature_data.iloc[:, 1].reset_index(drop=True)
                 xs = feature_data.iloc[:, 0]
                 ys = feature_data.iloc[:, 1]
                 xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
@@ -256,12 +230,12 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
                 for res in result_categories_map:
                     count += 1
                     dictRes = result_categories_map[res]
-                    indices = numpy.where(trainy == dictRes)[0]
+                    indices = numpy.where(train_result_data == dictRes)[0]
                     plt.scatter(xsTrain[indices], ysTrain[indices], color=darkcmap(dictRes), marker='o', label=(count>18)*"_"+res[0:8])
-                    indices = numpy.where(testy == dictRes)[0]
+                    indices = numpy.where(test_result_data == dictRes)[0]
                     plt.scatter(xsTest[indices], ysTest[indices], color=darkcmap(dictRes), marker='x')
-                plt.xlabel(trainx.columns[0])
-                plt.ylabel(trainx.columns[1])
+                plt.xlabel(train_feature_data.columns[0])
+                plt.ylabel(train_feature_data.columns[1])
                 plt.legend(bbox_to_anchor=(1,1), loc="upper left")
                 repImageBase64 = encodeRepImage('plt', plt, format='png')
             else:
@@ -271,22 +245,22 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
                 repImageBase64 = encodeRepImage('graph', graph)
         elif problem_type == "regression":
             if len(continuous_features) == 1 and len(categorical_features) == 0:
-                plt.scatter(trainx, trainy, marker='o', color='#03bffe', label='Training Data')
+                plt.scatter(train_feature_data, train_result_data, marker='o', color='#03bffe', label='Training Data')
                 xs = feature_data.iloc[:, 0]
                 xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200).reshape(-1,1)
                 zs = decTree.predict(xs)
-                plt.xlabel(trainx.columns[0])
+                plt.xlabel(train_feature_data.columns[0])
                 plt.ylabel(result)
                 plt.plot( xs, zs, color="#fe4203", label='Model')
-                plt.scatter(testx, testy, marker='x', color='#ff845b', label='Testing Data')
+                plt.scatter(test_feature_data, test_result_data, marker='x', color='#ff845b', label='Testing Data')
                 plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
                 repImageBase64 = encodeRepImage('plt', plt, format='png')
             elif len(continuous_features) == 2 and len(categorical_features) == 0:
                 fig = plt.figure()
                 ax = fig.add_subplot(projection='3d')
-                xs = trainx.iloc[:, 0].reset_index(drop=True)
-                ys = trainx.iloc[:, 1].reset_index(drop=True)
-                zs = trainy.reset_index(drop=True)
+                xs = train_feature_data.iloc[:, 0].reset_index(drop=True)
+                ys = train_feature_data.iloc[:, 1].reset_index(drop=True)
+                zs = train_result_data.reset_index(drop=True)
                 ax.scatter(xs, ys, zs, marker='o', color='#03bffe', label='Training Data')
                 xs = feature_data.iloc[:, 0]
                 ys = feature_data.iloc[:, 1]
@@ -298,12 +272,12 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
                 zs = zs.reshape(xs.shape)
                 surf = ax.plot_surface(xs, ys, zs, alpha = 0.5, cmap='copper', color="#03bffe", label='Model')
                 #plot 3d testing data
-                xs = testx.iloc[:, 0].reset_index(drop=True)
-                ys = testx.iloc[:, 1].reset_index(drop=True)
-                zs = testy.reset_index(drop=True)
+                xs = test_feature_data.iloc[:, 0].reset_index(drop=True)
+                ys = test_feature_data.iloc[:, 1].reset_index(drop=True)
+                zs = test_result_data.reset_index(drop=True)
                 ax.scatter(xs, ys, zs, marker='x', color='#ff845b', label='Testing Data')
-                ax.set_xlabel(trainx.columns[0])
-                ax.set_ylabel(trainx.columns[1])
+                ax.set_xlabel(train_feature_data.columns[0])
+                ax.set_ylabel(train_feature_data.columns[1])
                 ax.set_zlabel(result)
                 surf._edgecolors2d = surf._edgecolor3d
                 surf._facecolors2d = surf._facecolor3d
@@ -318,12 +292,12 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
             repImageCreated=False
     elif model_type == "KNN":
         if problem_type == "classification" and len(continuous_features) == 2 and len(categorical_features) == 0:
-            trainy = trainy.reset_index(drop=True)
-            testy = testy.reset_index(drop=True)
-            xsTest = testx.iloc[:, 0].reset_index(drop=True)
-            ysTest = testx.iloc[:, 1].reset_index(drop=True)
-            xsTrain = trainx.iloc[:, 0].reset_index(drop=True)
-            ysTrain = trainx.iloc[:, 1].reset_index(drop=True)
+            train_result_data = train_result_data.reset_index(drop=True)
+            test_result_data = test_result_data.reset_index(drop=True)
+            xsTest = test_feature_data.iloc[:, 0].reset_index(drop=True)
+            ysTest = test_feature_data.iloc[:, 1].reset_index(drop=True)
+            xsTrain = train_feature_data.iloc[:, 0].reset_index(drop=True)
+            ysTrain = train_feature_data.iloc[:, 1].reset_index(drop=True)
             xs = feature_data.iloc[:, 0]
             ys = feature_data.iloc[:, 1]
             xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
@@ -347,32 +321,32 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
             for res in result_categories_map:
                 count += 1
                 dictRes = result_categories_map[res]
-                indices = numpy.where(trainy == dictRes)[0]
+                indices = numpy.where(train_result_data == dictRes)[0]
                 plt.scatter(xsTrain[indices], ysTrain[indices], color=darkcmap(dictRes), marker='o', label=(count>18)*"_"+res[0:8])
-                indices = numpy.where(testy == dictRes)[0]
+                indices = numpy.where(test_result_data == dictRes)[0]
                 plt.scatter(xsTest[indices], ysTest[indices], color=darkcmap(dictRes), marker='x')
-            plt.xlabel(trainx.columns[0])
-            plt.ylabel(trainx.columns[1])
+            plt.xlabel(train_feature_data.columns[0])
+            plt.ylabel(train_feature_data.columns[1])
             plt.legend(bbox_to_anchor=(1,1), loc="upper left")
             repImageBase64 = encodeRepImage('plt', plt, format='png')
         elif problem_type == "regression" and len(continuous_features) == 1 and len(categorical_features) == 0:
-            plt.scatter(trainx, trainy, marker='o', color='#03bffe', label='Training Data')
+            plt.scatter(train_feature_data, train_result_data, marker='o', color='#03bffe', label='Training Data')
             xs = feature_data.iloc[:, 0]
             xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
             xsScaled = scale.transform(xs.reshape(-1,1))
             zs = KNN.predict( xsScaled )
-            plt.xlabel(trainx.columns[0])
+            plt.xlabel(train_feature_data.columns[0])
             plt.ylabel(result)
             plt.plot( xs, zs, color="#fe4203", label='Model')
-            plt.scatter(testx, testy, marker='x', color='#ff845b', label='Testing Data')
+            plt.scatter(test_feature_data, test_result_data, marker='x', color='#ff845b', label='Testing Data')
             plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
             repImageBase64 = encodeRepImage('plt', plt, format='png')
         elif problem_type == "regression" and len(continuous_features) == 2 and len(categorical_features) == 0:
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
-            xs = trainx.iloc[:, 0].reset_index(drop=True)
-            ys = trainx.iloc[:, 1].reset_index(drop=True)
-            zs = trainy.reset_index(drop=True)
+            xs = train_feature_data.iloc[:, 0].reset_index(drop=True)
+            ys = train_feature_data.iloc[:, 1].reset_index(drop=True)
+            zs = train_result_data.reset_index(drop=True)
             ax.scatter(xs, ys, zs, marker='o', color='#03bffe', label='Training Data')
             xs = feature_data.iloc[:, 0]
             ys = feature_data.iloc[:, 1]
@@ -385,12 +359,12 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
             zs = zs.reshape(xs.shape)
             surf = ax.plot_surface(xs, ys, zs, alpha = 0.5, cmap='copper', color="#03bffe", label='Model')
             #plot 3d testing data
-            xs = testx.iloc[:, 0].reset_index(drop=True)
-            ys = testx.iloc[:, 1].reset_index(drop=True)
-            zs = testy.reset_index(drop=True)
+            xs = test_feature_data.iloc[:, 0].reset_index(drop=True)
+            ys = test_feature_data.iloc[:, 1].reset_index(drop=True)
+            zs = test_result_data.reset_index(drop=True)
             ax.scatter(xs, ys, zs, marker='x', color='#ff845b', label='Testing Data')
-            ax.set_xlabel(trainx.columns[0])
-            ax.set_ylabel(trainx.columns[1])
+            ax.set_xlabel(train_feature_data.columns[0])
+            ax.set_ylabel(train_feature_data.columns[1])
             ax.set_zlabel(result)
             surf._edgecolors2d = surf._edgecolor3d
             surf._facecolors2d = surf._facecolor3d
@@ -400,21 +374,21 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
             repImageCreated=False
     elif model_type == "LinReg":
         if len(features) == 1 and len(categorical_features) == 0:
-            plt.scatter(trainx, trainy, marker='o', color='#03bffe', label='Training Data')
-            xs = numpy.linspace(numpy.floor(min(trainx.iloc[:, 0])),numpy.ceil(max(trainx.iloc[:, 0])),100)
+            plt.scatter(train_feature_data, train_result_data, marker='o', color='#03bffe', label='Training Data')
+            xs = numpy.linspace(numpy.floor(min(train_feature_data.iloc[:, 0])),numpy.ceil(max(train_feature_data.iloc[:, 0])),100)
             xsScaled = scale.transform(xs.reshape(-1,1))
-            plt.xlabel(trainx.columns[0])
+            plt.xlabel(train_feature_data.columns[0])
             plt.ylabel(result)
             plt.plot( xs, regr.coef_[0]*xsScaled + regr.predict(numpy.array([[0]])), color="#fe4203", label='Model')
-            plt.scatter(testx, testy, marker='x', color='#ff845b', label='Testing Data')
+            plt.scatter(test_feature_data, test_result_data, marker='x', color='#ff845b', label='Testing Data')
             plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
             repImageBase64 = encodeRepImage('plt', plt, format='png')
         elif len(continuous_features) == 2 and len(categorical_features) == 0:
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
-            xs = trainx.iloc[:, 0]
-            ys = trainx.iloc[:, 1]
-            zs = trainy
+            xs = train_feature_data.iloc[:, 0]
+            ys = train_feature_data.iloc[:, 1]
+            zs = train_result_data
             ax.scatter(xs, ys, zs, marker='o', color='#03bffe', label='Training Data')
             xs, ys = numpy.mgrid[ range(int(numpy.floor(min(xs))),int(numpy.ceil(max(xs)))), range(int(numpy.floor(min(ys))),int(numpy.ceil(max(ys)))) ]
             coords = numpy.vstack([xs.ravel(), ys.ravel()])
@@ -426,12 +400,12 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
             zs = regr.coef_[0]*xsScaled + regr.coef_[1]*ysScaled + regr.predict(numpy.array([[0, 0]]))
             surf = ax.plot_surface(xs, ys, zs, alpha = 0.5, cmap='copper', color="#03bffe", label='Model')
             #plot 3d testing data
-            xs = testx.iloc[:, 0]
-            ys = testx.iloc[:, 1]
-            zs = testy
+            xs = test_feature_data.iloc[:, 0]
+            ys = test_feature_data.iloc[:, 1]
+            zs = test_result_data
             ax.scatter(xs, ys, zs, marker='x', color='#ff845b', label='Testing Data')
-            ax.set_xlabel(trainx.columns[0])
-            ax.set_ylabel(trainx.columns[1])
+            ax.set_xlabel(train_feature_data.columns[0])
+            ax.set_ylabel(train_feature_data.columns[1])
             ax.set_zlabel(result)
             surf._edgecolors2d = surf._edgecolor3d
             surf._facecolors2d = surf._facecolor3d
@@ -441,13 +415,13 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
             repImageCreated=False
     elif model_type == "PolyFit":
         if len(features) == 1:
-            plt.scatter(trainx, trainy, marker='o', color='#03bffe', label='Training Data')
-            xs = numpy.linspace(numpy.floor(min(trainx.iloc[:, 0])),numpy.ceil(max(trainx.iloc[:, 0])),100)
+            plt.scatter(train_feature_data, train_result_data, marker='o', color='#03bffe', label='Training Data')
+            xs = numpy.linspace(numpy.floor(min(train_feature_data.iloc[:, 0])),numpy.ceil(max(train_feature_data.iloc[:, 0])),100)
             xsScaled = scale.transform(xs.reshape(-1,1))
-            plt.xlabel(trainx.columns[0])
+            plt.xlabel(train_feature_data.columns[0])
             plt.ylabel(result)
             plt.plot( xs, polyModel1d(xsScaled), color="#fe4203", label='Model')
-            plt.scatter(testx, testy, marker='x', color='#ff845b', label='Testing Data')
+            plt.scatter(test_feature_data, test_result_data, marker='x', color='#ff845b', label='Testing Data')
             plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
             repImageBase64 = encodeRepImage('plt', plt, format='png')
         else:
@@ -508,7 +482,7 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
 
     return {"mlOuts": mlOuts, "inputValidation": inputValidation}
 
-# def machineLearnerTimed(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName):
+# def machineLearnerTimed(supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, test_proportion, datasetName):
 #     cwd = os.getcwd()
 
 #     accTrain = multiprocessing.Value('d')
@@ -516,8 +490,8 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
 #     inpVal = multiprocessing.Array('u', [])
     
 #     print("STARTING TIMED FIT THREAD")
-#     # p = threading.Thread(target = machineLearner, args = [supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName])
-#     p = multiprocessing.Process(target = machineLearner, args = [supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, testProp, datasetName, accTrain, accTest, inpVal])
+#     # p = threading.Thread(target = machineLearner, args = [supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, test_proportion, datasetName])
+#     p = multiprocessing.Process(target = machineLearner, args = [supervision, problem_type, model_type, polyDeg, continuous_features, categorical_features, result, test_proportion, datasetName, accTrain, accTest, inpVal])
 #     p.start()
 #     p.join(5)
 

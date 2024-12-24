@@ -12,59 +12,48 @@ def preprocess_data(dataset, categorical_features, continuous_features, result, 
 
     Args:
         dataset (pandas.DataFrame): The dataset to preprocess.
-        categorical_features (list of str): List of categorical feature column names.
-        continuous_features (list of str): List of continuous feature column names.
-        result (str): The column name of the result data.
-        model_type (str): The type of model, e.g., 'DT', 'KNN', 'LinReg', etc.
-        problem_type (str): The type of problem, either 'classification' or 'regression'.
+        categorical_features (list of str): The names of the categorical features.
+        continuous_features (list of str): The names of the continuous features.
+        result (pandas.Series): The result data to preprocess.
+        model_type (str): The type of model to use (e.g. decision tree, linear regression, etc.).
+        problem_type (str): The type of problem (e.g. classification, regression).
 
     Returns:
         feature_data (pandas.DataFrame): The preprocessed feature data.
-        categorical_feature_data (pandas.DataFrame): The encoded categorical feature data.
-        continuous_feature_data (pandas.DataFrame): The processed continuous feature data.
         categorical_features_category_maps (dict): Maps for categorical feature categories to integers.
         result_data (pandas.Series): The preprocessed result data.
         result_categories_map (dict): A map from result categories to integers, if applicable.
+
     """
+    # Used to have no .copy(), maybe required.
+    # Todo: Write tests for testing and training.
+    feature_data = dataset[categorical_features + continuous_features].copy()
+    result_data = dataset[result].copy()
 
-    feature_data = dataset[categorical_features + continuous_features]
-    result_data = dataset[result]
-
-    categorical_feature_data, continuous_feature_data, categorical_features_category_maps = preprocess_feature_data(
+    feature_data, categorical_features_category_maps = preprocess_feature_data(
         feature_data, categorical_features, continuous_features, model_type
     )
 
     result_data, result_categories_map = preprocess_result_data(result_data, problem_type)
 
-    return feature_data, categorical_feature_data, continuous_feature_data, categorical_features_category_maps, result_data, result_categories_map
+    return feature_data, categorical_features_category_maps, result_data, result_categories_map
 
 def preprocess_feature_data(feature_data, categorical_features, continuous_features, model_type):
     """
-    Preprocess the features of a dataset.
+    Preprocess the features of a dataset by encoding categorical features.
 
-    Parameters
-    ----------
-    feature_data : pandas.DataFrame
-        The feature data to preprocess.
-    categorical_features : list
-        A list of categorical feature names.
-    continuous_features : list
-        A list of continuous feature names.
-    model_type : str
-        The type of model to use (e.g. decision tree, linear regression, etc.)
+    Args:
+        feature_data (pandas.DataFrame): The feature data to preprocess.
+        categorical_features (list of str): Names of categorical feature columns.
+        continuous_features (list of str): Names of continuous feature columns.
+        model_type (str): Model type to determine encoding strategy (e.g., 'decision tree',
+            'linear regression').
 
-    Returns
-    -------
-    categorical_feature_data : pandas.DataFrame
-        The preprocessed categorical feature data.
-    continuous_feature_data : pandas.DataFrame
-        The preprocessed continuous feature data.
-    categorical_features_category_maps : dict
-        A dictionary of maps from categorical feature categories to integers.
+    Returns:
+        feature_data (pandas.DataFrame): Processed feature data with categorical features encoded.
+        categorical_features_category_maps (dict): Mapping of original categories to integers for
+            each categorical feature.
     """
-    categorical_feature_data = feature_data[categorical_features]
-    continuous_feature_data = feature_data[continuous_features]
-
     # Convert categorical features to strings, and the rest to the existing type
     categorical_feature_data_types = {feature: 'str' for feature in categorical_features}
     feature_data = feature_data.astype(dtype=categorical_feature_data_types, copy=True)
@@ -72,14 +61,16 @@ def preprocess_feature_data(feature_data, categorical_features, continuous_featu
     # Create maps from categorical features' categories to integers, and convert categorical feature options to integers
     use_one_hot_encoding = should_use_one_hot_encoding(model_type)
     categorical_features_category_maps = {}
-    for category in categorical_features:
-        categorical_features_category_maps[category] = {option: value for value, option in enumerate(OrderedSet(categorical_feature_data[category]))}
+    for feature in categorical_features:
+        # Also used for input validation during prediction
+        categorical_features_category_maps[feature] = {option: value for value, option in enumerate(OrderedSet(feature_data[feature]))}
         if use_one_hot_encoding:
-            categorical_feature_data = pandas.get_dummies(data=categorical_feature_data, drop_first=True, columns = [category])
+            # get_dummies targets and replaces the specified column with dummy variables
+            feature_data = pandas.get_dummies(data=feature_data, drop_first=True, columns = [feature])
         else:
-            categorical_feature_data[category] = categorical_feature_data[category].map(categorical_features_category_maps[category])
+            feature_data[feature] = feature_data[feature].map(categorical_features_category_maps[feature])
     
-    return categorical_feature_data, continuous_feature_data, categorical_features_category_maps
+    return feature_data, categorical_features_category_maps
 
 def should_use_one_hot_encoding(model_type):
     """
