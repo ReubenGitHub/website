@@ -61,9 +61,6 @@ def scale_data(train_feature_data, test_feature_data, continuous_features, model
             columns=continuous_features
         )
 
-        # TODO: Move where this is done, so that the output of this code is just the scaled data in a dataframe. What does this operation do to the indices (relative to the results)?
-        train_feature_data_scaled = train_feature_data_scaled.to_numpy()
-        test_feature_data_scaled = test_feature_data_scaled.to_numpy()
         # TODO: Check whether this is required
         # train_result_data = train_result_data.reset_index(drop=True)
         # test_result_data = test_result_data.reset_index(drop=True)

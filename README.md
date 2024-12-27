@@ -1,24 +1,3 @@
-# To build the site:
-`docker build -t mywebsite .`
-# To build the site without using the cache:
-`docker build --no-cache -t mywebsite .`
-# To run the site once built/in a container:
-`docker run -it -p 5000:5000 mywebsite`
-# To get in a container without running it (to investigate built files for example):
-`docker run -it -p 5000:5000 mywebsite /bin/bash`
-# Run flask api just with python for debugging:
-`python3 api/api.py`
-# Prune builder caches (can grow quite large)
-`docker builder prune`
-# View disk usage
-`docker system df`
-# Prune all
-`docker system prune -a`
-# Bash terminal recursive directories
-`ls -R`
-
-
-
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

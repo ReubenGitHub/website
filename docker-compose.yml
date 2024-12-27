@@ -1,0 +1,8 @@
+services:
+  site:
+    build: .
+    image: mywebsite
+    ports:
+      - '5000:5000'
+    environment:
+      - PYTHONUNBUFFERED=1 # To get python prints to show up in console/logs

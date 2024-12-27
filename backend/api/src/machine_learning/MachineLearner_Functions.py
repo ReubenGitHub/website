@@ -110,6 +110,12 @@ def machineLearner(supervision, problem_type, model_type, polyDeg, continuous_fe
         train_feature_data, test_feature_data, continuous_features, model_type
     )
 
+    # If scaling was applied, convert data to numpy arrays (legacy support)
+    # Todo: work out why this was done and if there's a nicer way to handle this
+    if (scale is not None):
+        train_feature_data_scaled = train_feature_data_scaled.to_numpy()
+        test_feature_data_scaled = test_feature_data_scaled.to_numpy()
+
     #Create model (decision tree, linear regression etc)
     print("DATA SORTED AND SETS DEFINED, NOW FITTING MODEL")
     if model_type == 'DT':

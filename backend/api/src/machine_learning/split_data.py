@@ -31,10 +31,16 @@ def split_data_into_train_and_test(feature_data, result_data, test_proportion):
     test_result_data : array-like
         The result data for the testing set.
     """
+    if (test_proportion < 0 or test_proportion > 1):
+        raise ValueError('Test proportion must be between 0 and 1')
+
     sample_size = len(feature_data)
 
     min_test_size = MIN_TEST_TRAIN_SIZE
     max_test_size = sample_size - MIN_TEST_TRAIN_SIZE
+    if (max_test_size < min_test_size):
+        raise ValueError('Insufficient quantity of data to split into train and test sets (need at least {} samples)'.format(2*MIN_TEST_TRAIN_SIZE))
+
     target_test_size = round(test_proportion * sample_size)
     test_size = min(max(min_test_size, target_test_size), max_test_size)
 

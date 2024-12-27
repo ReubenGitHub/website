@@ -3,7 +3,7 @@ import threading
 import pandas
 import os
 import io
-from api.rootDirectory import API_ROOT_DIRECTORY
+from api.root_directory import API_ROOT_DIRECTORY
 
 DATASETS_DIRECTORY = os.path.join(API_ROOT_DIRECTORY, 'data')
 DEFAULT_DATASET = pandas.read_csv(DATASETS_DIRECTORY+"/CO2 Emissions.csv")
