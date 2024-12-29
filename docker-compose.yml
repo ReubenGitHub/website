@@ -1,8 +1,20 @@
 services:
-  site:
-    build: .
-    image: mywebsite
-    ports:
-      - '5000:5000'
-    environment:
-      - PYTHONUNBUFFERED=1 # To get python prints to show up in console/logs
+    site:
+        build: .
+        image: mywebsite
+        ports:
+            - '5000:5000'
+        environment:
+            - PYTHONUNBUFFERED=1 # To get python prints to show up in console/logs
+
+    site-dev:
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+        image: mywebsite-dev-test
+        ports:
+            - '5000:5000'
+        volumes:
+            - ./:/app/
+        environment:
+            - PYTHONUNBUFFERED=1 # To get python prints to show up in console/logs
