@@ -1,7 +1,10 @@
-build
 todoList.txt
 notes.md
-node_modules
+
 package-lock.json
+node_modules
+build
+
+__pycache__
 custom_metric.c
 custom_metric.cpython-39-x86_64-linux-gnu.so

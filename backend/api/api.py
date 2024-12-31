@@ -1,20 +1,22 @@
 from flask import Flask, render_template, request, send_from_directory
 from flask_cors import CORS, cross_origin
 import time
+import os
 
 import api.src.machine_learning as machine_learning
 
-app = Flask(__name__, static_folder="../build", static_url_path='/')
+STATIC_FOLDER = os.getenv('STATIC_FOLDER', '/app/build')
+app = Flask(__name__, static_folder=STATIC_FOLDER, static_url_path='/')
 cors = CORS(app)
 
 @app.errorhandler(404)
 def not_found(e):
-    return app.send_static_file("index.html")
+    return app.send_static_file('index.html')
 
 @app.route('/')
 @cross_origin()
 def index():
-    return app.send_static_file("index.html")
+    return app.send_static_file('index.html')
 
 @app.route('/api/time')
 def get_current_time():
@@ -32,8 +34,8 @@ def mlModelFit():
         request.json['cateparams'],
         request.json['resultparam'],
         request.json['testprop'],
-        request.json['sessionId'])
-    }
+        request.json['sessionId']
+    )}
 
 @app.route('/api/uploadDataset', methods=['POST'])
 @cross_origin()

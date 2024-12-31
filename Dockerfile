@@ -49,7 +49,5 @@ COPY --from=backend-build /usr/local/lib/python${PYTHON_VERSION_NUMBER}/site-pac
 COPY --from=backend-build /usr/local/bin /usr/local/bin
 # Expose the necessary ports
 EXPOSE 5000
-# Set environment variables if necessary (optional)
-ENV FLASK_APP=api/api.py
-# Command to run both the frontend (React) and backend (Flask) concurrently
+# Command to run back end (which serves the front end files)
 CMD ["sh", "-c", "python3 -m flask run --host=0.0.0.0 --port=5000"]

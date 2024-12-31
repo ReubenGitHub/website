@@ -6,15 +6,19 @@ services:
             - '5000:5000'
         environment:
             - PYTHONUNBUFFERED=1 # To get python prints to show up in console/logs
+            - FLASK_APP=api/api.py
+            - FLASK_ENV=PRODUCTION
 
     site-dev:
         build:
             context: .
             dockerfile: Dockerfile.dev
-        image: mywebsite-dev-test
+        image: mywebsite-dev
         ports:
             - '5000:5000'
         volumes:
             - ./:/app/
         environment:
             - PYTHONUNBUFFERED=1 # To get python prints to show up in console/logs
+            - FLASK_APP=api/api.py
+            - STATIC_FOLDER=/app/frontend/build
