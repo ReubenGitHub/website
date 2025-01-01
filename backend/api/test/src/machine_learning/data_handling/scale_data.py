@@ -1,7 +1,7 @@
 import unittest
 import pandas
 from sklearn.preprocessing import StandardScaler
-from api.src.machine_learning.scale_data import scale_data
+from api.src.machine_learning.data_handling.scale_data import scale_data
 
 TRAIN_FEATURE_DATA = pandas.DataFrame({
     'A': [1, 2, 3],

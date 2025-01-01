@@ -25,7 +25,7 @@ EXPOSE 5000
 ENV FLASK_APP=backend/api/api.py
 # Command to build cython metric and symlink node modules to frontend app directory
 CMD ["sh", "-c", "\
-    cd /app/backend/api/src/machine_learning && \
+    cd /app/backend/api/src/machine_learning/models/model_types/k_nearest_neighbours/custom_metric && \
     python3 setup.py build_ext --inplace && \
     echo 'Custom metric build completed' && \
     ln -s /app-dependencies/node_modules /app/frontend/node_modules && \

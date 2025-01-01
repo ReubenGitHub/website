@@ -1,7 +1,7 @@
-from .model_types.decision_tree import train_decision_tree
-from .model_types.k_nearest_neighbours import train_knn
-from .model_types.linear_regression import train_linear_regression
-from .model_types.polynomial_regression import train_polynomial_regression
+from .model_types.decision_tree.train import train_decision_tree
+from .model_types.k_nearest_neighbours.train import train_knn
+from .model_types.linear_regression.train import train_linear_regression
+from .model_types.polynomial_regression.train import train_polynomial_regression
 
 def train_model(train_feature_data_scaled, train_result_data, model_type, training_parameters={}):
     """

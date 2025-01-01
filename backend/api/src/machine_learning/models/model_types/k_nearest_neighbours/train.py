@@ -1,5 +1,5 @@
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
-from ...custom_metric import mydist
+from .custom_metric.custom_metric import custom_metric
 
 PROBLEM_TYPE_TO_CLASS = {
     'classification': KNeighborsClassifier,
@@ -34,7 +34,7 @@ def train_knn(train_feature_data_scaled, train_result_data, problem_type, num_co
     elif num_continuous_features == 0:
         metric = 'hamming'
     else:
-        metric = mydist
+        metric = custom_metric
         # Todo: Update the keys in metric_params
         metric_params = {
             'ncts': num_continuous_features,
@@ -48,9 +48,9 @@ def train_knn(train_feature_data_scaled, train_result_data, problem_type, num_co
         n_neighbors=min(4, len(train_feature_data_scaled)),
         weights='distance',
         metric=metric,
-        metric_params=metric_params,
-        algorithm=algorithm,
-        leaf_size=leaf_size
+        **({'metric_params': metric_params} if 'metric_params' in locals() else {}),
+        **({'algorithm': algorithm} if 'algorithm' in locals() else {}),
+        **({'leaf_size': leaf_size} if 'leaf_size' in locals() else {})
     )
     knn_model.fit(train_feature_data_scaled, train_result_data)
 

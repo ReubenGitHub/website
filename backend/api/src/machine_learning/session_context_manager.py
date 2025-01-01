@@ -9,7 +9,7 @@ DATASETS_DIRECTORY = os.path.join(API_ROOT_DIRECTORY, 'data')
 DEFAULT_DATASET = pandas.read_csv(DATASETS_DIRECTORY+"/CO2 Emissions.csv")
 DATASET_SIZE_LIMIT = 2000000 # Bytes
 
-class SessionDataManager:
+class SessionContextManager:
     def __init__(self):
         self.sessions = {}
         # TODO: uncomment this expiration time
@@ -88,4 +88,4 @@ class SessionDataManager:
                 self._expire_session_data()
         threading.Thread(target=run, daemon=True).start()
 
-session_data_manager = SessionDataManager()
+session_context_manager = SessionContextManager()

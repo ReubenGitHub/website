@@ -1,6 +1,6 @@
 import unittest
 import pandas
-from api.src.machine_learning.split_data import split_data_into_train_and_test
+from api.src.machine_learning.data_handling.split_data import split_data_into_train_and_test
 
 FEATURE_DATA = pandas.DataFrame({
     'A': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],

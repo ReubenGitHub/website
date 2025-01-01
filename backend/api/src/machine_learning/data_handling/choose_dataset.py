@@ -1,4 +1,4 @@
-from .session_data_manager import session_data_manager
+from ..session_context_manager import session_context_manager
 
 def choose_dataset(session_id, use_default_dataset=True, file=None):
     """
@@ -19,9 +19,9 @@ def choose_dataset(session_id, use_default_dataset=True, file=None):
         'fields': a list of the field names in the dataset
         'nonCtsFields': a list of the non-continuous fields in the dataset
     """
-    session_data_manager.add_dataset(session_id, use_default_dataset, file)
+    session_context_manager.add_dataset(session_id, use_default_dataset, file)
 
-    dataset = session_data_manager.get_session_data(session_id)['dataset']
+    dataset = session_context_manager.get_session_data(session_id)['dataset']
 
     # Identify and return the field names
     fields = dataset.columns.values.tolist()

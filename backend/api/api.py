@@ -41,7 +41,7 @@ def mlModelFit():
 @cross_origin()
 def mlDatasetSaver():
     return {
-        'datasetFields': machine_learning.datasets.choose_dataset(
+        'datasetFields': machine_learning.data_handling.choose_dataset.choose_dataset(
             request.json['sessionId'],
             request.json['useDefaultDataset'],
             request.json.get('dataset', None) # dataset may not exist if useDefaultDataset is true

@@ -28,8 +28,8 @@ COPY backend/requirements.txt ./
 RUN pip install -r requirements.txt
 # Copy the backend source code
 COPY backend/ ./
-# Run setup.py to build Cython module
-WORKDIR /backend/api/src/machine_learning
+# Run setup.py to build Cython custom metric module
+WORKDIR /backend/api/src/machine_learning/models/model_types/k_nearest_neighbours/custom_metric
 RUN python3 setup.py build_ext --inplace
 
 # Step 3: Final image with both Node.js and Python

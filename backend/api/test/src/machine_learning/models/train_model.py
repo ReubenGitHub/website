@@ -1,6 +1,6 @@
 import unittest
 import pandas
-from api.src.machine_learning.train_models.train_model import train_model
+from api.src.machine_learning.models.train_model import train_model
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.linear_model import LinearRegression

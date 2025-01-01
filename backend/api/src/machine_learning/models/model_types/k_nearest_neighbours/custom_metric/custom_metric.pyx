@@ -7,7 +7,7 @@ ctypedef numpy.double_t DTYPE_t
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.initializedcheck(False)
-def mydist(numpy.ndarray[DTYPE_t, ndim=1] x1, numpy.ndarray[DTYPE_t, ndim=1] x2, int ncts, double ncate):
+def custom_metric(numpy.ndarray[DTYPE_t, ndim=1] x1, numpy.ndarray[DTYPE_t, ndim=1] x2, int ncts, double ncate):
     cdef double euc = 0.0
     cdef double ham = 0.0
     cdef double d = 0.0
