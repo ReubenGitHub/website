@@ -444,13 +444,11 @@ export function FormPredictAt(props) {
 
 export function FormModelOutputs(props) {
     const modelOutputs = props.modelOutputs
-    const accuracyTrain = modelOutputs['accuracyTrain']
-    const accuracyTest = modelOutputs['accuracyTest']
-    const precsRecs = modelOutputs['precsRecs']
+    const modelMetrics = modelOutputs['model_metrics']
     const repImageCreated = modelOutputs['repImageCreated']
     const repImageBase64 = modelOutputs['repImageBase64']
 
-    const repImageSrc = !accuracyTrain ? representationIcon
+    const repImageSrc = !modelMetrics?.train_accuracy ? representationIcon
         : !repImageCreated ? representationNAIcon
         : `data:image/png;base64,${repImageBase64}`
 
@@ -467,13 +465,13 @@ export function FormModelOutputs(props) {
                 <tr >
                     <td style={{padding: "4px 8px"}}>
                     </td>
-                    {(precsRecs) ?
+                    {(modelMetrics?.train_macro_precision) ?
                             <th style={{padding: "4px 8px", background: "#ffa78a"}}>
                                 Classifier
                                 <br></br>
                                 Accuracy
                             </th>:
-                        (accuracyTrain) ?
+                        (modelMetrics?.train_accuracy) ?
                             <th style={{padding: "4px 8px", background: "#ffa78a"}}>
                                 R-Squared
                                 <br></br>
@@ -483,14 +481,14 @@ export function FormModelOutputs(props) {
                             Accuracy
                         </th>
                     }
-                    {(precsRecs) && 
+                    {(modelMetrics?.train_macro_precision) &&
                         <th style={{padding: "4px 8px", background: "#ffa78a"}}>
                             Macro | Micro
                             <br></br>
                             Precision
                         </th>
                     }
-                    {(precsRecs) && 
+                    {(modelMetrics?.train_macro_precision) &&
                         <th style={{padding: "4px 8px", background: "#ffa78a"}}>
                             Macro | Micro
                             <br></br>
@@ -503,19 +501,19 @@ export function FormModelOutputs(props) {
                         <b>Training </b>
                     </td>
                     <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                        { !(accuracyTrain==null) ? 
-                            ( 1*accuracyTrain + Number.EPSILON ).toFixed(3) :
+                        { !(modelMetrics?.train_accuracy==null) ? 
+                            ( 1*modelMetrics?.train_accuracy + Number.EPSILON ).toFixed(3) :
                             "..."
                         }
                     </td>
-                    {(precsRecs) && 
+                    {(modelMetrics?.train_macro_precision) && 
                         <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                            <div> {( 1*precsRecs['macroPrecTrain'] + Number.EPSILON ).toFixed(3)} &nbsp;|&nbsp; {( 1*precsRecs['microPrecTrain'] + Number.EPSILON ).toFixed(3)} </div>
+                            <div> {( 1*modelMetrics?.train_macro_precision + Number.EPSILON ).toFixed(3)} &nbsp;|&nbsp; {( 1*modelMetrics?.train_micro_precision + Number.EPSILON ).toFixed(3)} </div>
                         </td>
                     }
-                    {(precsRecs) &&
+                    {(modelMetrics?.train_macro_recall) &&
                         <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                            <div> {( 1*precsRecs['macroRecallTrain'] + Number.EPSILON ).toFixed(3)} &nbsp;|&nbsp; {( 1*precsRecs['microRecallTrain'] + Number.EPSILON ).toFixed(3)} </div>
+                            <div> {( 1*modelMetrics?.train_macro_recall + Number.EPSILON ).toFixed(3)} &nbsp;|&nbsp; {( 1*modelMetrics?.train_micro_recall + Number.EPSILON ).toFixed(3)} </div>
                         </td>
                     }
                 </tr>
@@ -524,25 +522,19 @@ export function FormModelOutputs(props) {
                         <b>Testing </b>
                     </td>
                     <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                        { !(accuracyTest==null) ? 
-                            ( 1*accuracyTest + Number.EPSILON ).toFixed(3) :
+                        { !(modelMetrics?.test_accuracy==null) ? 
+                            ( 1*modelMetrics?.test_accuracy + Number.EPSILON ).toFixed(3) :
                             "..."
                         }
                     </td>
-                    {(precsRecs) && 
+                    {(modelMetrics?.test_macro_precision) && 
                         <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                            { (precsRecs) ? 
-                                <div> {( 1*precsRecs['macroPrecTest'] + Number.EPSILON ).toFixed(3)} &nbsp;|&nbsp; {( 1*precsRecs['microPrecTest'] + Number.EPSILON ).toFixed(3)} </div> :
-                                "..."
-                            }
+                            <div> {( 1*modelMetrics?.test_macro_precision + Number.EPSILON ).toFixed(3)} &nbsp;|&nbsp; {( 1*modelMetrics?.test_micro_precision + Number.EPSILON ).toFixed(3)} </div>
                         </td>
                     }
-                    {(precsRecs) && 
+                    {(modelMetrics?.test_macro_recall) &&
                         <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                            { (precsRecs) ? 
-                                <div> {( 1*precsRecs['macroRecallTest'] + Number.EPSILON ).toFixed(3)} &nbsp;|&nbsp; {( 1*precsRecs['microRecallTest'] + Number.EPSILON ).toFixed(3)} </div> :
-                                "..."
-                            }
+                            <div> {( 1*modelMetrics?.test_macro_recall + Number.EPSILON ).toFixed(3)} &nbsp;|&nbsp; {( 1*modelMetrics?.test_micro_recall + Number.EPSILON ).toFixed(3)} </div>
                         </td>
                     }
                 </tr>

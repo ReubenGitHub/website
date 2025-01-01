@@ -3,6 +3,7 @@ from .data_handling.preprocess_data import preprocess_data
 from .data_handling.split_data import split_data_into_train_and_test
 from .data_handling.scale_data import scale_data
 from .models.train_model import train_model
+from .models.evaluate import calculate_model_metrics
 from xml.dom.minicompat import StringTypes
 import numpy
 import matplotlib
@@ -14,8 +15,6 @@ import matplotlib.image as pltimg3
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 # from scipy import stats
 from sklearn import tree
-from sklearn.metrics import r2_score, accuracy_score, confusion_matrix, precision_score, recall_score
-from sklearn.model_selection import cross_val_score #CROSS VAL SCORE like many test/train splits and setting an expectation for accuracy on unseen data
 import pandas
 import pydotplus
 import colorsys
@@ -120,49 +119,15 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
     model = train_model(train_feature_data_scaled, train_result_data, model_type, training_parameters)
     session_context_manager.add_model(session_id, model)
 
-    # Measure accuracy of the model
-    
-    if model_type == 'DT': #Look at "accuracy_score", based on matching result labels
-        if problem_type == "classification":
-            predictedTrain = model.predict(train_feature_data_scaled.values)
-            predictedTest = model.predict(test_feature_data_scaled.values)
-            accuracyTrain = accuracy_score(train_result_data, predictedTrain)
-            accuracyTest = accuracy_score(test_result_data, predictedTest)
-            macroPrecTrain = precision_score(train_result_data, predictedTrain, average="macro", zero_division=0) # AVERAGE OF INDIV CLASS PRECISIONS = numpy.average( TP / (TP+FP) ), good for spotting poor precision on minority classes
-            microPrecTrain = precision_score(train_result_data, predictedTrain, average="micro", zero_division=0) # WEIGHTED AVERAGE OF INDIV CLASS PRECISIONS = TP.sum() / (TP.sum()+FP.sum()), good if you only care about precision in majority of cases
-            macroRecallTrain = recall_score(train_result_data, predictedTrain, average="macro", zero_division=0)
-            microRecallTrain = recall_score(train_result_data, predictedTrain, average="micro", zero_division=0) # Micro Precision/Micro Recall/Micro F1-score, all equal to Accuracy when items can only have one label each (i.e. non-Multi-Label problem)
-            macroPrecTest = precision_score(test_result_data, predictedTest, average="macro", zero_division=0)
-            microPrecTest = precision_score(test_result_data, predictedTest, average="micro", zero_division=0)
-            macroRecallTest = recall_score(test_result_data, predictedTest, average="macro", zero_division=0)
-            microRecallTest = recall_score(test_result_data, predictedTest, average="micro", zero_division=0)
-        elif problem_type == "regression":
-            accuracyTrain = r2_score(train_result_data, model.predict(train_feature_data_scaled.values)) # Coefficient of Determination
-            accuracyTest = r2_score(test_result_data, model.predict(test_feature_data_scaled.values))
-    elif model_type == "KNN":
-        if problem_type == "classification":
-            predictedTrain = model.predict( numpy.array(train_feature_data_scaled) )
-            predictedTest = model.predict( numpy.array(test_feature_data_scaled) )
-            accuracyTrain = accuracy_score(train_result_data, predictedTrain)
-            accuracyTest = accuracy_score(test_result_data, predictedTest)
-            macroPrecTrain = precision_score(train_result_data, predictedTrain, average="macro", zero_division=0)
-            microPrecTrain = precision_score(train_result_data, predictedTrain, average="micro", zero_division=0)
-            macroRecallTrain = recall_score(train_result_data, predictedTrain, average="macro", zero_division=0)
-            microRecallTrain = recall_score(train_result_data, predictedTrain, average="micro", zero_division=0)
-            macroPrecTest = precision_score(test_result_data, predictedTest, average="macro", zero_division=0)
-            microPrecTest = precision_score(test_result_data, predictedTest, average="micro", zero_division=0)
-            macroRecallTest = recall_score(test_result_data, predictedTest, average="macro", zero_division=0)
-            microRecallTest = recall_score(test_result_data, predictedTest, average="micro", zero_division=0)
-        elif problem_type =="regression":
-            accuracyTrain = r2_score(train_result_data, model.predict( numpy.array(train_feature_data_scaled) ) ) # Coefficient of Determination
-            accuracyTest = r2_score(test_result_data, model.predict( numpy.array(test_feature_data_scaled) ) )
-    elif model_type == "LinReg":
-        # r-squared, measure of how well model fits data (Coefficient of Determination, greater is better fit). Ideally R^2 will be similar for the training and testing data sets. When R2<0, a horizontal line (mean) explains the data better than your model.
-        accuracyTrain = r2_score(train_result_data, model.predict( numpy.array(train_feature_data_scaled) ))
-        accuracyTest = r2_score(test_result_data, model.predict( numpy.array(test_feature_data_scaled) ))
-    elif model_type == "PolyFit":
-        accuracyTrain = r2_score(train_result_data, model( numpy.array(train_feature_data_scaled) ))
-        accuracyTest = r2_score(test_result_data, model( numpy.array(test_feature_data_scaled) ))
+    # Calculate model metrics (accuracy etc...)
+    model_metrics = calculate_model_metrics(
+        model,
+        problem_type,
+        train_feature_data_scaled,
+        test_feature_data_scaled,
+        train_result_data,
+        test_result_data
+    )
 
     # Default initialization to avoid checking for non-existence later
     repImageBase64 = None
@@ -417,40 +382,21 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
 
     print("SETTINGS SAVED, NOW SETTING UP INPUT VALIDATION AND EXPORTING")
 
+    # Create input validation object
     inputValidation = []
-
     for i in range(0, len(categorical_features)):
         inputValidation.append(list(categorical_features_category_maps[categorical_features[i]].keys()))
 
-    # accTrain.value = accuracyTrain
-    # accTest.value = accuracyTest
-    # inpVal = inputValidation
-
-    if problem_type == "classification":
-        mlOuts = {"accuracyTrain": accuracyTrain,
-                "accuracyTest": accuracyTest,
-                "precsRecs": {"macroPrecTrain": macroPrecTrain,
-                                "microPrecTrain": microPrecTrain,
-                                "macroRecallTrain": macroRecallTrain,
-                                "microRecallTrain": microRecallTrain,
-                                "macroPrecTest": macroPrecTest,
-                                "microPrecTest": microPrecTest,
-                                "macroRecallTest": macroRecallTest,
-                                "microRecallTest": microRecallTest
-                },
-                "repImageCreated": repImageCreated
-        }
-    else:
-        mlOuts = {"accuracyTrain": accuracyTrain,
-                "accuracyTest": accuracyTest,
-                "precsRecs": "",
-                "repImageCreated": repImageCreated
-        }
+    # Define outputs
+    outputs = {
+        'model_metrics': model_metrics,
+        'repImageCreated': repImageCreated,
+    }
 
     if (repImageBase64):
-        mlOuts['repImageBase64'] = repImageBase64
+        outputs['repImageBase64'] = repImageBase64
 
-    return {"mlOuts": mlOuts, "inputValidation": inputValidation}
+    return {'mlOuts': outputs, 'inputValidation': inputValidation}
 
 # def machineLearnerTimed(supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, datasetName):
 #     cwd = os.getcwd()
