@@ -446,11 +446,11 @@ export function FormModelOutputs(props) {
     const modelOutputs = props.modelOutputs
     const modelMetrics = modelOutputs['model_metrics']
     const repImageCreated = modelOutputs['repImageCreated']
-    const repImageBase64 = modelOutputs['repImageBase64']
+    const graph_image_base_64 = modelOutputs['graph_image_base_64']
 
     const repImageSrc = !modelMetrics?.train_accuracy ? representationIcon
         : !repImageCreated ? representationNAIcon
-        : `data:image/png;base64,${repImageBase64}`
+        : `data:image/png;base64,${graph_image_base_64}`
 
     return (
         <div>

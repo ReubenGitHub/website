@@ -39,7 +39,7 @@ def scale_data(train_feature_data, test_feature_data, continuous_features, model
     # Ensure scale is defined
     scale = None
 
-    # If there are continuous features and scaling is required due to the model type
+    # If there are continuous features and scaling is required for this model type
     if len(continuous_features) > 0 and (model_type in ['LinReg', 'PolyFit', 'KNN']):
         scale = StandardScaler()
 

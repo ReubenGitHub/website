@@ -4,6 +4,9 @@ from .data_handling.split_data import split_data_into_train_and_test
 from .data_handling.scale_data import scale_data
 from .models.train_model import train_model
 from .models.evaluate import calculate_model_metrics
+from .models.graphing.encode_image import encode_graph_image
+from .models.graphing.graph_types.one_d_function_plot import generate_1d_function_plot
+
 from xml.dom.minicompat import StringTypes
 import numpy
 import matplotlib
@@ -130,7 +133,7 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
     )
 
     # Default initialization to avoid checking for non-existence later
-    repImageBase64 = None
+    graph_image_base_64 = None
 
     # Draw/plot the model tree/3d training data
     repImageCreated=True
@@ -172,24 +175,26 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
                 plt.xlabel(train_feature_data.columns[0])
                 plt.ylabel(train_feature_data.columns[1])
                 plt.legend(bbox_to_anchor=(1,1), loc="upper left")
-                repImageBase64 = encodeRepImage('plt', plt, format='png')
+                graph_image_base_64 = encode_graph_image('plt', plt, format='png')
             else:
                 data = tree.export_graphviz(model, out_file=None, feature_names=features, class_names=list(result_categories_map), max_depth=4, filled=True)
                 graph = pydotplus.graph_from_dot_data(data)
                 removeValuesFromNodes(graph)
-                repImageBase64 = encodeRepImage('graph', graph)
+                graph_image_base_64 = encode_graph_image('graph', graph)
         elif problem_type == "regression":
             if len(continuous_features) == 1 and len(categorical_features) == 0:
-                plt.scatter(train_feature_data, train_result_data, marker='o', color='#03bffe', label='Training Data')
-                xs = feature_data.iloc[:, 0]
-                xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200).reshape(-1,1)
-                zs = model.predict(xs)
-                plt.xlabel(train_feature_data.columns[0])
-                plt.ylabel(result)
-                plt.plot( xs, zs, color="#fe4203", label='Model')
-                plt.scatter(test_feature_data, test_result_data, marker='x', color='#ff845b', label='Testing Data')
-                plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-                repImageBase64 = encodeRepImage('plt', plt, format='png')
+                graph_image_base_64 = generate_1d_function_plot(
+                    model,
+                    problem_type,
+                    continuous_features,
+                    categorical_features,
+                    result,
+                    train_feature_data,
+                    test_feature_data,
+                    train_result_data,
+                    test_result_data,
+                    scale
+                )
             elif len(continuous_features) == 2 and len(categorical_features) == 0:
                 fig = plt.figure()
                 ax = fig.add_subplot(projection='3d')
@@ -217,12 +222,12 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
                 surf._edgecolors2d = surf._edgecolor3d
                 surf._facecolors2d = surf._facecolor3d
                 ax.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-                repImageBase64 = encodeRepImage('plt', plt, format='png')
+                graph_image_base_64 = encode_graph_image('plt', plt, format='png')
             else:
                 data = tree.export_graphviz(model, out_file=None, feature_names=features, max_depth=4, filled=True)
                 graph = pydotplus.graph_from_dot_data(data)
                 removeValuesFromNodes(graph)
-                repImageBase64 = encodeRepImage('graph', graph)
+                graph_image_base_64 = encode_graph_image('graph', graph)
         else:
             repImageCreated=False
     elif model_type == "KNN":
@@ -263,19 +268,20 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
             plt.xlabel(train_feature_data.columns[0])
             plt.ylabel(train_feature_data.columns[1])
             plt.legend(bbox_to_anchor=(1,1), loc="upper left")
-            repImageBase64 = encodeRepImage('plt', plt, format='png')
+            graph_image_base_64 = encode_graph_image('plt', plt, format='png')
         elif problem_type == "regression" and len(continuous_features) == 1 and len(categorical_features) == 0:
-            plt.scatter(train_feature_data, train_result_data, marker='o', color='#03bffe', label='Training Data')
-            xs = feature_data.iloc[:, 0]
-            xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
-            xsScaled = scale.transform(xs.reshape(-1,1))
-            zs = model.predict( xsScaled )
-            plt.xlabel(train_feature_data.columns[0])
-            plt.ylabel(result)
-            plt.plot( xs, zs, color="#fe4203", label='Model')
-            plt.scatter(test_feature_data, test_result_data, marker='x', color='#ff845b', label='Testing Data')
-            plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-            repImageBase64 = encodeRepImage('plt', plt, format='png')
+            graph_image_base_64 = generate_1d_function_plot(
+                model,
+                problem_type,
+                continuous_features,
+                categorical_features,
+                result,
+                train_feature_data,
+                test_feature_data,
+                train_result_data,
+                test_result_data,
+                scale
+            )
         elif problem_type == "regression" and len(continuous_features) == 2 and len(categorical_features) == 0:
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
@@ -304,20 +310,23 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
             surf._edgecolors2d = surf._edgecolor3d
             surf._facecolors2d = surf._facecolor3d
             ax.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-            repImageBase64 = encodeRepImage('plt', plt, format='png')
+            graph_image_base_64 = encode_graph_image('plt', plt, format='png')
         else:
             repImageCreated=False
     elif model_type == "LinReg":
         if len(features) == 1 and len(categorical_features) == 0:
-            plt.scatter(train_feature_data, train_result_data, marker='o', color='#03bffe', label='Training Data')
-            xs = numpy.linspace(numpy.floor(min(train_feature_data.iloc[:, 0])),numpy.ceil(max(train_feature_data.iloc[:, 0])),100)
-            xsScaled = scale.transform(xs.reshape(-1,1))
-            plt.xlabel(train_feature_data.columns[0])
-            plt.ylabel(result)
-            plt.plot( xs, model.coef_[0]*xsScaled + model.predict(numpy.array([[0]])), color="#fe4203", label='Model')
-            plt.scatter(test_feature_data, test_result_data, marker='x', color='#ff845b', label='Testing Data')
-            plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-            repImageBase64 = encodeRepImage('plt', plt, format='png')
+            graph_image_base_64 = generate_1d_function_plot(
+                model,
+                problem_type,
+                continuous_features,
+                categorical_features,
+                result,
+                train_feature_data,
+                test_feature_data,
+                train_result_data,
+                test_result_data,
+                scale
+            )
         elif len(continuous_features) == 2 and len(categorical_features) == 0:
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
@@ -345,20 +354,23 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
             surf._edgecolors2d = surf._edgecolor3d
             surf._facecolors2d = surf._facecolor3d
             ax.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-            repImageBase64 = encodeRepImage('plt', plt, format='png')
+            graph_image_base_64 = encode_graph_image('plt', plt, format='png')
         else:
             repImageCreated=False
     elif model_type == "PolyFit":
         if len(features) == 1:
-            plt.scatter(train_feature_data, train_result_data, marker='o', color='#03bffe', label='Training Data')
-            xs = numpy.linspace(numpy.floor(min(train_feature_data.iloc[:, 0])),numpy.ceil(max(train_feature_data.iloc[:, 0])),100)
-            xsScaled = scale.transform(xs.reshape(-1,1))
-            plt.xlabel(train_feature_data.columns[0])
-            plt.ylabel(result)
-            plt.plot( xs, model(xsScaled), color="#fe4203", label='Model')
-            plt.scatter(test_feature_data, test_result_data, marker='x', color='#ff845b', label='Testing Data')
-            plt.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-            repImageBase64 = encodeRepImage('plt', plt, format='png')
+            graph_image_base_64 = generate_1d_function_plot(
+                model,
+                problem_type,
+                continuous_features,
+                categorical_features,
+                result,
+                train_feature_data,
+                test_feature_data,
+                train_result_data,
+                test_result_data,
+                scale
+            )
         else:
             repImageCreated=False
 
@@ -393,8 +405,8 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
         'repImageCreated': repImageCreated,
     }
 
-    if (repImageBase64):
-        outputs['repImageBase64'] = repImageBase64
+    if (graph_image_base_64):
+        outputs['graph_image_base_64'] = graph_image_base_64
 
     return {'mlOuts': outputs, 'inputValidation': inputValidation}
 
@@ -421,30 +433,6 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
 #         print(accTest)
 #         print(inpVal)
 #         return {"accuracyTrain": accTrain, "accuracyTest": accTest, "inputValidation": inpVal}
-
-def encodeRepImage(type, imageObject, **options):
-    """
-    Encodes a model representation image object to a base64 string.
-
-    Args:
-        imageObject: The image object (Matplotlib plot or graph).
-        **options: Additional keyword arguments to pass to `savefig` if using plt.
-
-    Returns:
-        A base64-encoded string of the image.
-    """
-    repImageBuffer = io.BytesIO()
-
-    if (type == 'plt'):
-        imageObject.savefig(repImageBuffer, bbox_inches='tight', **options)
-    elif (type == 'graph'):
-        imageObject.write_png(repImageBuffer)
-
-    repImageBuffer.seek(0)
-    repImageBase64 = base64.b64encode(repImageBuffer.read()).decode('utf-8')
-    repImageBuffer.close()
-
-    return repImageBase64
 
 def removeValuesFromNodes(graph):
     for node in graph.get_node_list():
