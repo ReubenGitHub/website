@@ -6,6 +6,7 @@ from .models.train_model import train_model
 from .models.evaluate import calculate_model_metrics
 from .models.graphing.encode_image import encode_graph_image
 from .models.graphing.graph_types.one_d_function_plot import generate_1d_function_plot
+from .models.graphing.graph_types.two_d_function_plot import generate_2d_function_plot
 
 from xml.dom.minicompat import StringTypes
 import numpy
@@ -196,33 +197,18 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
                     scale
                 )
             elif len(continuous_features) == 2 and len(categorical_features) == 0:
-                fig = plt.figure()
-                ax = fig.add_subplot(projection='3d')
-                xs = train_feature_data.iloc[:, 0].reset_index(drop=True)
-                ys = train_feature_data.iloc[:, 1].reset_index(drop=True)
-                zs = train_result_data.reset_index(drop=True)
-                ax.scatter(xs, ys, zs, marker='o', color='#03bffe', label='Training Data')
-                xs = feature_data.iloc[:, 0]
-                ys = feature_data.iloc[:, 1]
-                xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
-                ys = numpy.linspace(int(numpy.floor(min(ys)))-1,int(numpy.ceil(max(ys)))+1,200)
-                xs, ys = numpy.meshgrid( xs, ys )
-                coords = numpy.vstack([xs.ravel(), ys.ravel()]).transpose()
-                zs = model.predict(coords)
-                zs = zs.reshape(xs.shape)
-                surf = ax.plot_surface(xs, ys, zs, alpha = 0.5, cmap='copper', color="#03bffe", label='Model')
-                #plot 3d testing data
-                xs = test_feature_data.iloc[:, 0].reset_index(drop=True)
-                ys = test_feature_data.iloc[:, 1].reset_index(drop=True)
-                zs = test_result_data.reset_index(drop=True)
-                ax.scatter(xs, ys, zs, marker='x', color='#ff845b', label='Testing Data')
-                ax.set_xlabel(train_feature_data.columns[0])
-                ax.set_ylabel(train_feature_data.columns[1])
-                ax.set_zlabel(result)
-                surf._edgecolors2d = surf._edgecolor3d
-                surf._facecolors2d = surf._facecolor3d
-                ax.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-                graph_image_base_64 = encode_graph_image('plt', plt, format='png')
+                graph_image_base_64 = generate_2d_function_plot(
+                    model,
+                    problem_type,
+                    continuous_features,
+                    categorical_features,
+                    result,
+                    train_feature_data,
+                    test_feature_data,
+                    train_result_data,
+                    test_result_data,
+                    scale
+                )
             else:
                 data = tree.export_graphviz(model, out_file=None, feature_names=features, max_depth=4, filled=True)
                 graph = pydotplus.graph_from_dot_data(data)
@@ -283,34 +269,18 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
                 scale
             )
         elif problem_type == "regression" and len(continuous_features) == 2 and len(categorical_features) == 0:
-            fig = plt.figure()
-            ax = fig.add_subplot(projection='3d')
-            xs = train_feature_data.iloc[:, 0].reset_index(drop=True)
-            ys = train_feature_data.iloc[:, 1].reset_index(drop=True)
-            zs = train_result_data.reset_index(drop=True)
-            ax.scatter(xs, ys, zs, marker='o', color='#03bffe', label='Training Data')
-            xs = feature_data.iloc[:, 0]
-            ys = feature_data.iloc[:, 1]
-            xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
-            ys = numpy.linspace(int(numpy.floor(min(ys)))-1,int(numpy.ceil(max(ys)))+1,200)
-            xs, ys = numpy.meshgrid( xs, ys )
-            coords = numpy.vstack([xs.ravel(), ys.ravel()])
-            coordsScaled = scale.transform( coords.transpose() )
-            zs = model.predict( coordsScaled )
-            zs = zs.reshape(xs.shape)
-            surf = ax.plot_surface(xs, ys, zs, alpha = 0.5, cmap='copper', color="#03bffe", label='Model')
-            #plot 3d testing data
-            xs = test_feature_data.iloc[:, 0].reset_index(drop=True)
-            ys = test_feature_data.iloc[:, 1].reset_index(drop=True)
-            zs = test_result_data.reset_index(drop=True)
-            ax.scatter(xs, ys, zs, marker='x', color='#ff845b', label='Testing Data')
-            ax.set_xlabel(train_feature_data.columns[0])
-            ax.set_ylabel(train_feature_data.columns[1])
-            ax.set_zlabel(result)
-            surf._edgecolors2d = surf._edgecolor3d
-            surf._facecolors2d = surf._facecolor3d
-            ax.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-            graph_image_base_64 = encode_graph_image('plt', plt, format='png')
+            graph_image_base_64 = generate_2d_function_plot(
+                model,
+                problem_type,
+                continuous_features,
+                categorical_features,
+                result,
+                train_feature_data,
+                test_feature_data,
+                train_result_data,
+                test_result_data,
+                scale
+            )
         else:
             repImageCreated=False
     elif model_type == "LinReg":
@@ -328,33 +298,18 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
                 scale
             )
         elif len(continuous_features) == 2 and len(categorical_features) == 0:
-            fig = plt.figure()
-            ax = fig.add_subplot(projection='3d')
-            xs = train_feature_data.iloc[:, 0]
-            ys = train_feature_data.iloc[:, 1]
-            zs = train_result_data
-            ax.scatter(xs, ys, zs, marker='o', color='#03bffe', label='Training Data')
-            xs, ys = numpy.mgrid[ range(int(numpy.floor(min(xs))),int(numpy.ceil(max(xs)))), range(int(numpy.floor(min(ys))),int(numpy.ceil(max(ys)))) ]
-            coords = numpy.vstack([xs.ravel(), ys.ravel()])
-            coordsScaled = scale.transform( coords.transpose() )
-            xsScaled = coordsScaled[:,0]
-            ysScaled = coordsScaled[:,1]
-            xsScaled = xsScaled.reshape(len(xs),len(xs[0]))
-            ysScaled = ysScaled.reshape(len(xs),len(xs[0]))
-            zs = model.coef_[0]*xsScaled + model.coef_[1]*ysScaled + model.predict(numpy.array([[0, 0]]))
-            surf = ax.plot_surface(xs, ys, zs, alpha = 0.5, cmap='copper', color="#03bffe", label='Model')
-            #plot 3d testing data
-            xs = test_feature_data.iloc[:, 0]
-            ys = test_feature_data.iloc[:, 1]
-            zs = test_result_data
-            ax.scatter(xs, ys, zs, marker='x', color='#ff845b', label='Testing Data')
-            ax.set_xlabel(train_feature_data.columns[0])
-            ax.set_ylabel(train_feature_data.columns[1])
-            ax.set_zlabel(result)
-            surf._edgecolors2d = surf._edgecolor3d
-            surf._facecolors2d = surf._facecolor3d
-            ax.legend(bbox_to_anchor=(0.5,1.1), loc="upper center", ncol=3)
-            graph_image_base_64 = encode_graph_image('plt', plt, format='png')
+            graph_image_base_64 = generate_2d_function_plot(
+                model,
+                problem_type,
+                continuous_features,
+                categorical_features,
+                result,
+                train_feature_data,
+                test_feature_data,
+                train_result_data,
+                test_result_data,
+                scale
+            )
         else:
             repImageCreated=False
     elif model_type == "PolyFit":
