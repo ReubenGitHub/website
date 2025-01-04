@@ -71,11 +71,7 @@ def generate_1d_function_plot(
     min_feature_value = numpy.floor(min(all_feature_values))
     max_feature_value = numpy.ceil(max(all_feature_values))
     feature_range = numpy.linspace(int(min_feature_value)-1, int(max_feature_value)+1, 200).reshape(-1,1)
-    # If scale is provided, transform feature range
-    if (scale is not None):
-        prediction_points = scale.transform(feature_range)
-    else:
-        prediction_points = feature_range
+    prediction_points = scale.transform(feature_range) if scale is not None else feature_range
     predictions = model.predict(prediction_points)
     plt.plot(feature_range, predictions, color='#fe4203', label='Model')
 

@@ -4,28 +4,17 @@ from .data_handling.split_data import split_data_into_train_and_test
 from .data_handling.scale_data import scale_data
 from .models.train_model import train_model
 from .models.evaluate import calculate_model_metrics
-from .models.graphing.encode_image import encode_graph_image
+from .models.graphing.generate_image import generate_model_graph
 from .models.graphing.graph_types.one_d_function_plot import generate_1d_function_plot
 from .models.graphing.graph_types.two_d_function_plot import generate_2d_function_plot
-
-from xml.dom.minicompat import StringTypes
+from .models.graphing.graph_types.two_d_region_plot import generate_2d_region_plot
+from .models.graphing.graph_types.tree_graph import generate_tree_graph
 import numpy
 import matplotlib
-from sklearn.externals._packaging.version import _parse_version_parts
 matplotlib.use('Agg')
-from matplotlib import cm
-import matplotlib.pyplot as plt
-import matplotlib.image as pltimg3
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 # from scipy import stats
-from sklearn import tree
 import pandas
-import pydotplus
-import colorsys
 from contextlib import contextmanager
-import io
-import base64
-import re
 # import threading
 # import _thread
 # import multiprocessing
@@ -133,204 +122,21 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
         test_result_data
     )
 
-    # Default initialization to avoid checking for non-existence later
-    graph_image_base_64 = None
-
-    # Draw/plot the model tree/3d training data
-    repImageCreated=True
-    if model_type == "DT":
-        if problem_type == "classification":
-            if len(continuous_features) == 2 and len(categorical_features) == 0:
-                train_result_data = train_result_data.reset_index(drop=True)
-                test_result_data = test_result_data.reset_index(drop=True)
-                xsTest = test_feature_data.iloc[:, 0].reset_index(drop=True)
-                ysTest = test_feature_data.iloc[:, 1].reset_index(drop=True)
-                xsTrain = train_feature_data.iloc[:, 0].reset_index(drop=True)
-                ysTrain = train_feature_data.iloc[:, 1].reset_index(drop=True)
-                xs = feature_data.iloc[:, 0]
-                ys = feature_data.iloc[:, 1]
-                xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
-                ys = numpy.linspace(int(numpy.floor(min(ys)))-1,int(numpy.ceil(max(ys)))+1,200)
-                xs, ys = numpy.meshgrid( xs, ys )
-                coords = numpy.vstack([xs.ravel(), ys.ravel()]).transpose()
-                zs = model.predict(coords)
-                lightcmap = cm.get_cmap('rainbow', len(result_categories_map))
-                darkcmap = cm.get_cmap('rainbow', len(result_categories_map))
-                lightcolours=[]
-                listOfzs = list(set(zs))
-                listOfzs.sort()
-                for ind in range(len(result_categories_map)):
-                    c = colorsys.rgb_to_hls(lightcmap(ind)[0], lightcmap(ind)[1], lightcmap(ind)[2])
-                    lightcolours.append( tuple(colorsys.hls_to_rgb(c[0], 1 - 0.5 * (1 - c[1]), c[2]*0.7)) )
-                lightcmap = cm.colors.ListedColormap(lightcolours)
-                zs = zs.reshape(xs.shape)
-                plt.pcolormesh(xs, ys, zs, cmap=lightcmap, vmin=min(result_categories_map.values()), vmax=max(result_categories_map.values()))
-                count = 0
-                for res in result_categories_map:
-                    count += 1
-                    dictRes = result_categories_map[res]
-                    indices = numpy.where(train_result_data == dictRes)[0]
-                    plt.scatter(xsTrain[indices], ysTrain[indices], color=darkcmap(dictRes), marker='o', label=(count>18)*"_"+res[0:8])
-                    indices = numpy.where(test_result_data == dictRes)[0]
-                    plt.scatter(xsTest[indices], ysTest[indices], color=darkcmap(dictRes), marker='x')
-                plt.xlabel(train_feature_data.columns[0])
-                plt.ylabel(train_feature_data.columns[1])
-                plt.legend(bbox_to_anchor=(1,1), loc="upper left")
-                graph_image_base_64 = encode_graph_image('plt', plt, format='png')
-            else:
-                data = tree.export_graphviz(model, out_file=None, feature_names=features, class_names=list(result_categories_map), max_depth=4, filled=True)
-                graph = pydotplus.graph_from_dot_data(data)
-                removeValuesFromNodes(graph)
-                graph_image_base_64 = encode_graph_image('graph', graph)
-        elif problem_type == "regression":
-            if len(continuous_features) == 1 and len(categorical_features) == 0:
-                graph_image_base_64 = generate_1d_function_plot(
-                    model,
-                    problem_type,
-                    continuous_features,
-                    categorical_features,
-                    result,
-                    train_feature_data,
-                    test_feature_data,
-                    train_result_data,
-                    test_result_data,
-                    scale
-                )
-            elif len(continuous_features) == 2 and len(categorical_features) == 0:
-                graph_image_base_64 = generate_2d_function_plot(
-                    model,
-                    problem_type,
-                    continuous_features,
-                    categorical_features,
-                    result,
-                    train_feature_data,
-                    test_feature_data,
-                    train_result_data,
-                    test_result_data,
-                    scale
-                )
-            else:
-                data = tree.export_graphviz(model, out_file=None, feature_names=features, max_depth=4, filled=True)
-                graph = pydotplus.graph_from_dot_data(data)
-                removeValuesFromNodes(graph)
-                graph_image_base_64 = encode_graph_image('graph', graph)
-        else:
-            repImageCreated=False
-    elif model_type == "KNN":
-        if problem_type == "classification" and len(continuous_features) == 2 and len(categorical_features) == 0:
-            train_result_data = train_result_data.reset_index(drop=True)
-            test_result_data = test_result_data.reset_index(drop=True)
-            xsTest = test_feature_data.iloc[:, 0].reset_index(drop=True)
-            ysTest = test_feature_data.iloc[:, 1].reset_index(drop=True)
-            xsTrain = train_feature_data.iloc[:, 0].reset_index(drop=True)
-            ysTrain = train_feature_data.iloc[:, 1].reset_index(drop=True)
-            xs = feature_data.iloc[:, 0]
-            ys = feature_data.iloc[:, 1]
-            xs = numpy.linspace(int(numpy.floor(min(xs)))-1,int(numpy.ceil(max(xs)))+1,200)
-            ys = numpy.linspace(int(numpy.floor(min(ys)))-1,int(numpy.ceil(max(ys)))+1,200)
-            xs, ys = numpy.meshgrid( xs, ys )
-            coords = numpy.vstack([xs.ravel(), ys.ravel()])
-            coordsScaled = scale.transform( coords.transpose() )
-            zs = model.predict( coordsScaled )
-            lightcmap = cm.get_cmap('rainbow', len(result_categories_map))
-            darkcmap = cm.get_cmap('rainbow', len(result_categories_map))
-            lightcolours=[]
-            listOfzs = list(set(zs))
-            listOfzs.sort()
-            for ind in range(len(result_categories_map)):
-                c = colorsys.rgb_to_hls(lightcmap(ind)[0], lightcmap(ind)[1], lightcmap(ind)[2])
-                lightcolours.append( tuple(colorsys.hls_to_rgb(c[0], 1 - 0.5 * (1 - c[1]), c[2]*0.7)) )
-            lightcmap = cm.colors.ListedColormap(lightcolours)
-            zs = zs.reshape(xs.shape)
-            plt.pcolormesh(xs, ys, zs, cmap=lightcmap, vmin=min(result_categories_map.values()), vmax=max(result_categories_map.values()))
-            count = 0
-            for res in result_categories_map:
-                count += 1
-                dictRes = result_categories_map[res]
-                indices = numpy.where(train_result_data == dictRes)[0]
-                plt.scatter(xsTrain[indices], ysTrain[indices], color=darkcmap(dictRes), marker='o', label=(count>18)*"_"+res[0:8])
-                indices = numpy.where(test_result_data == dictRes)[0]
-                plt.scatter(xsTest[indices], ysTest[indices], color=darkcmap(dictRes), marker='x')
-            plt.xlabel(train_feature_data.columns[0])
-            plt.ylabel(train_feature_data.columns[1])
-            plt.legend(bbox_to_anchor=(1,1), loc="upper left")
-            graph_image_base_64 = encode_graph_image('plt', plt, format='png')
-        elif problem_type == "regression" and len(continuous_features) == 1 and len(categorical_features) == 0:
-            graph_image_base_64 = generate_1d_function_plot(
-                model,
-                problem_type,
-                continuous_features,
-                categorical_features,
-                result,
-                train_feature_data,
-                test_feature_data,
-                train_result_data,
-                test_result_data,
-                scale
-            )
-        elif problem_type == "regression" and len(continuous_features) == 2 and len(categorical_features) == 0:
-            graph_image_base_64 = generate_2d_function_plot(
-                model,
-                problem_type,
-                continuous_features,
-                categorical_features,
-                result,
-                train_feature_data,
-                test_feature_data,
-                train_result_data,
-                test_result_data,
-                scale
-            )
-        else:
-            repImageCreated=False
-    elif model_type == "LinReg":
-        if len(features) == 1 and len(categorical_features) == 0:
-            graph_image_base_64 = generate_1d_function_plot(
-                model,
-                problem_type,
-                continuous_features,
-                categorical_features,
-                result,
-                train_feature_data,
-                test_feature_data,
-                train_result_data,
-                test_result_data,
-                scale
-            )
-        elif len(continuous_features) == 2 and len(categorical_features) == 0:
-            graph_image_base_64 = generate_2d_function_plot(
-                model,
-                problem_type,
-                continuous_features,
-                categorical_features,
-                result,
-                train_feature_data,
-                test_feature_data,
-                train_result_data,
-                test_result_data,
-                scale
-            )
-        else:
-            repImageCreated=False
-    elif model_type == "PolyFit":
-        if len(features) == 1:
-            graph_image_base_64 = generate_1d_function_plot(
-                model,
-                problem_type,
-                continuous_features,
-                categorical_features,
-                result,
-                train_feature_data,
-                test_feature_data,
-                train_result_data,
-                test_result_data,
-                scale
-            )
-        else:
-            repImageCreated=False
-
-    # Ensure plot object always clear for next request
-    plt.clf()
+    # Generate model graph
+    graph_image_base_64 = generate_model_graph(
+        model,
+        model_type,
+        problem_type,
+        continuous_features,
+        categorical_features,
+        result,
+        train_feature_data,
+        test_feature_data,
+        train_result_data,
+        test_result_data,
+        scale,
+        result_categories_map
+    )
 
     print("REPRESENTATION CREATED AND SAVED, NOW SAVING MODEL SETTINGS/PARAMS")
     modelSettings = {
@@ -357,11 +163,8 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
     # Define outputs
     outputs = {
         'model_metrics': model_metrics,
-        'repImageCreated': repImageCreated,
+        'graph_image_base_64': graph_image_base_64
     }
-
-    if (graph_image_base_64):
-        outputs['graph_image_base_64'] = graph_image_base_64
 
     return {'mlOuts': outputs, 'inputValidation': inputValidation}
 
@@ -388,14 +191,6 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
 #         print(accTest)
 #         print(inpVal)
 #         return {"accuracyTrain": accTrain, "accuracyTest": accTest, "inputValidation": inpVal}
-
-def removeValuesFromNodes(graph):
-    for node in graph.get_node_list():
-        label = node.get('label')
-        if label:
-            # Assumes values are in "value = [...]" format, remove "value = [...]\\n"
-            newLabel = re.sub(r"value = \[.*?\]\\n", "", label)
-            node.set("label", newLabel)
 
 #Evaluate model at some particular value
 def modelPrediction(predictAt, session_id):

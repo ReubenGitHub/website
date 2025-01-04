@@ -445,12 +445,13 @@ export function FormPredictAt(props) {
 export function FormModelOutputs(props) {
     const modelOutputs = props.modelOutputs
     const modelMetrics = modelOutputs['model_metrics']
-    const repImageCreated = modelOutputs['repImageCreated']
-    const graph_image_base_64 = modelOutputs['graph_image_base_64']
+    const graphImageBase64 = modelOutputs['graph_image_base_64']
 
-    const repImageSrc = !modelMetrics?.train_accuracy ? representationIcon
-        : !repImageCreated ? representationNAIcon
-        : `data:image/png;base64,${graph_image_base_64}`
+    const repImageSrc = !modelMetrics?.train_accuracy
+        ? representationIcon
+        : !graphImageBase64
+            ? representationNAIcon
+            : `data:image/png;base64,${graphImageBase64}`
 
     return (
         <div>
