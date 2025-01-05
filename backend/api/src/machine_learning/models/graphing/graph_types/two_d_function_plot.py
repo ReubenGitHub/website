@@ -1,6 +1,6 @@
 from ..encode_image import encode_graph_image
+from ..graph_utils import generate_feature_arrays, generate_feature_grid
 import matplotlib.pyplot as plt
-import numpy
 
 def generate_2d_function_plot(
     model,
@@ -67,21 +67,17 @@ def generate_2d_function_plot(
     axes = figure.add_subplot(projection='3d')
 
     # Plot training and testing data
-    train_feature_1_data = train_feature_data.iloc[:, 0]
-    train_feature_2_data = train_feature_data.iloc[:, 1]
+    train_feature_arrays_by_feature = generate_feature_arrays(train_feature_data, continuous_features)
     axes.scatter(
-        train_feature_1_data,
-        train_feature_2_data,
+        *train_feature_arrays_by_feature.values(),
         train_result_data,
         marker='o',
         color='#03bffe',
         label='Training Data'
     )
-    test_feature_1_data = test_feature_data.iloc[:, 0]
-    test_feature_2_data = test_feature_data.iloc[:, 1]
+    test_feature_arrays_by_feature = generate_feature_arrays(test_feature_data, continuous_features)
     axes.scatter(
-        test_feature_1_data,
-        test_feature_2_data,
+        *test_feature_arrays_by_feature.values(),
         test_result_data,
         marker='x',
         color='#ff845b',
@@ -89,21 +85,15 @@ def generate_2d_function_plot(
     )
 
     # Plot model predictions
-    all_feature_1_values = numpy.concatenate((train_feature_1_data, test_feature_1_data))
-    all_feature_2_values = numpy.concatenate((train_feature_2_data, test_feature_2_data))
-    min_feature_1_value = numpy.floor(min(all_feature_1_values))
-    max_feature_1_value = numpy.ceil(max(all_feature_1_values))
-    min_feature_2_value = numpy.floor(min(all_feature_2_values))
-    max_feature_2_value = numpy.ceil(max(all_feature_2_values))
-    feature_1_range = numpy.linspace(int(min_feature_1_value)-1, int(max_feature_1_value)+1, 200)
-    feature_2_range = numpy.linspace(int(min_feature_2_value)-1, int(max_feature_2_value)+1, 200)
-    feature_1_grid, feature_2_grid = numpy.meshgrid(feature_1_range, feature_2_range)
-    feature_grid = numpy.vstack([feature_1_grid.ravel(), feature_2_grid.ravel()]).transpose()
+    feature_grids_by_feature, feature_grid = generate_feature_grid(
+        train_feature_data,
+        test_feature_data,
+        continuous_features
+    )
     prediction_points = scale.transform(feature_grid) if scale is not None else feature_grid
-    predictions = model.predict(prediction_points).reshape(feature_1_grid.shape)
+    predictions = model.predict(prediction_points).reshape(feature_grids_by_feature[continuous_features[0]].shape)
     surface = axes.plot_surface(
-        feature_1_grid,
-        feature_2_grid,
+        *feature_grids_by_feature.values(),
         predictions,
         alpha = 0.5,
         cmap='copper',
@@ -114,8 +104,8 @@ def generate_2d_function_plot(
     surface._facecolors2d = surface._facecolor3d
 
     # Add axis labels
-    axes.set_xlabel(train_feature_data.columns[0])
-    axes.set_ylabel(train_feature_data.columns[1])
+    axes.set_xlabel(continuous_features[0])
+    axes.set_ylabel(continuous_features[1])
     axes.set_zlabel(result)
 
     # Add legend

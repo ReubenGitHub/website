@@ -1,4 +1,5 @@
 from ..encode_image import encode_graph_image
+from ..graph_utils import generate_feature_arrays, generate_feature_grid
 import matplotlib.pyplot as plt
 import numpy
 import colorsys
@@ -78,26 +79,16 @@ def generate_2d_region_plot(
     lightcmap = cm.colors.ListedColormap(lightcolours)
 
     # Plot model predictions
-    train_feature_1_data = train_feature_data.iloc[:, 0]
-    train_feature_2_data = train_feature_data.iloc[:, 1]
-    test_feature_1_data = test_feature_data.iloc[:, 0]
-    test_feature_2_data = test_feature_data.iloc[:, 1]
-    all_feature_1_values = numpy.concatenate((train_feature_1_data, test_feature_1_data))
-    all_feature_2_values = numpy.concatenate((train_feature_2_data, test_feature_2_data))
-    min_feature_1_value = numpy.floor(min(all_feature_1_values))
-    max_feature_1_value = numpy.ceil(max(all_feature_1_values))
-    min_feature_2_value = numpy.floor(min(all_feature_2_values))
-    max_feature_2_value = numpy.ceil(max(all_feature_2_values))
-    feature_1_range = numpy.linspace(int(min_feature_1_value)-1, int(max_feature_1_value)+1, 200)
-    feature_2_range = numpy.linspace(int(min_feature_2_value)-1, int(max_feature_2_value)+1, 200)
-    feature_1_grid, feature_2_grid = numpy.meshgrid( feature_1_range, feature_2_range )
-    feature_grid = numpy.vstack([feature_1_grid.ravel(), feature_2_grid.ravel()]).transpose()
+    feature_grids_by_feature, feature_grid = generate_feature_grid(
+        train_feature_data,
+        test_feature_data,
+        continuous_features
+    )
     prediction_points = scale.transform(feature_grid) if scale is not None else feature_grid
-    predictions = model.predict(prediction_points).reshape(feature_1_grid.shape)
+    predictions = model.predict(prediction_points).reshape(feature_grids_by_feature[continuous_features[0]].shape)
     result_encoded_values = result_categories_map.values()
     plt.pcolormesh(
-        feature_1_grid,
-        feature_2_grid,
+        *feature_grids_by_feature.values(),
         predictions,
         cmap=lightcmap,
         vmin=min(result_encoded_values),
@@ -114,16 +105,16 @@ def generate_2d_region_plot(
         result_encoded_value = result_categories_map[result]
         train_indices_with_result = train_result_data[train_result_data == result_encoded_value].index
         plt.scatter(
-            train_feature_1_data[train_indices_with_result],
-            train_feature_2_data[train_indices_with_result],
+            train_feature_data[continuous_features[0]][train_indices_with_result],
+            train_feature_data[continuous_features[1]][train_indices_with_result],
             color=darkcmap(result_encoded_value),
             marker='o',
             label=hide_result*"_"+result[0:8]
         )
         test_indices_with_result = test_result_data[test_result_data == result_encoded_value].index
         plt.scatter(
-            test_feature_1_data[test_indices_with_result],
-            test_feature_2_data[test_indices_with_result],
+            test_feature_data[continuous_features[0]][test_indices_with_result],
+            test_feature_data[continuous_features[1]][test_indices_with_result],
             color=darkcmap(result_encoded_value),
             marker='x'
         )
