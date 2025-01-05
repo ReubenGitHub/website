@@ -58,22 +58,9 @@ from contextlib import contextmanager
 
 
 def machineLearner(supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, session_id): #, accTrain, accTest, inpVal):
-    # Disable pandas warning "A value is trying to be set on a copy of a slice from a DataFrame"
-    pandas.options.mode.chained_assignment = None  # default='warn'
-
-    #Method of learning: DT, LinReg, PolyFit (1d), ...  . poly_degree degress of polynomial if PolyFit selected
-    #Features to analyse, independent X, and proportion of test vs train. Cts followed by categorical
-    features = continuous_features + categorical_features
-    fields_of_interest = features + [result]
-    global ncts
-    global ncate
-    global ntotal
-    ncts = len(continuous_features)
-    ncate = len(categorical_features)
-    ntotal = ncts + ncate
-
     # Get dataset from session data
     dataset = session_context_manager.get_session_data(session_id)['dataset']
+    fields_of_interest = continuous_features + categorical_features + [result]
     dataset = dataset.dropna(axis=0, how='any', thresh=None, subset=fields_of_interest, inplace=False)
 
     # Preprocess data to split out feature and result data, and handle category encoding (for categorical features or results)
@@ -112,6 +99,19 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
     model = train_model(train_feature_data_scaled, train_result_data, model_type, training_parameters)
     session_context_manager.add_model(session_id, model)
 
+    # Save model settings
+    model_settings = {
+        'dataset': dataset,
+        'model_type': model_type,
+        'problem_type': problem_type,
+        'continuous_features': continuous_features,
+        'categorical_features': categorical_features,
+        'categorical_features_category_maps': categorical_features_category_maps,
+        'result_categories_map': result_categories_map,
+        'scale': scale
+    }
+    session_context_manager.add_model_settings(session_id, model_settings)
+
     # Calculate model metrics (accuracy etc...)
     model_metrics = calculate_model_metrics(
         model,
@@ -138,35 +138,20 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
         result_categories_map
     )
 
-    print("REPRESENTATION CREATED AND SAVED, NOW SAVING MODEL SETTINGS/PARAMS")
-    modelSettings = {
-        'probType': problem_type,
-        'model_type': model_type,
-        'features': features,
-        'continuous_features': continuous_features,
-        'categorical_features': categorical_features,
-        'categorical_features_category_maps': categorical_features_category_maps,
-        'result_categories_map': result_categories_map,
-        'dataset': dataset,
-        'scaler': scale
-    }
-
-    session_context_manager.add_model_settings(session_id, modelSettings)
-
-    print("SETTINGS SAVED, NOW SETTING UP INPUT VALIDATION AND EXPORTING")
-
-    # Create input validation object
-    inputValidation = []
-    for i in range(0, len(categorical_features)):
-        inputValidation.append(list(categorical_features_category_maps[categorical_features[i]].keys()))
+    # Define input validation object
+    allowed_feature_values_for_prediction = [
+        list(categorical_features_category_maps[feature].keys())
+        for feature in categorical_features
+    ]
 
     # Define outputs
     outputs = {
         'model_metrics': model_metrics,
-        'graph_image_base_64': graph_image_base_64
+        'graph_image_base_64': graph_image_base_64,
+        'allowed_feature_values_for_prediction': allowed_feature_values_for_prediction
     }
 
-    return {'mlOuts': outputs, 'inputValidation': inputValidation}
+    return outputs
 
 # def machineLearnerTimed(supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, datasetName):
 #     cwd = os.getcwd()
@@ -190,23 +175,24 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
 #         print(accTrain)
 #         print(accTest)
 #         print(inpVal)
-#         return {"accuracyTrain": accTrain, "accuracyTest": accTest, "inputValidation": inpVal}
+#         return {"accuracyTrain": accTrain, "accuracyTest": accTest, "allowed_feature_values_for_prediction": inpVal}
 
 #Evaluate model at some particular value
 def modelPrediction(predictAt, session_id):
     session_data = session_context_manager.get_session_data(session_id)
     model = session_data['model']
-    modelSettings = session_data['model_settings']
+    model_settings = session_data['model_settings']
 
-    problem_type = modelSettings['probType']
-    model_type = modelSettings['model_type']
-    features = modelSettings['features']
-    continuous_features = modelSettings['continuous_features']
-    categorical_features = modelSettings['categorical_features']
-    categorical_features_category_maps = modelSettings['categorical_features_category_maps']
-    result_categories_map = modelSettings['result_categories_map']
-    dataset = modelSettings['dataset']
-    scale = modelSettings['scaler']
+    problem_type = model_settings['problem_type']
+    model_type = model_settings['model_type']
+    continuous_features = model_settings['continuous_features']
+    categorical_features = model_settings['categorical_features']
+    categorical_features_category_maps = model_settings['categorical_features_category_maps']
+    result_categories_map = model_settings['result_categories_map']
+    dataset = model_settings['dataset']
+    scale = model_settings['scale']
+
+    features = continuous_features + categorical_features
 
     if model_type == 'DT':
         predictAtNumerical = predictAt.copy()

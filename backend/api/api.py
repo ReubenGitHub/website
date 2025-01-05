@@ -25,7 +25,7 @@ def get_current_time():
 @app.route('/api/mlModelFit', methods=['POST'])
 @cross_origin()
 def mlModelFit():
-    return {'mlModelOutputs': machine_learning.MachineLearner_Functions.machineLearner(
+    return machine_learning.MachineLearner_Functions.machineLearner(
         request.json['supervision'],
         request.json['problemtype'],
         request.json['mlmethod'],
@@ -35,7 +35,7 @@ def mlModelFit():
         request.json['resultparam'],
         request.json['testprop'],
         request.json['sessionId']
-    )}
+    )
 
 @app.route('/api/uploadDataset', methods=['POST'])
 @cross_origin()

@@ -69,16 +69,20 @@ export function MLerPage(props) {
                     sessionId: sessionId
                 })
             }).then(res => res.json())
-                .then(data => {setMlOuts(data.mlModelOutputs['mlOuts']);
+                .then(data => {
+                    setMlOuts({
+                        modelMetrics: data.model_metrics,
+                        graphImageBase64: data.graph_image_base_64
+                    })
                     setInputValidation({
                         features: inputs[4].concat(inputs[5]),
                         noOfCts: inputs[4].length,
-                        options: data.mlModelOutputs['inputValidation']
-                    });
-                    setDatasetResultParam(inputs[6]);
-                    setDatasetFeatures( inputs[4].concat(inputs[5]) );
-                    setLoadingModelFit(false);
-                    setPredictionTitle(true);
+                        options: data.allowed_feature_values_for_prediction
+                    })
+                    setDatasetResultParam(inputs[6])
+                    setDatasetFeatures(inputs[4].concat(inputs[5]))
+                    setLoadingModelFit(false)
+                    setPredictionTitle(true)
             });
         }
     }, [inputs]);

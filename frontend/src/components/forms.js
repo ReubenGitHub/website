@@ -347,7 +347,6 @@ export function FormPredictAt(props) {
     const [predictAt, setPredictAt] = useState([""]);
     const [predictValues, setPredictValues] = useState([""]);
     const [predictEnable, setPredictEnable] = useState(0);
-    // const validOptions = props.inputValidation['options'];
     const [inputValidation, setInputValidation] = useState({features: ["Features..."], noOfFeatures: ["0"], noOfCts: 0, options: [["Option"]]});
 
     const handleSubmit = (event) => {
@@ -440,12 +439,9 @@ export function FormPredictAt(props) {
         </form>
     )
 }
-// selected={getIndex(validOptions[(index-props.noOfCtsParams)], option)===3 }
 
 export function FormModelOutputs(props) {
-    const modelOutputs = props.modelOutputs
-    const modelMetrics = modelOutputs['model_metrics']
-    const graphImageBase64 = modelOutputs['graph_image_base_64']
+    const { modelMetrics, graphImageBase64 } = props.modelOutputs
 
     const repImageSrc = !modelMetrics?.train_accuracy
         ? representationIcon
