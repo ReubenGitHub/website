@@ -18,6 +18,8 @@ services:
             - '5000:5000'
         volumes:
             - ./:/app/
+            - /app/frontend/node_modules
+            - /app/frontend/build
         environment:
             - PYTHONUNBUFFERED=1 # To get python prints to show up in console/logs
             - FLASK_APP=api/api.py

@@ -5,19 +5,29 @@ ARG PYTHON_IMAGE_VERSION=${PYTHON_VERSION_NUMBER}-slim
 FROM python:${PYTHON_IMAGE_VERSION} AS backend-build
 ARG NODE_VERSION_NUMBER
 
-WORKDIR /app-dependencies
+WORKDIR /app
+
+# List files in /app before creating directories
+RUN echo "Before mkdir:" && ls -R /app || echo "Directory does not exist"
+
+# Create directories for backend and frontend explicitly
+RUN mkdir -p /app/backend /app/frontend
+
+# List files in /app after creating directories
+RUN echo "After mkdir:" && ls -R /app
+
 # Copy the frontend package file to install frontend dependencies from
-COPY frontend/package.json ./
+COPY frontend/package.json /app/frontend/
 # Copy the backend requirements file to install backend dependencies from
-COPY backend/requirements.txt ./
+COPY backend/requirements.txt /app/backend/
 
 # Install global dependencies for compiling C, and running both backend and frontend
 RUN apt-get update && \
     apt-get install -y build-essential graphviz && \
     curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION_NUMBER}.x | bash - && \
     apt-get install -y nodejs=${NODE_VERSION_NUMBER}.* npm && \
-    pip install -r requirements.txt && \
-    npm install
+    cd /app/backend && pip install -r requirements.txt && \
+    cd /app/frontend && npm install
 
 # Expose the necessary ports
 EXPOSE 5000
@@ -28,8 +38,6 @@ CMD ["sh", "-c", "\
     cd /app/backend/api/src/machine_learning/models/model_types/k_nearest_neighbours/custom_metric && \
     python3 setup.py build_ext --inplace && \
     echo 'Custom metric build completed' && \
-    ln -s /app-dependencies/node_modules /app/frontend/node_modules && \
-    echo 'Node modules symlinked' && \
     cd /app && \
     bash \
 "]
