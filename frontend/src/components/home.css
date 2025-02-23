@@ -1,0 +1,11 @@
+.hello-container {
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.section {
+    margin-bottom: 40px;
+}

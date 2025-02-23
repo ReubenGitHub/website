@@ -1,0 +1,22 @@
+.hello {
+    --transition: all 0.5s;
+    font-size: 50px;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    width: min-content;
+    font-family: 'Kanit';
+}
+
+.hello div {
+    display: flex;
+    transition: var(--transition);
+    justify-content: center;
+    align-items: center;
+}
+
+.hello div span {
+    display: inline-block;
+    transition: var(--transition);
+    line-height: 0.708;
+}
