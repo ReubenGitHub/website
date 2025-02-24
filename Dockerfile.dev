@@ -21,7 +21,7 @@ COPY frontend/package.json /app/frontend/
 # Copy the backend requirements file to install backend dependencies from
 COPY backend/requirements.txt /app/backend/
 
-# Install global dependencies for compiling C, and running both backend and frontend
+# Install global dependencies for frontend, backend, compiling C, and build custom metric
 RUN apt-get update && \
     apt-get install -y build-essential graphviz && \
     curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION_NUMBER}.x | bash - && \
@@ -29,11 +29,10 @@ RUN apt-get update && \
     cd /app/backend && pip install -r requirements.txt && \
     cd /app/frontend && npm install
 
-# Expose the necessary ports
 EXPOSE 5000
-# Set environment variables if necessary (optional)
+
 ENV FLASK_APP=backend/api/api.py
-# Command to build cython metric and symlink node modules to frontend app directory
+
 CMD ["sh", "-c", "\
     cd /app/backend/api/src/machine_learning/models/model_types/k_nearest_neighbours/custom_metric && \
     python3 setup.py build_ext --inplace && \

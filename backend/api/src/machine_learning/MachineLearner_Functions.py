@@ -9,6 +9,7 @@ from .models.graphing.graph_types.one_d_function_plot import generate_1d_functio
 from .models.graphing.graph_types.two_d_function_plot import generate_2d_function_plot
 from .models.graphing.graph_types.two_d_region_plot import generate_2d_region_plot
 from .models.graphing.graph_types.tree_graph import generate_tree_graph
+from .models.predict import predict
 import numpy
 import matplotlib
 matplotlib.use('Agg')
@@ -101,7 +102,7 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
 
     # Save model settings
     model_settings = {
-        'dataset': dataset,
+        'feature_data_columns': feature_data.columns.tolist(),
         'model_type': model_type,
         'problem_type': problem_type,
         'continuous_features': continuous_features,
@@ -189,54 +190,25 @@ def modelPrediction(predictAt, session_id):
     categorical_features = model_settings['categorical_features']
     categorical_features_category_maps = model_settings['categorical_features_category_maps']
     result_categories_map = model_settings['result_categories_map']
-    dataset = model_settings['dataset']
+    feature_data_columns = model_settings['feature_data_columns']
     scale = model_settings['scale']
 
     features = continuous_features + categorical_features
 
-    if model_type == 'DT':
-        predictAtNumerical = predictAt.copy()
-        for i in range(0,len(features)):
-            if features[i] in categorical_features:
-                category = features[i]
-                predictAtNumerical[i] = categorical_features_category_maps[category][predictAtNumerical[i]]
-        predicted = model.predict([predictAtNumerical])
-        if problem_type == 'classification':
-            predicted = [list(result_categories_map.keys())[predicted[0]]]
-    elif model_type == 'KNN':
-        predictAtAdj = []
-        if len(continuous_features) > 0:
-            predictAtAdj[0:len(continuous_features)] = scale.transform([predictAt[0:len(continuous_features)]]).ravel()
-        if len(categorical_features) > 0:
-            for i in range(0,len(categorical_features)):
-                category = features[len(continuous_features) + i]
-                predictAtAdj.append( categorical_features_category_maps[category][predictAt[len(continuous_features) + i]] )
-        predicted = model.predict(numpy.array(predictAtAdj).reshape(1, -1))
-        if problem_type == 'classification':
-            predicted = [list(result_categories_map.keys())[predicted[0]]]
-    elif model_type == 'LinReg':
-        scaled = []
-        predictCates = []
-        if len(continuous_features) > 0:
-            scaled = scale.transform([predictAt[0:len(continuous_features)]])
-            scaled = scaled.ravel()
-        if len(categorical_features) > 0:
-            for i in range(0,len(categorical_features)):
-                dummyCate = [0] * ( len(set(dataset[categorical_features[i]])) - 1 )
-                onePos = sorted(set(dataset[categorical_features[i]])).index(predictAt[len(continuous_features)+i]) - 1
-                if onePos > -1:
-                    dummyCate[onePos] = 1
-                predictCates = predictCates + dummyCate
-        predictAtAdj = [*scaled, *predictCates]
-        predicted = model.predict([predictAtAdj])
-    elif model_type == "PolyFit":
-        scaled = scale.transform([predictAt])
-        predicted = model.predict(scaled)
+    prediction = predict(
+        model,
+        model_type,
+        problem_type,
+        scale,
+        continuous_features,
+        categorical_features,
+        categorical_features_category_maps,
+        feature_data_columns,
+        result_categories_map,
+        predictAt # Pre-scaling and encoding
+    )
 
-    #POSSIBLY ROUND Predicted 
-    #round_to_n = lambda x, n: round(x, -int(floor(log10(x))) + (n - 1))
-    
-    return {"predictAt": predictAt, "prediction": predicted[0]}
+    return { 'predictAt': predictAt, 'prediction': prediction }
 
 
 # Ensure this is called when the website is closed or page refreshed

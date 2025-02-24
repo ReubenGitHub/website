@@ -345,7 +345,7 @@ export function FormPredictAt(props) {
     const [datasetFeatures, setDatasetFeatures] = useState(["Features..."]);
     const [datasetFeaturesNo, setDatasetFeaturesNo] = useState(["0"])
     const [predictAt, setPredictAt] = useState([""]);
-    const [predictValues, setPredictValues] = useState([""]);
+    const [predictValues, setPredictValues] = useState({});
     const [predictEnable, setPredictEnable] = useState(0);
     const [inputValidation, setInputValidation] = useState({features: ["Features..."], noOfFeatures: ["0"], noOfCts: 0, options: [["Option"]]});
 
@@ -369,7 +369,10 @@ export function FormPredictAt(props) {
                     noOfCts: props.inputValidation['noOfCts'],
                     options: props.inputValidation['options']
                 });
-                setPredictValues( Array(props.inputValidation['features'].length).fill("") );
+                setPredictValues(props.inputValidation['features'].reduce(
+                    (acc, feature) => ({ ...acc, [feature]: "" }),
+                    {}
+                ))
                 document.querySelectorAll('input[att=clearOnFeatureSelect],select[att=clearOnFeatureSelect]').forEach( el => el.value = "" );
             }
         } else {
@@ -379,7 +382,7 @@ export function FormPredictAt(props) {
                 noOfCts: 0,
                 options: [["Option"]]
             });
-            setPredictValues( Array(1).fill("") );
+            setPredictValues({});
             document.querySelectorAll('input[att=clearOnFeatureSelect],select[att=clearOnFeatureSelect]').forEach( el => el.value = "" );
         }
     }, [props.inputValidation]);
@@ -412,13 +415,13 @@ export function FormPredictAt(props) {
                                         step="any"
                                         att="clearOnFeatureSelect"
                                         required
-                                        onChange={(e) => predictValues[index] = e.target.value }
+                                        onChange={(e) => predictValues[e.target.id] = e.target.value }
                                         />
                                     :<select id={inputValidation['features'][index]}
                                         att="clearOnFeatureSelect"
                                         style={{width: "100%"}}
                                         required
-                                        onChange={(e) => predictValues[index] = e.target.value} >
+                                        onChange={(e) => predictValues[e.target.id] = e.target.value} >
                                         <option value="" selected></option>
                                         { (inputValidation['options'][(index-inputValidation['noOfCts'])]).map( (option) => (
                                             <option value={option}>{option}</option>

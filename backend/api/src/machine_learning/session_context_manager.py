@@ -10,11 +10,10 @@ DEFAULT_DATASET = pandas.read_csv(DATASETS_DIRECTORY+"/CO2 Emissions.csv")
 DATASET_SIZE_LIMIT = 2000000 # Bytes
 
 class SessionContextManager:
-    def __init__(self):
+    def __init__(self, expiration_time=300):
         self.sessions = {}
-        # TODO: uncomment this expiration time
-        # self.expiration_time = 3600 # 1 hour
-        self.expiration_time = 20
+        self.expiration_time = expiration_time
+        self._expiration_check_period = self.expiration_time / 3
         self.lock = threading.Lock()
         self._start_expiration_thread()
 
@@ -80,11 +79,7 @@ class SessionContextManager:
     def _start_expiration_thread(self):
         def run():
             while True:
-                # TODO: uncomment this sleep time
-                # time.sleep(600) # 10 minutes
-                time.sleep(5)
-                print("cleanup sessions, current sessions are:")
-                print([key for key, value in self.sessions.items()])
+                time.sleep(self._expiration_check_period)
                 self._expire_session_data()
         threading.Thread(target=run, daemon=True).start()
 
