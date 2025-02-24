@@ -133,6 +133,9 @@ def modelPrediction(predictAt, session_id):
         predictAt # Pre-scaling and encoding
     )
 
+    # Front end still expects this to be an array
+    predictAt = list(predictAt.values())
+
     return { 'predictAt': predictAt, 'prediction': prediction }
 
 # Ensure this is called when the website is closed or page refreshed
