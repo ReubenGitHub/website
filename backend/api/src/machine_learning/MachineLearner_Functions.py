@@ -5,60 +5,11 @@ from .data_handling.scale_data import scale_data
 from .models.train_model import train_model
 from .models.evaluate import calculate_model_metrics
 from .models.graphing.generate_image import generate_model_graph
-from .models.graphing.graph_types.one_d_function_plot import generate_1d_function_plot
-from .models.graphing.graph_types.two_d_function_plot import generate_2d_function_plot
-from .models.graphing.graph_types.two_d_region_plot import generate_2d_region_plot
-from .models.graphing.graph_types.tree_graph import generate_tree_graph
 from .models.predict import predict
-import numpy
 import matplotlib
 matplotlib.use('Agg')
-# from scipy import stats
-import pandas
-from contextlib import contextmanager
-# import threading
-# import _thread
-# import multiprocessing
 
-# class TimeoutException(Exception):
-#     def __init__(self, msg=''):
-#         self.msg = msg
-
-# class MyException(Exception):
-#     pass
-
-# @contextmanager
-# def time_limit(cwd, seconds, msg=''):
-# # def time_limit(supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, datasetName, cwd, seconds, msg=''):
-#     # timer = threading.Timer(seconds, lambda: _thread.interrupt_main())
-#     timer = threading.Timer( seconds, lambda: (print("TIMED OUT SO CANCELLED"), MyException) )
-#     timer.start()
-#     print("TIMER STARTED AND IS")
-#     try:
-#         print("TRYING")
-#         # yield
-#         yield
-#     except MyException:
-#         print("TIMED OUT SO CANCELLED")
-#         raise TimeoutException("Timed out for operation {}".format(msg)) 
-#     finally:
-#         timer.cancel()
-#         print("STOPPED?")
-
-# def machineLearnerTimed(supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, datasetName):
-#     cwd = os.getcwd()
-#     try:
-#         print("KICKING OFF ML WITH TIME LIMIT")
-#         with time_limit(cwd, 5, 'sleep'):
-#         # return time_limit(supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, datasetName, cwd, 5, 'sleep')
-#             return machineLearner(supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, datasetName)
-#     except TimeoutException:
-#         print("TIME RAN OUT EXCEPTION, RETURNING NOTHING")
-#         return
-#     print("HERE 4")
-
-
-def machineLearner(supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, session_id): #, accTrain, accTest, inpVal):
+def machineLearner(supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, session_id):
     # Get dataset from session data
     dataset = session_context_manager.get_session_data(session_id)['dataset']
     fields_of_interest = continuous_features + categorical_features + [result]
@@ -154,31 +105,7 @@ def machineLearner(supervision, problem_type, model_type, poly_degree, continuou
 
     return outputs
 
-# def machineLearnerTimed(supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, datasetName):
-#     cwd = os.getcwd()
-
-#     accTrain = multiprocessing.Value('d')
-#     accTest = multiprocessing.Value('d')
-#     inpVal = multiprocessing.Array('u', [])
-    
-#     print("STARTING TIMED FIT THREAD")
-#     # p = threading.Thread(target = machineLearner, args = [supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, datasetName])
-#     p = multiprocessing.Process(target = machineLearner, args = [supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, datasetName, accTrain, accTest, inpVal])
-#     p.start()
-#     p.join(5)
-
-#     if p.is_alive():
-#         print("Terminating fit thread")
-#         p.terminate()
-#         p.join()
-#         return
-#     else:
-#         print(accTrain)
-#         print(accTest)
-#         print(inpVal)
-#         return {"accuracyTrain": accTrain, "accuracyTest": accTest, "allowed_feature_values_for_prediction": inpVal}
-
-#Evaluate model at some particular value
+# Evaluate model at some particular value
 def modelPrediction(predictAt, session_id):
     session_data = session_context_manager.get_session_data(session_id)
     model = session_data['model']
@@ -192,8 +119,6 @@ def modelPrediction(predictAt, session_id):
     result_categories_map = model_settings['result_categories_map']
     feature_data_columns = model_settings['feature_data_columns']
     scale = model_settings['scale']
-
-    features = continuous_features + categorical_features
 
     prediction = predict(
         model,
@@ -209,7 +134,6 @@ def modelPrediction(predictAt, session_id):
     )
 
     return { 'predictAt': predictAt, 'prediction': prediction }
-
 
 # Ensure this is called when the website is closed or page refreshed
 def clear_session_data(session_id):
