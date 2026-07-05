@@ -1,0 +1,25 @@
+ARG DOTNET_VERSION=8.0
+
+FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}
+WORKDIR /src
+
+# Install dotnet-watch for hot reload during development
+RUN dotnet tool install --global dotnet-watch
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
+# Copy the project file
+COPY dotnet/dotnet-api.csproj ./
+RUN dotnet restore
+
+# Copy the source code
+COPY dotnet/ ./
+
+# Expose the port for the .NET API
+EXPOSE 5001
+
+# Set environment variables
+ENV ASPNETCORE_URLS=http://+:5001
+ENV ASPNETCORE_ENVIRONMENT=Development
+
+ # Run with dotnet watch for hot reload (built into .NET SDK)
+ CMD ["dotnet", "watch", "run"]

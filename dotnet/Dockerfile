@@ -1,0 +1,32 @@
+ARG DOTNET_VERSION=8.0
+
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS builder
+WORKDIR /src
+
+# Copy the project file
+COPY dotnet/dotnet-api.csproj ./
+RUN dotnet restore
+
+# Copy the source code
+COPY dotnet/ ./
+
+# Build the application
+RUN dotnet publish -c Release -o /app/publish --no-restore
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION}
+WORKDIR /app
+
+# Copy the published application from the builder stage
+COPY --from=builder /app/publish .
+
+# Expose the port for the .NET API
+EXPOSE 5001
+
+# Set environment variables
+ENV ASPNETCORE_URLS=http://+:5001
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+# Run the application
+CMD ["dotnet", "dotnet-api.dll"]
