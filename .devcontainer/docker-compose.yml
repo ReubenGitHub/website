@@ -15,6 +15,7 @@ services:
             - '5000:5000'
         volumes:
             - ../backend:/app/backend
+            - ../dotnet:/app/dotnet
             - /app/frontend/node_modules
             - /app/frontend/build
         environment:
