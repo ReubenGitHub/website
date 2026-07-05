@@ -1,0 +1,137 @@
+.dotnet-demo-container {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dotnet-demo-container h2 {
+    margin-top: 0;
+    font-size: 2em;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.dotnet-demo-container .description {
+    text-align: center;
+    font-size: 0.95em;
+    opacity: 0.9;
+    margin-bottom: 20px;
+}
+
+.error-message {
+    background-color: rgba(255, 0, 0, 0.2);
+    border: 2px solid #ff6b6b;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.demo-section {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.demo-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.3em;
+}
+
+.demo-section button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: background-color 0.3s;
+    margin-right: 10px;
+}
+
+.demo-section button:hover:not(:disabled) {
+    background-color: #45a049;
+}
+
+.demo-section button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.demo-section form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.demo-section input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.95em;
+}
+
+.demo-section input:disabled {
+    background-color: #e0e0e0;
+    cursor: not-allowed;
+}
+
+.response {
+    margin-top: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    padding: 15px;
+    border-left: 4px solid #4CAF50;
+}
+
+.response h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.response pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 0.85em;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.demo-section.info {
+    background: rgba(100, 200, 255, 0.1);
+    border-left: 4px solid #64c8ff;
+}
+
+.demo-section.info h4 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.demo-section.info code {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    word-break: break-all;
+}
+
+.demo-section.info ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.demo-section.info li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}

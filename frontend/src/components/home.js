@@ -29,6 +29,10 @@ export default function HomePage(props) {
                         which is deployed on this site.
                     </p>
                     <p class="intro">
+                        I've also built a <Link to="/dotnet-demo">C# .NET microservice backend</Link> to demonstrate
+                        my ability to work with multiple tech stacks and microservices architecture.
+                    </p>
+                    <p class="intro">
                         I am also working on a Next.js game app, where players answer questions about movies, which I hope to
                         release soon.
                     </p>
@@ -41,8 +45,9 @@ export default function HomePage(props) {
                     <h2>Application stack</h2>
                     <p class="intro">
                         The front end of this application is comprised of React, JSX, and CSS.
-                        The back end is made up of Flask and Python. This app is containerized
-                        using Docker, and deployed using ECS with Fargate on AWS.
+                        The back end uses a microservices architecture with a Flask/Python API for machine learning,
+                        and a C# .NET microservice for additional functionality. This app is containerized
+                        using Docker Compose for orchestration, and deployed using ECS with Fargate on AWS.
                     </p>
                 </div>
                 <div class='section'>

@@ -3,6 +3,7 @@ import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
 import HomePage from './components/home';
 import {MLerPage} from './components/machinelearner';
 import PFerPage from './components/pathfinder';
+import {DotNetDemo} from './components/DotNetDemo';
 import {NavBar} from './components/headernavbar';
 
 function App() {
@@ -11,7 +12,7 @@ function App() {
   const Home = <HomePage />;
   const MLer = <MLerPage />;
   const PFer = <PFerPage />;
-
+  const DotNet = <DotNetDemo />;
   const callbackFunctionHome = () => {
     setNavState(!navState);
   }   
@@ -24,6 +25,7 @@ function App() {
         <Route path="/home" element = {Home} parentCallback = {callbackFunctionHome} />
         <Route path="/machinelearner" element = {MLer} />
         <Route path="/pathfinder" element = {PFer} />
+        <Route path="/dotnet-demo" element = {DotNet} />
       </Routes>
     </Router>
   );
