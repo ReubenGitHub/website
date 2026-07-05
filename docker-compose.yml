@@ -1,19 +1,14 @@
-services:
-    site:
-        build: .
-        image: mywebsite
-        ports:
-            - '5000:5000'
-        environment:
-            - PYTHONUNBUFFERED=1 # To get python prints to show up in console/logs
-            - FLASK_APP=api/api.py
-            - FLASK_ENV=PRODUCTION
+version: '3.8'
 
+services:
+    # ========== DEVELOPMENT SERVICES ==========
+    
     site-dev:
         build:
             context: .
-            dockerfile: Dockerfile.dev
+            dockerfile: .devcontainer/Dockerfile
         image: mywebsite-dev
+        container_name: mywebsite-python-dev
         ports:
             - '5000:5000'
         volumes:
@@ -21,6 +16,61 @@ services:
             - /app/frontend/node_modules
             - /app/frontend/build
         environment:
-            - PYTHONUNBUFFERED=1 # To get python prints to show up in console/logs
+            - PYTHONUNBUFFERED=1
             - FLASK_APP=api/api.py
             - STATIC_FOLDER=/app/frontend/build
+        depends_on:
+            - dotnet-api-dev
+        networks:
+            - mywebsite-network
+
+    dotnet-api-dev:
+        build:
+            context: .
+            dockerfile: dotnet/Dockerfile.dev
+        image: mywebsite-dotnet-dev
+        container_name: mywebsite-dotnet-dev
+        ports:
+            - '5001:5001'
+        volumes:
+            - ./dotnet:/src
+        environment:
+            - ASPNETCORE_URLS=http://+:5001
+            - ASPNETCORE_ENVIRONMENT=Development
+        networks:
+            - mywebsite-network
+
+    # ========== PRODUCTION SERVICES ==========
+    
+    site:
+        build: .
+        image: mywebsite
+        container_name: mywebsite-python-prod
+        ports:
+            - '5000:5000'
+        environment:
+            - PYTHONUNBUFFERED=1
+            - FLASK_APP=api/api.py
+            - FLASK_ENV=PRODUCTION
+        depends_on:
+            - dotnet-api
+        networks:
+            - mywebsite-network
+
+    dotnet-api:
+        build:
+            context: .
+            dockerfile: dotnet/Dockerfile
+        image: mywebsite-dotnet
+        container_name: mywebsite-dotnet-prod
+        ports:
+            - '5001:5001'
+        environment:
+            - ASPNETCORE_URLS=http://+:5001
+            - ASPNETCORE_ENVIRONMENT=Production
+        networks:
+            - mywebsite-network
+
+networks:
+    mywebsite-network:
+        driver: bridge

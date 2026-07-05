@@ -1,5 +1,5 @@
-ARG NODE_VERSION_NUMBER=18
-ARG PYTHON_VERSION_NUMBER=3.9
+ARG NODE_VERSION_NUMBER=22
+ARG PYTHON_VERSION_NUMBER=3.13
 ARG PYTHON_IMAGE_VERSION=${PYTHON_VERSION_NUMBER}-slim
 
 FROM python:${PYTHON_IMAGE_VERSION} AS backend-build
@@ -32,11 +32,12 @@ RUN apt-get update && \
 EXPOSE 5000
 
 ENV FLASK_APP=backend/api/api.py
+ENV FLASK_ENV=development
 
 CMD ["sh", "-c", "\
     cd /app/backend/api/src/machine_learning/models/model_types/k_nearest_neighbours/custom_metric && \
     python3 setup.py build_ext --inplace && \
     echo 'Custom metric build completed' && \
     cd /app && \
-    bash \
+    python -m flask run --host=0.0.0.0 --port=5000 --reload \
 "]

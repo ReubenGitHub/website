@@ -1,0 +1,22 @@
+{
+    "name": "MyWebsite Dev",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "site-dev",
+    "workspaceFolder": "/app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.debugpy"
+            ]
+        }
+    },
+    "forwardPorts": [5000, 5001],
+    "remoteUser": "root",
+    "overrideCommand": false,
+    "mounts": [
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,readonly"
+    ],
+    "postStartCommand": "cd /app/frontend && npm run build"
+}

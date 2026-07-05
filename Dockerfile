@@ -1,4 +1,4 @@
-ARG NODE_VERSION_NUMBER=18
+ARG NODE_VERSION_NUMBER=22
 ARG PYTHON_VERSION_NUMBER=3.9
 ARG PYTHON_IMAGE_VERSION=${PYTHON_VERSION_NUMBER}-slim
 
@@ -17,9 +17,15 @@ RUN npm run build
 
 # Step 2: Build the Python (Flask) application
 FROM python:${PYTHON_IMAGE_VERSION} AS backend-build
-# Install global dependencies for compiling C
+# Install global dependencies for compiling C, and .NET SDK for building C# microservice
 RUN apt-get update && \
-    apt-get install -y build-essential
+    apt-get install -y \
+        build-essential \
+        curl \
+        gnupg \
+        ca-certificates \
+        apt-transport-https && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 # Set working directory for backend
 WORKDIR /backend
 # Copy the backend requirements (before source code so can keep dependencies cached through code changes)
@@ -37,7 +43,8 @@ FROM python:${PYTHON_IMAGE_VERSION}
 ARG PYTHON_VERSION_NUMBER
 # Install global dependencies for running both backend and frontend
 RUN apt-get update && \
-    apt-get install -y graphviz
+    apt-get install -y graphviz && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 # Set working directories for both frontend and backend
 WORKDIR /app
 # Copy frontend build from the previous stage
