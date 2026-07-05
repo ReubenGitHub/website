@@ -14,8 +14,7 @@ services:
         ports:
             - '5000:5000'
         volumes:
-            - ../backend:/app/backend
-            - ../dotnet:/app/dotnet
+            - ../:/app
             - /app/frontend/node_modules
             - /app/frontend/build
         environment:

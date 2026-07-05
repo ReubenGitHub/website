@@ -19,6 +19,7 @@ COPY backend/requirements.txt /app/backend/
 RUN apt-get update && \
     apt-get install -y \
         build-essential \
+        git \
         graphviz \
         curl \
         gnupg \
@@ -39,6 +40,9 @@ WORKDIR /app/backend/api/src/machine_learning/models/model_types/k_nearest_neigh
 RUN python3 setup.py build_ext --inplace
 
 WORKDIR /app
+
+# Configure git to use host credentials (shared .gitconfig via volume mount)
+RUN git config --global --add safe.directory /app
 
 EXPOSE 5000 5001
 
