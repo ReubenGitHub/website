@@ -12,11 +12,10 @@
             ]
         }
     },
-    "forwardPorts": [5000, 5001],
+    "forwardPorts": [3000, 5000, 5001],
     "remoteUser": "root",
     "overrideCommand": false,
     "mounts": [
         "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,readonly"
-    ],
-    "postStartCommand": "cd /app/frontend && npm run build"
+    ]
 }

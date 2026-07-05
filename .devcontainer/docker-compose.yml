@@ -13,6 +13,7 @@ services:
         container_name: mywebsite-python-dev
         ports:
             - '5000:5000'
+            - '3000:3000'
         volumes:
             - ../:/app
             - /app/frontend/node_modules
