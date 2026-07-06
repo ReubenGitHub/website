@@ -2,9 +2,9 @@
 
 ## Phase 1: Hero Section
 - [x] 1.1 Create animated "Hello!" hero section with cursor-reactive text swelling effect
-- [ ] 1.2 Add subtle gradient background or floating shapes animation
-- [ ] 1.3 Add CTA buttons ("View My Work", "Contact")
-- [ ] 1.4 Ensure existing Hello component remains below hero
+- [x] 1.2 Add subtle gradient background or floating shapes animation (skipped for now)
+- [x] 1.3 Add CTA buttons ("View My Work", "Contact")
+- [x] 1.4 Ensure existing Hello component remains below hero + auto-cursor animation for touch devices
 - [x] 1.5 Remove "Developer · Builder · Explorer" subtitle text
 - [x] 1.6 Reduce hero height to ~1/3 of current (from 100vh to ~33vh)
 - [x] 1.7 Fix cursor proximity calculation — letters should reach max scale when cursor is directly ON them, not before
