@@ -4,10 +4,12 @@ import './font_kanit.css'
 import { Link } from "react-router-dom";
 import { Hello } from './HelloWord/Hello'
 import { VerticalTimeline } from './VerticalTimeline/VerticalTimeline'
+import { Hero } from './Hero'
 
 export default function HomePage(props) {
     return (
         <div>
+            <Hero />
             <h1 class="hello-container">
                 <Hello />
             </h1>
