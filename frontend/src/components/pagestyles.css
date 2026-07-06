@@ -67,10 +67,20 @@ p.intro {
 }
 
 .card {
-  box-shadow: 4px 4px 8px 0 rgba(0, 0, 0, 0.2);
-  margin: 8px 12px;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  margin: 16px 12px;
   overflow: hidden;
   border-radius: 16px;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 .about-section {
@@ -145,14 +155,9 @@ p.intro {
 .container {
   display: block;
   position: relative;
-  padding: 8px 8px;
-  margin: 0px 0px;
-  text-shadow: rgba(0, 0, 0, 0.2) 0px 0px 2px;
-  /* background-color: rgba(255, 255, 255, 0.7); */
-  box-shadow: inset 0 0 1000px 150px rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
+  padding: 16px 20px;
+  margin: 0;
   color: black;
-  border-radius: 0px 0px 16px 16px;
 }
 
 /* .container::after, .row::after {
