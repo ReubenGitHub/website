@@ -144,7 +144,7 @@ export function Hero() {
                             const dx = mousePos.x - center.x
                             const dy = mousePos.y - center.y
                             const distance = Math.sqrt(dx * dx + dy * dy)
-                            const proximityRadius = baseW * 3
+                            const proximityRadius = 0.5 * baseW + 200
                             const proximity = Math.max(0, 1 - distance / proximityRadius)
                             return 1 + proximity * 0.5
                         })
