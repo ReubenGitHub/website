@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import './Hero.css'
 
 export function Hero() {
-    const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
-    const heroRef = useRef(null)
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0, width: 0, height: 0 })
+    const letterRefs = useRef({})
     const containerRef = useRef(null)
     const animationRef = useRef(null)
     const timeRef = useRef(0)
@@ -12,8 +12,8 @@ export function Hero() {
         if (!containerRef.current) return
         const rect = containerRef.current.getBoundingClientRect()
         setMousePos({
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top,
+            x: e.clientX,
+            y: e.clientY,
             width: rect.width,
             height: rect.height,
         })
@@ -26,6 +26,25 @@ export function Hero() {
         container.addEventListener('mousemove', handleMouseMove)
         return () => container.removeEventListener('mousemove', handleMouseMove)
     }, [handleMouseMove])
+
+    // Calculate letter bounding boxes on mount and resize
+    const getLetterBounds = useCallback(() => {
+        const bounds = {}
+        Object.keys(letterRefs.current).forEach(key => {
+            const el = letterRefs.current[key]
+            if (el) {
+                const rect = el.getBoundingClientRect()
+                bounds[key] = {
+                    centerX: rect.left + rect.width / 2,
+                    centerY: rect.top + rect.height / 2,
+                    width: rect.width,
+                    height: rect.height,
+                    radius: Math.max(rect.width, rect.height) * 0.5,
+                }
+            }
+        })
+        return bounds
+    }, [])
 
     // Floating shapes animation
     useEffect(() => {
@@ -61,25 +80,29 @@ export function Hero() {
             <div className="hero-gradient" />
 
             {/* Content */}
-            <div ref={heroRef} className="hero-content">
+            <div className="hero-content">
                 <div className="hero-greeting">
                     {letters.map((letter, index) => {
-                        // Calculate distance from mouse to each letter's center
-                        const letterWidth = 100 / letters.length
-                        const letterCenterX = (index + 0.5) * letterWidth
-                        const letterCenterY = 50
-                        const dx = mousePos.x - (letterCenterX / 100 * mousePos.width)
-                        const dy = mousePos.y - (letterCenterY / 100 * mousePos.height)
-                        const distance = Math.sqrt(dx * dx + dy * dy)
-                        const maxDistance = Math.sqrt(
-                            (mousePos.width / 2) ** 2 + (mousePos.height / 2) ** 2
-                        )
-                        const proximity = Math.max(0, 1 - distance / (maxDistance * 0.6))
-                        const scale = 1 + proximity * 0.5
+                        const letterEl = letterRefs.current[index]
+                        let proximity = 0
+                        let scale = 1
+
+                        if (letterEl) {
+                            const rect = letterEl.getBoundingClientRect()
+                            const letterCenterX = rect.left + rect.width / 2
+                            const letterCenterY = rect.top + rect.height / 2
+                            const dx = mousePos.x - letterCenterX
+                            const dy = mousePos.y - letterCenterY
+                            const distance = Math.sqrt(dx * dx + dy * dy)
+                            const proximityRadius = Math.max(rect.width, rect.height) * 1.2
+                            proximity = Math.max(0, 1 - distance / proximityRadius)
+                            scale = 1 + proximity * 0.5
+                        }
 
                         return (
                             <span
                                 key={index}
+                                ref={(el) => { letterRefs.current[index] = el }}
                                 className="hero-letter"
                                 style={{
                                     '--proximity': proximity,
@@ -92,10 +115,6 @@ export function Hero() {
                         )
                     })}
                 </div>
-
-                <p className="hero-subtitle">
-                    Developer · Builder · Explorer
-                </p>
 
                 <div className="hero-cta">
                     <a href="/machinelearner" className="hero-btn hero-btn-primary">
