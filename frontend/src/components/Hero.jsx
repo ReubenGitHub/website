@@ -17,26 +17,70 @@ export function Hero() {
         const container = containerRef.current
         if (!container) return
 
-        const handleMouseMove = (e) => {
-            const rect = container.getBoundingClientRect()
-            mouseRef.current = {
-                x: e.clientX,
-                y: e.clientY,
-                width: rect.width,
-                height: rect.height,
-            }
-            if (!rafRef.current) {
-                rafRef.current = requestAnimationFrame(() => {
-                    setMousePos({ ...mouseRef.current })
-                    rafRef.current = null
-                })
-            }
-        }
+        // Check if device has a precise pointer (mouse/trackpad)
+        const hasPointer = window.matchMedia('(pointer: fine)').matches
 
-        container.addEventListener('mousemove', handleMouseMove)
-        return () => {
-            container.removeEventListener('mousemove', handleMouseMove)
-            if (rafRef.current) cancelAnimationFrame(rafRef.current)
+        if (!hasPointer) {
+            // No real cursor — auto-animate a virtual cursor sweeping left→right→left over 4s
+            const startTime = Date.now()
+            let rafId = null
+
+            const animate = () => {
+                const elapsed = (Date.now() - startTime) / 1000
+                const cycle = 4 // seconds per full cycle (L→R→L)
+                const t = (elapsed % cycle) / cycle
+
+                // 0→0.5 goes L→R, 0.5→1 goes R→L
+                const pos = t < 0.5
+                    ? 2 * t // 0→1
+                    : 2 * (1 - t) // 1→0
+
+                const rect = container.getBoundingClientRect()
+
+                mouseRef.current = {
+                    x: rect.left + pos * rect.width,
+                    y: rect.top + rect.height / 2,
+                    width: rect.width,
+                    height: rect.height,
+                }
+
+                if (!rafId) {
+                    rafId = requestAnimationFrame(() => {
+                        setMousePos({ ...mouseRef.current })
+                        rafId = null
+                    })
+                }
+
+                animationRef.current = requestAnimationFrame(animate)
+            }
+
+            animationRef.current = requestAnimationFrame(animate)
+            return () => {
+                if (animationRef.current) cancelAnimationFrame(animationRef.current)
+            }
+        } else {
+            // Real cursor — listen for mousemove
+            const handleMouseMove = (e) => {
+                const rect = container.getBoundingClientRect()
+                mouseRef.current = {
+                    x: e.clientX,
+                    y: e.clientY,
+                    width: rect.width,
+                    height: rect.height,
+                }
+                if (!rafRef.current) {
+                    rafRef.current = requestAnimationFrame(() => {
+                        setMousePos({ ...mouseRef.current })
+                        rafRef.current = null
+                    })
+                }
+            }
+
+            container.addEventListener('mousemove', handleMouseMove)
+            return () => {
+                container.removeEventListener('mousemove', handleMouseMove)
+                if (rafRef.current) cancelAnimationFrame(rafRef.current)
+            }
         }
     }, [])
 
@@ -100,7 +144,7 @@ export function Hero() {
                             const dx = mousePos.x - center.x
                             const dy = mousePos.y - center.y
                             const distance = Math.sqrt(dx * dx + dy * dy)
-                                const proximityRadius = baseW * 2
+                            const proximityRadius = baseW * 3
                             const proximity = Math.max(0, 1 - distance / proximityRadius)
                             return 1 + proximity * 0.5
                         })
