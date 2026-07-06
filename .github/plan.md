@@ -10,11 +10,8 @@
 - [x] 1.7 Fix cursor proximity calculation — letters should reach max scale when cursor is directly ON them, not before
 
 ## Phase 2: Layout & Structure
-- [ ] 2.1 Remove deprecated `<center>` tags, replace with CSS Flexbox/Grid
-
-## Phase 2: Layout & Structure
-- [ ] 2.1 Remove deprecated `<center>` tags, replace with CSS Flexbox/Grid
-- [ ] 2.2 Convert sections to semantic HTML (`<section>`, `<article>`)
+- [x] 2.1 Remove deprecated `<center>` tags, replace with CSS Flexbox/Grid
+- [x] 2.2 Convert sections to semantic HTML (`<section>`, `<article>`)
 - [ ] 2.3 Implement card-based glassmorphism layout for content sections
 - [ ] 2.4 Add CSS custom properties for consistent theming
 
