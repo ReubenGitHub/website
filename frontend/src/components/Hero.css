@@ -1,0 +1,233 @@
+.hero {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    cursor: crosshair;
+}
+
+/* Floating background shapes */
+.hero-bg-shapes {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.hero-shape {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.3;
+    animation: float 8s ease-in-out infinite;
+}
+
+.hero-shape-1 {
+    width: 400px;
+    height: 400px;
+    background: #fe4203;
+    top: -100px;
+    right: -100px;
+    animation-duration: 10s;
+}
+
+.hero-shape-2 {
+    width: 300px;
+    height: 300px;
+    background: #03bffe;
+    bottom: -50px;
+    left: -50px;
+    animation-duration: 12s;
+}
+
+.hero-shape-3 {
+    width: 250px;
+    height: 250px;
+    background: #fe4203;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation-duration: 9s;
+}
+
+.hero-shape-4 {
+    width: 200px;
+    height: 200px;
+    background: #03bffe;
+    top: 20%;
+    left: 10%;
+    animation-duration: 11s;
+}
+
+.hero-shape-5 {
+    width: 350px;
+    height: 350px;
+    background: #fe4203;
+    bottom: 10%;
+    right: 15%;
+    animation-duration: 13s;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(30px, -30px) scale(1.05);
+    }
+    50% {
+        transform: translate(-20px, 20px) scale(0.95);
+    }
+    75% {
+        transform: translate(20px, 10px) scale(1.02);
+    }
+}
+
+/* Subtle gradient overlay that follows mouse */
+.hero-gradient {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+        600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, 0.03),
+        transparent 60%
+    );
+}
+
+/* Content */
+.hero-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2rem;
+}
+
+/* Greeting text */
+.hero-greeting {
+    font-family: 'Kanit', sans-serif;
+    font-size: clamp(4rem, 12vw, 10rem);
+    font-weight: 900;
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 0;
+    line-height: 1;
+    margin-bottom: 1rem;
+    user-select: none;
+}
+
+.hero-letter {
+    display: inline-block;
+    transition: transform 0.15s ease-out;
+    transform: scale(var(--scale, 1));
+    cursor: default;
+    text-shadow:
+        0 0 20px rgba(254, 66, 3, 0.0),
+        0 0 40px rgba(3, 191, 254, 0.0);
+    will-change: transform, text-shadow;
+}
+
+.hero-letter:hover {
+    --scale: 1.3 !important;
+    text-shadow:
+        0 0 20px rgba(254, 66, 3, 0.6),
+        0 0 40px rgba(254, 66, 3, 0.3),
+        0 0 60px rgba(254, 66, 3, 0.1);
+}
+
+/* Subtitle */
+.hero-subtitle {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+}
+
+/* CTA Buttons */
+.hero-cta {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.9rem 2rem;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Primary button */
+.hero-btn-primary {
+    background: linear-gradient(135deg, #fe4203, #ff6b35);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(254, 66, 3, 0.4);
+}
+
+.hero-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(254, 66, 3, 0.5);
+}
+
+.hero-btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Secondary button */
+.hero-btn-secondary {
+    background: transparent;
+    color: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.hero-btn-secondary:hover {
+    border-color: #03bffe;
+    color: #03bffe;
+    box-shadow: 0 0 20px rgba(3, 191, 254, 0.2);
+    transform: translateY(-2px);
+}
+
+.hero-btn-secondary:active {
+    transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .hero-cta {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .hero-btn {
+        width: 200px;
+        justify-content: center;
+    }
+}
