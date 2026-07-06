@@ -5,9 +5,9 @@
 - [ ] 1.2 Add subtle gradient background or floating shapes animation
 - [ ] 1.3 Add CTA buttons ("View My Work", "Contact")
 - [ ] 1.4 Ensure existing Hello component remains below hero
-- [ ] 1.5 Remove "Developer · Builder · Explorer" subtitle text
-- [ ] 1.6 Reduce hero height to ~1/3 of current (from 100vh to ~33vh)
-- [ ] 1.7 Fix cursor proximity calculation — letters should reach max scale when cursor is directly ON them, not before
+- [x] 1.5 Remove "Developer · Builder · Explorer" subtitle text
+- [x] 1.6 Reduce hero height to ~1/3 of current (from 100vh to ~33vh)
+- [x] 1.7 Fix cursor proximity calculation — letters should reach max scale when cursor is directly ON them, not before
 
 ## Phase 2: Layout & Structure
 - [ ] 2.1 Remove deprecated `<center>` tags, replace with CSS Flexbox/Grid
