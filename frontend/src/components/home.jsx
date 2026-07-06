@@ -13,50 +13,50 @@ export default function HomePage(props) {
             <h1 class="hello-container">
                 <Hello />
             </h1>
-            <center>
-                <div class='section'>
-                    <p class="intro">
+            <div className="home-content">
+                <section className='section'>
+                    <p className="intro">
                         My name is Reuben.
                     </p>
-                    <p class="intro">
+                    <p className="intro">
                         I am a web developer, and I like crafting things that I think are cool.
                     </p>
-                    <p class="intro">
+                    <p className="intro">
                         One of my recent projects has been&nbsp;
                         <a href="https://easy-pv.co.uk/speedy-pv/demo" target="_blank" rel="noreferrer">Speedy PV</a>,
                         a solar PV lead generator I've been working on at Midsummer Energy.
                     </p>
-                    <p class="intro">
+                    <p className="intro">
                         A previous project was building a <Link to="/machinelearner">general machine learner</Link>,
                         which is deployed on this site.
                     </p>
-                    <p class="intro">
+                    <p className="intro">
                         I've also built a <Link to="/dotnet-demo">C# .NET microservice backend</Link> to demonstrate
                         my ability to work with multiple tech stacks and microservices architecture.
                     </p>
-                    <p class="intro">
+                    <p className="intro">
                         I am also working on a Next.js game app, where players answer questions about movies, which I hope to
                         release soon.
                     </p>
-                    <p class="intro">
+                    <p className="intro">
                         Thanks for stopping by. If you have any comments or would like to get in touch,
                         you can reach me at reubenowenwilliams@outlook.com.
                     </p>
-                </div>
-                <div class='section'>
+                </section>
+                <section className='section'>
                     <h2>Application stack</h2>
-                    <p class="intro">
+                    <p className="intro">
                         The front end of this application is comprised of React, JSX, and CSS.
                         The back end uses a microservices architecture with a Flask/Python API for machine learning,
                         and a C# .NET microservice for additional functionality. This app is containerized
                         using Docker Compose for orchestration, and deployed using ECS with Fargate on AWS.
                     </p>
-                </div>
-                <div class='section'>
+                </section>
+                <section className='section'>
                     <h2>Site timeline</h2>
                     <VerticalTimeline />
-                </div>
-            </center>
+                </section>
+            </div>
         </div>
     )
 }

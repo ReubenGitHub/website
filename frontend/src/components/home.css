@@ -6,6 +6,16 @@
     align-items: center;
 }
 
+.home-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
 .section {
     margin-bottom: 40px;
+    width: 100%;
 }
