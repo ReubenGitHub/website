@@ -8,21 +8,22 @@ export default function ProjectsPage() {
             title: 'Machine Learner',
             description: 'A general-purpose machine learning platform that supports multiple model types including decision trees, k-nearest neighbours, and regression models. Features data preprocessing, scaling, and visualization tools. Deployed and running on this site.',
             link: '/machinelearner',
-            label: 'Try it out'
+            label: 'Try It Out'
         },
 
         {
             title: 'Speedy PV',
             description: 'A solar PV lead generator built while working at Midsummer Energy. Helps generate quotes and leads for solar panel installations.',
-            link: 'https://easy-pv.co.uk/speedy-pv/demo',
-            external: true,
-            label: 'View demo'
+            link: '/speedy-pv',
+            label: 'Learn More',
+            externalLink: 'https://easy-pv.co.uk/speedy-pv/demo',
+            externalLabel: 'View Live Demo'
         },
         {
             title: 'Movie Quiz Game',
             description: 'A Next.js multiplayer quiz game where players answer questions about movies. Currently in development and scheduled for release soon.',
             link: null,
-            label: 'Coming soon',
+            label: 'Coming Soon',
             comingSoon: true
         }
     ];
@@ -45,14 +46,24 @@ export default function ProjectsPage() {
                                 <h3>{project.title}</h3>
                                 <p>{project.description}</p>
                                 {!project.comingSoon && project.link && (
-                                    <a
-                                        href={project.link}
-                                        className="project-link"
-                                        target={project.external ? "_blank" : undefined}
-                                        rel={project.external ? "noreferrer" : undefined}
-                                    >
-                                        {project.label}
-                                    </a>
+                                    <div className="project-links">
+                                        <a
+                                            href={project.link}
+                                            className="project-link"
+                                        >
+                                            {project.label}
+                                        </a>
+                                        {project.externalLink && (
+                                            <a
+                                                href={project.externalLink}
+                                                className="project-link external-link"
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                {project.externalLabel}
+                                            </a>
+                                        )}
+                                    </div>
                                 )}
                                 {project.comingSoon && (
                                     <span className="project-link coming-soon">{project.label}</span>
