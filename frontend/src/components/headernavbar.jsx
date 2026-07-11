@@ -3,7 +3,7 @@ import logo_white from '../ReubenHOWLogo_White_Orange.png'
 // import headerimg from '../Header_img.jpg';
 
 export function NavBar() {
-    let pages = ['', 'machinelearner', 'pathfinder']
+    let pages = ['', 'machinelearner']
     let url = window.location.href.split("/")
     let currentPage = url[url.length - 1]
     let index = pages.indexOf(currentPage)
@@ -21,7 +21,6 @@ export function NavBar() {
                     <div class="dropdown-content">
                         <a href="/projects">All Projects</a>
                         <a href="/machinelearner" class={active[1]}>Machine Learner</a>
-                        <a href="/pathfinder" class={active[2]}>Path-finder</a>
                     </div>
                 </div>
             </div>

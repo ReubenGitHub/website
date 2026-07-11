@@ -10,12 +10,7 @@ export default function ProjectsPage() {
             link: '/machinelearner',
             label: 'Try it out'
         },
-        {
-            title: 'Path-finder',
-            description: 'An interactive pathfinding visualization tool that demonstrates various algorithms. Shows how different pathfinding approaches work step-by-step with visual feedback.',
-            link: '/pathfinder',
-            label: 'Try it out'
-        },
+
         {
             title: 'Speedy PV',
             description: 'A solar PV lead generator built while working at Midsummer Energy. Helps generate quotes and leads for solar panel installations.',
