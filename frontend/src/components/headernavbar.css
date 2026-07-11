@@ -151,6 +151,9 @@
 /* LinkedIn link pushed to right */
 .navbar a.right {
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    padding: 8px;
 }
 
 /* Responsive layout - only stack on very small screens */
