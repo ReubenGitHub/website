@@ -3,7 +3,7 @@ import logo_white from '../ReubenHOWLogo_White_Orange.png'
 // import headerimg from '../Header_img.jpg';
 
 export function NavBar() {
-    let pages = ['', 'machinelearner', 'speedy-pv']
+    let pages = ['', 'machinelearner', 'speedy-pv', 'ml-vehicle-emissions']
     let url = window.location.href.split("/")
     let currentPage = url[url.length - 1]
     let index = pages.indexOf(currentPage)
@@ -22,6 +22,7 @@ export function NavBar() {
                         <a href="/projects">All Projects</a>
                         <a href="/machinelearner" class={active[1]}>Machine Learner</a>
                         <a href="/speedy-pv" class={active[2]}>Speedy PV</a>
+                        <a href="/ml-vehicle-emissions" class={active[3]}>ML Vehicle Emissions</a>
                     </div>
                 </div>
             </div>

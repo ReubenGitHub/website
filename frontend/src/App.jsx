@@ -5,6 +5,7 @@ import {MLerPage} from './components/machinelearner';
 import {DotNetDemo} from './components/DotNetDemo';
 import ProjectsPage from './components/projects';
 import SpeedyPVPage from './components/speedypv';
+import MlVehicleEmissionsPage from './components/mlevision';
 import {NavBar} from './components/headernavbar';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
   const DotNet = <DotNetDemo />;
   const Projects = <ProjectsPage />;
   const SpeedyPV = <SpeedyPVPage />;
+  const MlEmissions = <MlVehicleEmissionsPage />;
   const callbackFunctionHome = () => {
     setNavState(!navState);
   }   
@@ -37,6 +39,7 @@ function App() {
         <Route path="/dotnet-demo" element = {DotNet} />
         <Route path="/projects" element = {Projects} />
         <Route path="/speedy-pv" element = {SpeedyPV} />
+        <Route path="/ml-vehicle-emissions" element = {MlEmissions} />
       </Routes>
     </Router>
   );

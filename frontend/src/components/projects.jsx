@@ -19,6 +19,13 @@ export default function ProjectsPage() {
             externalLink: 'https://easy-pv.co.uk/speedy-pv/demo',
             externalLabel: 'View Live Demo'
         },
+
+        {
+            title: 'ML Vehicle Emissions',
+            description: 'An investigation into UK vehicle CO2 emissions using machine learning. Analysed 6,756 vehicles with Python, MySQL, and XGBoost, tuning models via Bayesian optimisation.',
+            link: '/ml-vehicle-emissions',
+            label: 'Learn More'
+        },
         {
             title: 'Movie Quiz Game',
             description: 'A Next.js multiplayer quiz game where players answer questions about movies. Currently in development and scheduled for release soon.',
