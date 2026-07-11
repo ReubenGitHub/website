@@ -20,6 +20,14 @@ function App() {
   return (
     <Router>
       <NavBar navState={navState} />
+      {/* Global floating shapes background */}
+      <div className="global-bg-shapes">
+        <div className="global-shape global-shape-1" />
+        <div className="global-shape global-shape-2" />
+        <div className="global-shape global-shape-3" />
+        <div className="global-shape global-shape-4" />
+        <div className="global-shape global-shape-5" />
+      </div>
       <Routes>
         <Route path="/" element = {Home} parentCallback = {callbackFunctionHome} />
         <Route path="/home" element = {Home} parentCallback = {callbackFunctionHome} />

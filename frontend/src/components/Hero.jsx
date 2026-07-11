@@ -120,15 +120,6 @@ export function Hero() {
 
     return (
         <div ref={containerRef} className="hero">
-            {/* Floating background shapes */}
-            <div className="hero-bg-shapes">
-                <div className="hero-shape hero-shape-1" style={{ animationDelay: '0s' }} />
-                <div className="hero-shape hero-shape-2" style={{ animationDelay: '1s' }} />
-                <div className="hero-shape hero-shape-3" style={{ animationDelay: '2s' }} />
-                <div className="hero-shape hero-shape-4" style={{ animationDelay: '0.5s' }} />
-                <div className="hero-shape hero-shape-5" style={{ animationDelay: '1.5s' }} />
-            </div>
-
             {/* Gradient overlay */}
             <div className="hero-gradient" />
 
@@ -190,6 +181,10 @@ export function Hero() {
                         })
                     })()}
                 </div>
+
+                <p className="hero-intro">
+                    My name is Reuben. I like crafting cool things.
+                </p>
 
                 <div className="hero-cta">
                     <a href="/machinelearner" className="hero-btn hero-btn-primary">

@@ -13,12 +13,6 @@ export default function HomePage(props) {
                 <section className='section'>
                     <div className='card'>
                         <p className="intro">
-                            My name is Reuben.
-                        </p>
-                        <p className="intro">
-                            I am a web developer, and I like crafting things that I think are cool.
-                        </p>
-                        <p className="intro">
                             One of my recent projects has been&nbsp;
                             <a href="https://easy-pv.co.uk/speedy-pv/demo" target="_blank" rel="noreferrer">Speedy PV</a>,
                             a solar PV lead generator I've been working on at Midsummer Energy.
