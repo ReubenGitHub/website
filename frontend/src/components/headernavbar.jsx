@@ -16,8 +16,13 @@ export function NavBar() {
             <div class="logo"> <img class="img" src={logo_white} alt="Logo"></img> </div>
             <div class="nav-links">
                 <a href="/" class={active[0]}>Home</a>
-                <a href="/machinelearner" class={active[1]}>Machine Learner</a>
-                <a href="/pathfinder" class={active[2]}>Path-finder</a>
+                    <div class="dropdown">
+                        <span class="dropdown-btn">Projects ▾</span>
+                        <div class="dropdown-content">
+                            <a href="/machinelearner" class={active[1]}>Machine Learner</a>
+                            <a href="/pathfinder" class={active[2]}>Path-finder</a>
+                        </div>
+                    </div>
             </div>
             <a href="https://www.linkedin.com/in/reuben-owen-williams-53609a173/" target="_blank" class="right">LinkedIn</a>
             </div>

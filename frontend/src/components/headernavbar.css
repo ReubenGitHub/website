@@ -8,7 +8,7 @@
 
 /* Floating navbar - toggles between relative and fixed, depending on the scroll position */
 .navbar {
-    overflow: hidden;
+    overflow: visible;
     margin-top: 16px;
     margin-left: auto;
     margin-right: auto;
@@ -46,6 +46,71 @@
     gap: 4px;
     align-items: center;
     margin-left: 24px;
+}
+
+/* Dropdown */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-btn {
+    display: block;
+    color: rgba(255, 255, 255, 0.85);
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-size: inherit;
+}
+
+.dropdown-btn:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    min-width: 160px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: -1px;
+    overflow: hidden;
+    text-align: center;
+}
+
+.dropdown-content a {
+    color: rgba(255, 255, 255, 0.85);
+    padding: 10px 16px;
+    text-decoration: none;
+    display: block;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.dropdown-content a:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-content a.active {
+    color: #ffffff;
+    font-weight: 600;
+    background-color: rgba(3, 191, 254, 0.2);
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
 }
 
 .navbar .logo img {
