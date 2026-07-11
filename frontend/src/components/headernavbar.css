@@ -62,7 +62,6 @@
     text-decoration: none;
     border-radius: 6px;
     transition: all 0.2s ease;
-    cursor: pointer;
     font-size: inherit;
     white-space: nowrap;
 }
