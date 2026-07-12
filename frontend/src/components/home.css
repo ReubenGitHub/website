@@ -111,7 +111,63 @@
     color: #86efac;
 }
 
+.try-it-out {
+    color: #4ade80;
+}
+
+.try-it-out:hover {
+    color: #86efac;
+}
+
 .project-link.coming-soon {
     color: rgba(255, 255, 255, 0.5);
     cursor: default;
+}
+
+.project-images {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin: 28px 0;
+}
+
+.image-caption-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.project-image {
+    width: 100%;
+    max-width: 380px;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid var(--color-card-border, rgba(255, 255, 255, 0.1));
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    display: block;
+    margin: 0 auto;
+}
+
+.image-caption {
+    color: var(--color-text, #e0e0e0);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    font-style: italic;
+    text-align: center;
+}
+
+.project-page-card .intro {
+    max-width: 100%;
+    width: 100%;
+}
+
+.project-page-card h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.project-page-card > a {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
 }

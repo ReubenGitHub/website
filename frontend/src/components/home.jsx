@@ -13,15 +13,6 @@ export default function HomePage(props) {
                 <section className='section'>
                     <div className='card'>
                         <p className="intro">
-                            One of my recent projects has been&nbsp;
-                            <a href="https://easy-pv.co.uk/speedy-pv/demo" target="_blank" rel="noreferrer">Speedy PV</a>,
-                            a solar PV lead generator I've been working on at Midsummer Energy.
-                        </p>
-                        <p className="intro">
-                            A previous project was building a <Link to="/machinelearner">general machine learner</Link>,
-                            which is deployed on this site.
-                        </p>
-                        <p className="intro">
                             I've also built a <Link to="/dotnet-demo">C# .NET microservice backend</Link> to demonstrate
                             my ability to work with multiple tech stacks and microservices architecture.
                         </p>
