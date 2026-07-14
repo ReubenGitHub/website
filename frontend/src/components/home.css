@@ -23,6 +23,21 @@
     padding: 0 16px;
 }
 
+.project-page-wide {
+    max-width: 888px;
+    margin: 0 auto;
+}
+
+.project-page-wide .card h2 {
+    text-align: center;
+}
+
+.project-page-wide .card .intro {
+    text-align: center;
+    max-width: 100%;
+    width: 100%;
+}
+
 .section {
     margin-bottom: var(--spacing-section);
     width: 100%;
@@ -149,6 +164,65 @@
 }
 
 .image-caption {
+    color: var(--color-text, #e0e0e0);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    font-style: italic;
+    text-align: center;
+}
+
+.project-videos {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    margin: 28px auto;
+    width: 100%;
+    max-width: 840px;
+    align-items: center;
+}
+
+.video-caption-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.video-container {
+    width: 100%;
+    max-width: 380px;
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
+    border: 1px solid var(--color-card-border, rgba(255, 255, 255, 0.1));
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.video-container-desktop {
+    aspect-ratio: auto;
+    height: auto;
+    max-width: 840px;
+    margin: 0 auto;
+}
+
+.video-container-mobile {
+    aspect-ratio: auto;
+    height: auto;
+    width: auto;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+.project-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.video-caption {
     color: var(--color-text, #e0e0e0);
     font-size: 0.85rem;
     line-height: 1.5;
