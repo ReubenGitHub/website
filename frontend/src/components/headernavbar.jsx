@@ -3,26 +3,24 @@ import logo_white from '../ReubenHOWLogo_White_Orange.png'
 // import headerimg from '../Header_img.jpg';
 
 export function NavBar() {
-    let pages = ['', 'machinelearner', 'speedy-pv', 'ml-vehicle-emissions']
     let url = window.location.href.split("/")
     let currentPage = url[url.length - 1]
-    let index = pages.indexOf(currentPage)
-    let active = []
-    active[index] = "active"
+    
+    const isActive = (page) => currentPage === page ? 'active' : ''
     
     return (
         <div class="navbar-container">
             <div class="navbar">
             <div class="logo"> <img class="img" src={logo_white} alt="Logo"></img> </div>
             <div class="nav-links">
-                <a href="/" class={active[0]}>Home</a>
+                <a href="/" class={isActive('')}>Home</a>
                 <div class="dropdown">
-                    <a href="/projects" class="dropdown-btn">Projects ▾</a>
+                    <a href="/projects" class={`dropdown-btn ${isActive('projects')}`}>Projects ▾</a>
                     <div class="dropdown-content">
-                        <a href="/projects">All Projects</a>
-                        <a href="/machinelearner" class={active[1]}>Machine Learner</a>
-                        <a href="/speedy-pv" class={active[2]}>Speedy PV</a>
-                        <a href="/ml-vehicle-emissions" class={active[3]}>ML Vehicle Emissions</a>
+                        <a href="/projects" class={isActive('projects')}>All Projects</a>
+                        <a href="/machinelearner" class={isActive('machinelearner')}>Machine Learner</a>
+                        <a href="/speedy-pv" class={isActive('speedy-pv')}>Speedy PV</a>
+                        <a href="/ml-vehicle-emissions" class={isActive('ml-vehicle-emissions')}>ML Vehicle Emissions</a>
                     </div>
                 </div>
             </div>

@@ -44,8 +44,7 @@ export default function ProjectsPage() {
             <ProjectHero />
             <div className="column-container">
             <section className="section">
-                <div className="card">
-                    <div className="projects-grid">
+                <div className="projects-grid">
                         {projects.map((project, index) => (
                             <div key={index} className="project-card">
                                 <h3>{project.title}</h3>
@@ -77,7 +76,6 @@ export default function ProjectsPage() {
                             </div>
                         ))}
                     </div>
-                </div>
             </section>
             </div>
         </div>
