@@ -187,7 +187,7 @@ export function Hero() {
                 </p>
 
                 <div className="hero-cta">
-                    <a href="/machinelearner" className="hero-btn hero-btn-primary">
+                    <a href="/projects" className="hero-btn hero-btn-primary">
                         View My Work
                     </a>
                     <a href="mailto:reubenowenwilliams@outlook.com" className="hero-btn hero-btn-secondary">
