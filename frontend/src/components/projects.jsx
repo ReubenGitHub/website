@@ -1,6 +1,8 @@
 import './pagestyles.css';
 import './home.css';
+import './font_kanit.css';
 import { Link } from 'react-router-dom';
+import { ProjectHero } from './ProjectHero';
 
 export default function ProjectsPage() {
     const projects = [
@@ -38,15 +40,9 @@ export default function ProjectsPage() {
     ];
 
     return (
-        <div className="column-container">
-            <section className="section">
-                <div className="card">
-                    <h2>Projects</h2>
-                    <p className="intro">
-                        Here's a summary of the projects I've worked on. Interactive demos are available below, along with descriptions of each project.
-                    </p>
-                </div>
-            </section>
+        <div>
+            <ProjectHero />
+            <div className="column-container">
             <section className="section">
                 <div className="card">
                     <div className="projects-grid">
@@ -83,6 +79,7 @@ export default function ProjectsPage() {
                     </div>
                 </div>
             </section>
+            </div>
         </div>
     );
 }
