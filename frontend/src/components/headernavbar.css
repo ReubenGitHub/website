@@ -155,10 +155,55 @@
     gap: 8px;
 }
 
+.social-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
 .navbar .social-links a {
     display: flex;
     align-items: center;
     padding: 8px;
+}
+
+.social-icon-btn {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.social-icon-btn:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.copied-tooltip {
+    position: absolute;
+    bottom: -28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    color: #03bffe;
+    font-size: 0.8rem;
+    font-weight: 500;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0;
+    background: rgba(26, 26, 46, 0.95);
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.copied-tooltip.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 /* Responsive layout - only stack on very small screens */
