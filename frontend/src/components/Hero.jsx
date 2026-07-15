@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './Hero.css'
 
+const EMAIL = 'reubenowenwilliams@outlook.com';
+
 export function Hero() {
     const [mousePos, setMousePos] = useState({ x: 0, y: 0, width: 0, height: 0 })
+    const [showCopied, setShowCopied] = useState(false)
     const mouseRef = useRef({ x: 0, y: 0, width: 0, height: 0 })
     const rafRef = useRef(null)
     const letterRefs = useRef({})
@@ -190,9 +193,30 @@ export function Hero() {
                     <a href="/projects" className="hero-btn hero-btn-primary">
                         View My Work
                     </a>
-                    <a href="mailto:reubenowenwilliams@outlook.com" className="hero-btn hero-btn-secondary">
-                        Contact Me
-                    </a>
+                    <div className="contact-email-wrapper">
+                        <button
+                            className="hero-btn hero-btn-secondary"
+                            onClick={async () => {
+                                try {
+                                    await navigator.clipboard.writeText(EMAIL);
+                                } catch {
+                                    const textarea = document.createElement('textarea');
+                                    textarea.value = EMAIL;
+                                    document.body.appendChild(textarea);
+                                    textarea.select();
+                                    document.execCommand('copy');
+                                    document.body.removeChild(textarea);
+                                }
+                                setShowCopied(true);
+                                setTimeout(() => setShowCopied(false), 2000);
+                            }}
+                        >
+                            Contact Me
+                        </button>
+                        <span className={`copied-feedback ${showCopied ? 'visible' : ''}`}>
+                            Email copied to clipboard!
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
