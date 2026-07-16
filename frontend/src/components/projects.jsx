@@ -10,7 +10,10 @@ export default function ProjectsPage() {
             title: 'Machine Learner',
             description: 'A general-purpose machine learning platform that supports multiple model types including decision trees, k-nearest neighbours, and regression models. Features data preprocessing, scaling, and visualization tools. Deployed and running on this site.',
             link: '/machinelearner',
-            label: 'Try It Out'
+            label: 'Try It Out',
+            image: null,
+            imageColor: '#fe4203',
+            imageIcon: '🤖'
         },
 
         {
@@ -19,7 +22,10 @@ export default function ProjectsPage() {
             link: '/speedy-pv',
             label: 'Learn More',
             externalLink: 'https://easy-pv.co.uk/speedy-pv/demo',
-            externalLabel: 'View Live Demo'
+            externalLabel: 'View Live Demo',
+            image: '/speedypv_screenshot.webp',
+            imageColor: null,
+            imageIcon: null
         },
 
         {
@@ -28,14 +34,20 @@ export default function ProjectsPage() {
             link: '/ml-vehicle-emissions',
             label: 'Learn More',
             externalLink: 'https://github.com/ReubenGitHub/ML-Vehicle-Emissions',
-            externalLabel: 'View on GitHub'
+            externalLabel: 'View on GitHub',
+            image: null,
+            imageColor: '#03bffe',
+            imageIcon: '🌍'
         },
         {
             title: 'Movie Quiz Game',
             description: 'A Next.js multiplayer quiz game where players answer questions about movies. Currently in development and scheduled for release soon.',
             link: null,
             label: 'Coming Soon',
-            comingSoon: true
+            comingSoon: true,
+            image: null,
+            imageColor: '#a855f7',
+            imageIcon: '🎬'
         }
     ];
 
@@ -47,32 +59,44 @@ export default function ProjectsPage() {
                 <div className="projects-grid">
                         {projects.map((project, index) => (
                             <div key={index} className="project-card">
-                                <h3>{project.title}</h3>
-                                <p>{project.description}</p>
-                                {!project.comingSoon && project.link && (
-                                    <div className="project-links">
-                                        <a
-                                            href={project.link}
-                                            className="project-link"
-                                        >
-                                            {project.label}
-                                        </a>
-                                        {project.externalLink && (
-                                            <a
-                                                href={project.externalLink}
-                                                className="project-link external-link"
-                                                target="_blank"
-                                                rel="noreferrer"
-                                            >
-                                                {project.externalLabel}
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor" style={{verticalAlign: 'middle', marginLeft: 4}}><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z"/></svg>
-                                            </a>
-                                        )}
+                                {project.image && (
+                                    <div className="project-card-image">
+                                        <img src={project.image} alt={project.title} loading="lazy" />
                                     </div>
                                 )}
-                                {project.comingSoon && (
-                                    <span className="project-link coming-soon">{project.label}</span>
+                                {project.imageColor && (
+                                    <div className="project-card-image project-card-placeholder" style={{backgroundColor: project.imageColor}}>
+                                        <span className="project-card-icon">{project.imageIcon}</span>
+                                    </div>
                                 )}
+                                <div className="project-card-content">
+                                    <h3>{project.title}</h3>
+                                    <p>{project.description}</p>
+                                    {!project.comingSoon && project.link && (
+                                        <div className="project-links">
+                                            <a
+                                                href={project.link}
+                                                className="project-link"
+                                            >
+                                                {project.label}
+                                            </a>
+                                            {project.externalLink && (
+                                                <a
+                                                    href={project.externalLink}
+                                                    className="project-link external-link"
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    {project.externalLabel}
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor" style={{verticalAlign: 'middle', marginLeft: 4}}><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z"/></svg>
+                                                </a>
+                                            )}
+                                        </div>
+                                    )}
+                                    {project.comingSoon && (
+                                        <span className="project-link coming-soon">{project.label}</span>
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>
