@@ -45,9 +45,9 @@ export default function ProjectsPage() {
             link: null,
             label: 'Coming Soon',
             comingSoon: true,
-            image: null,
-            imageColor: '#a855f7',
-            imageIcon: '🎬'
+            image: '/film_quiz_game.webp',
+            imageColor: null,
+            imageIcon: null
         }
     ];
 
