@@ -123,9 +123,6 @@ export function Hero() {
 
     return (
         <div ref={containerRef} className="hero">
-            {/* Gradient overlay */}
-            <div className="hero-gradient" />
-
             {/* Content */}
             <div className="hero-content">
                 <div className="hero-greeting">

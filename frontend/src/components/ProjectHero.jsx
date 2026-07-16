@@ -71,7 +71,6 @@ export function ProjectHero() {
 
     return (
         <div ref={containerRef} className="hero">
-            <div className="hero-gradient" />
             <div className="hero-content">
                 <BlockLetters
                     text="Projects"

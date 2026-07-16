@@ -227,7 +227,7 @@ p.intro {
   background: #fe4203;
   top: -100px;
   right: -100px;
-  animation-duration: 10s;
+  animation-duration: 8.5s;
 }
 
 .global-shape-2 {
@@ -236,7 +236,7 @@ p.intro {
   background: #03bffe;
   bottom: -50px;
   left: -50px;
-  animation-duration: 12s;
+  animation-duration: 10.2s;
 }
 
 .global-shape-3 {
@@ -245,8 +245,9 @@ p.intro {
   background: #fe4203;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  animation-duration: 9s;
+  margin-left: -125px;
+  margin-top: -125px;
+  animation-duration: 7.65s;
 }
 
 .global-shape-4 {
@@ -255,7 +256,7 @@ p.intro {
   background: #03bffe;
   top: 20%;
   left: 10%;
-  animation-duration: 11s;
+  animation-duration: 9.35s;
 }
 
 .global-shape-5 {
@@ -264,23 +265,109 @@ p.intro {
   background: #fe4203;
   bottom: 10%;
   right: 15%;
-  animation-duration: 13s;
+  animation-duration: 11.05s;
 }
 
 @keyframes global-float {
   0%, 100% {
     transform: translate(0, 0) scale(1);
+    opacity: 0.3;
   }
   25% {
-    transform: translate(30px, -30px) scale(1.05);
+    transform: translate(31px, -25px) scale(1.03);
+    opacity: 0.375;
   }
   50% {
-    transform: translate(-20px, 20px) scale(0.95);
+    transform: translate(-19px, 19px) scale(0.97);
+    opacity: 0.225;
   }
   75% {
-    transform: translate(20px, 10px) scale(1.02);
+    transform: translate(19px, 10px) scale(1.01);
+    opacity: 0.34;
   }
 }
+
+@keyframes global-float-2 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translate(-25px, 31px) scale(1.04);
+    opacity: 0.225;
+  }
+  50% {
+    transform: translate(31px, -19px) scale(0.96);
+    opacity: 0.375;
+  }
+  75% {
+    transform: translate(-13px, -25px) scale(1.02);
+    opacity: 0.34;
+  }
+}
+
+@keyframes global-float-3 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  33% {
+    transform: translate(25px, 31px) scale(1.03);
+    opacity: 0.375;
+  }
+  66% {
+    transform: translate(-31px, -13px) scale(0.98);
+    opacity: 0.225;
+  }
+}
+
+@keyframes global-float-4 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translate(-38px, -19px) scale(1.02);
+    opacity: 0.225;
+  }
+  50% {
+    transform: translate(19px, 31px) scale(0.97);
+    opacity: 0.34;
+  }
+  75% {
+    transform: translate(-13px, 19px) scale(1.03);
+    opacity: 0.375;
+  }
+}
+
+@keyframes global-float-5 {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  20% {
+    transform: translate(19px, -31px) scale(1.04);
+    opacity: 0.375;
+  }
+  40% {
+    transform: translate(-25px, -19px) scale(0.96);
+    opacity: 0.225;
+  }
+  60% {
+    transform: translate(31px, 13px) scale(1.02);
+    opacity: 0.34;
+  }
+  80% {
+    transform: translate(-19px, 25px) scale(0.98);
+    opacity: 0.375;
+  }
+}
+
+.global-shape-1 { animation-name: global-float; }
+.global-shape-2 { animation-name: global-float-2; }
+.global-shape-3 { animation-name: global-float-3; }
+.global-shape-4 { animation-name: global-float-4; }
+.global-shape-5 { animation-name: global-float-5; }
 
 
 
