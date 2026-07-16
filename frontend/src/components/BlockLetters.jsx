@@ -150,9 +150,15 @@ export function BlockLetters({ text, mousePos, containerRef }) {
                     el.style.transform = `translate(${pushX}px, ${pushY}px)`;
                 });
             } else {
-                // Reset all blocks when mouse is not tracking
+                // Reset letter blocks when mouse is not tracking
                 Object.keys(blockRefs.current).forEach(key => {
                     const block = blockRefs.current[key];
+                    const parts = key.split('-').map(Number);
+                    const [charIndex, rowIdx, colIdx] = parts;
+                    const glyph = BLOCK_FONT[normalizedText[charIndex]];
+
+                    if (!glyph || !glyph[rowIdx] || glyph[rowIdx][colIdx] !== 1) return;
+
                     if (block && block.el) {
                         block.el.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
                         block.el.style.boxShadow = 'none';
