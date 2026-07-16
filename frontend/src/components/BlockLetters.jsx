@@ -100,6 +100,7 @@ export function BlockLetters({ text, mousePos, containerRef }) {
     useEffect(() => {
         const proximityRadius = 250;
         const maxPush = 6;
+        const returnSpeed = 0.08;
         const animate = () => {
             const mouse = mouseRef.current;
             const text = textRef.current;
@@ -115,6 +116,8 @@ export function BlockLetters({ text, mousePos, containerRef }) {
                             el: val,
                             cx: rect.left + rect.width / 2,
                             cy: rect.top + rect.height / 2,
+                            px: 0,
+                            py: 0,
                         };
                     }
                 });
@@ -148,9 +151,11 @@ export function BlockLetters({ text, mousePos, containerRef }) {
                         ? `0 0 ${glow * 16}px rgba(254, 66, 3, ${glow * 0.7})`
                         : 'none';
                     el.style.transform = `translate(${pushX}px, ${pushY}px)`;
+                    block.px = pushX;
+                    block.py = pushY;
                 });
             } else {
-                // Reset letter blocks when mouse is not tracking
+                // Smoothly return letter blocks to origin
                 Object.keys(blockRefs.current).forEach(key => {
                     const block = blockRefs.current[key];
                     const parts = key.split('-').map(Number);
@@ -160,9 +165,20 @@ export function BlockLetters({ text, mousePos, containerRef }) {
                     if (!glyph || !glyph[rowIdx] || glyph[rowIdx][colIdx] !== 1) return;
 
                     if (block && block.el) {
+                        block.px += (0 - block.px) * returnSpeed;
+                        block.py += (0 - block.py) * returnSpeed;
+
+                        const absPx = Math.abs(block.px);
+                        const absPy = Math.abs(block.py);
+
+                        if (absPx < 0.05 && absPy < 0.05) {
+                            block.px = 0;
+                            block.py = 0;
+                        }
+
                         block.el.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
                         block.el.style.boxShadow = 'none';
-                        block.el.style.transform = 'translate(0px, 0px)';
+                        block.el.style.transform = `translate(${block.px.toFixed(2)}px, ${block.py.toFixed(2)}px)`;
                     }
                 });
             }
