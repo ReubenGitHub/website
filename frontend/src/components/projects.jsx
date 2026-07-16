@@ -35,9 +35,9 @@ export default function ProjectsPage() {
             label: 'Learn More',
             externalLink: 'https://github.com/ReubenGitHub/ML-Vehicle-Emissions',
             externalLabel: 'View on GitHub',
-            image: null,
-            imageColor: '#03bffe',
-            imageIcon: '🌍'
+            image: '/car_exhaust.webp',
+            imageColor: null,
+            imageIcon: null
         },
         {
             title: 'Movie Quiz Game',
