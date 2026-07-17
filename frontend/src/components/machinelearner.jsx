@@ -68,12 +68,12 @@ export function MLerPage(props) {
                         graphImageBase64: data.graph_image_base_64
                     })
                     setInputValidation({
-                        features: inputs[4].concat(inputs[5]),
-                        noOfCts: inputs[4].length,
+                        features: inputs[3].concat(inputs[4]),
+                        noOfCts: inputs[3].length,
                         options: data.allowed_feature_values_for_prediction
                     })
-                    setDatasetResultParam(inputs[6])
-                    setDatasetFeatures(inputs[4].concat(inputs[5]))
+                    setDatasetResultParam(inputs[5])
+                    setDatasetFeatures(inputs[3].concat(inputs[4]))
                     setLoadingModelFit(false)
                     setPredictionTitle(true)
             });

@@ -74,6 +74,12 @@ export function FormDataset(props) {
                 e.preventDefault()
                 if(dataset || datasetIsUpload==false)handleSubmit()
             }}>
+            {datasetName && (
+                <div className="dataset-badge-top">
+                    <span className="dataset-badge-icon">📄</span>
+                    <span>{datasetName}</span>
+                </div>
+            )}
             <b>Select a .csv Dataset </b>
             <div className="dataset-option-group">
                 <input type="radio" id="datasetDefault" name="datasetSelect" required defaultChecked onChange={(e) => {setDatasetIsUpload(false); setDataset()} } />
@@ -106,16 +112,11 @@ export function FormDataset(props) {
             )}
 
             <br></br>
-            { (!datasetIsUpload || dataset) ?
-                <button className="ml-button">Commit Dataset</button> :
-                <button disabled className="ml-button">Commit Dataset</button> }
-
-            {datasetName && (
-                <div className="dataset-badge">
-                    <span className="dataset-badge-icon">📄</span>
-                    <span>{datasetName}</span>
-                </div>
-            )}
+            <div className="ml-button-container">
+                { (!datasetIsUpload || dataset) ?
+                    <button className="ml-button">Commit Dataset</button> :
+                    <button disabled className="ml-button">Commit Dataset</button> }
+            </div>
         </form>
     )
 }
@@ -193,9 +194,9 @@ export function FormDefineModel(props) {
                 <label className={problemType === "classification" ? "pill-btn" : "pill-btn"} htmlFor="classification">Classification</label>
             </div>
             <br></br>
-            <b>Machine Learning Method</b>
+            <b>Model Type</b>
             <br></br>
-            <label> Model type &nbsp;
+            <div className="model-type-wrapper">
                 { (problemType==="") ?
                         <select
                         disabled
@@ -230,7 +231,7 @@ export function FormDefineModel(props) {
                             <option value="PolyFit" disabled style={{color: "#989897"}}>Polynomial Regression</option>
                         </select>
                 }
-            </label>
+            </div>
             <br></br>
             { (MLMethod=="PolyFit") && 
                 <label> Degrees &nbsp;
@@ -385,8 +386,7 @@ export function FormDefineModel(props) {
             </div>
             <br></br>
             <b>Test Data Proportion</b>
-            <br></br>
-            <label> Percentage &nbsp;
+            <div className="test-proportion-wrapper">
                 <input
                     type="number"
                     min="1"
@@ -395,14 +395,15 @@ export function FormDefineModel(props) {
                     required
                     onChange={(e) => setTestProp(e.target.value)}
                 />
-            </label>
-            %
+                <span className="test-proportion-suffix">%</span>
+            </div>
             <br></br>
-            <br></br>
-            { props.isLoadingModelFit ? <button disabled className="ml-button">Fitting Model...</button>:
-                !(props.datasetName) ? <button disabled className="ml-button">Fit Model</button>:
-                <button className="ml-button">Fit Model</button>
-            }  
+            <div className="ml-button-container">
+                { props.isLoadingModelFit ? <button disabled className="ml-button">Fitting Model...</button>:
+                    !(props.datasetName) ? <button disabled className="ml-button">Fit Model</button>:
+                    <button className="ml-button">Fit Model</button>
+                }
+            </div>  
         </form>
     )
     
@@ -715,7 +716,7 @@ export function FormModelPrediction(props) {
                     onClick={handlePredict}
                     disabled={!datasetFeatures.length || isPredicting}
                 >
-                    {isPredicting ? 'Predicting...' : `Predict ${datasetResultParam}`}
+                    {isPredicting ? 'Predicting...' : 'Predict'}
                 </button>
             </div>
         </div>

@@ -803,8 +803,8 @@ p.intro {
 }
 
 .ml-results-image img {
-  max-width: 75%;
-  width: 400px;
+  max-width: 100%;
+  width: 520px;
   height: auto;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -916,6 +916,14 @@ p.intro {
   font-weight: 500;
   white-space: nowrap;
   min-width: 100px;
+}
+
+.prediction-table tbody tr:not(.prediction-result-row) {
+  background: rgba(3, 191, 254, 0.08);
+}
+
+.prediction-table tbody tr:not(.prediction-result-row):nth-child(even) {
+  background: rgba(3, 191, 254, 0.12);
 }
 
 .prediction-input-cell {

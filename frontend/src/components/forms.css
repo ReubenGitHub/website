@@ -105,8 +105,8 @@ form strong {
 
 .dataset-option-group {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-direction: row;
+  gap: 12px;
   margin: 12px 0;
 }
 
@@ -172,6 +172,53 @@ form strong {
   position: relative;
 }
 
+.ml-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* ============================================================
+   Model Type Wrapper (more spacing)
+   ============================================================ */
+
+.model-type-wrapper {
+  margin: 16px 0;
+  padding: 4px 0;
+}
+
+.model-type-wrapper select {
+  min-width: 220px;
+}
+
+/* ============================================================
+   Test Data Proportion Wrapper
+   ============================================================ */
+
+.test-proportion-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+}
+
+.test-proportion-wrapper input[type="number"] {
+  width: 70px;
+  text-align: right;
+  padding: 6px 8px;
+  margin: 0;
+}
+
+.test-proportion-suffix {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+  font-weight: 600;
+}
+
 .glass-file-input input[type="file"] {
   position: absolute;
   opacity: 0;
@@ -205,7 +252,25 @@ form strong {
 }
 
 /* ============================================================
-   Dataset Name Badge
+   Dataset Badge at Top of Section
+   ============================================================ */
+
+.dataset-badge-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin-bottom: 12px;
+  background: rgba(3, 191, 254, 0.15);
+  border: 1px solid rgba(3, 191, 254, 0.3);
+  border-radius: 20px;
+  color: #03bffe;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ============================================================
+   Dataset Name Badge (legacy, kept for compatibility)
    ============================================================ */
 
 .dataset-badge {
