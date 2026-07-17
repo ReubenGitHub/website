@@ -77,18 +77,18 @@ export function FormDataset(props) {
             <b>Select a .csv Dataset </b>
             <br></br>
             <input type="radio" id="default" name="datasetSelect" required defaultChecked onChange={(e) => {setDatasetIsUpload(false); setDataset()} } ></input>
-            <label for="default">Use the default dataset <i>(vehicle emissions)</i></label>
+            <label htmlFor="default">Use the default dataset <i>(vehicle emissions)</i></label>
             <br></br>
             <input type="radio" id="uploaded" name="datasetSelect" required onChange={(e) => setDatasetIsUpload(true)} ></input>
-            <label for="uploaded">Upload a dataset (maximum size of 2MB)</label>
+            <label htmlFor="uploaded">Upload a dataset (maximum size of 2MB)</label>
             <br></br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             { !datasetIsUpload && <input disabled type="file" /> }
             { datasetIsUpload && <input type="file" accept=".csv" id="dataset" onChange={(e) => setDataset(e.target.files[0])} /> }
             <br></br>
             <br></br>
             { (!datasetIsUpload || dataset) ?
-                <button class="button-submit"> <b>Commit Dataset</b></button>:
-                <button disabled class="button-submit"> <b>Commit Dataset</b></button>}
+                <button className="button-submit"> <b>Commit Dataset</b></button> :
+                <button disabled className="button-submit"> <b>Commit Dataset</b></button> }
         </form>
     )
 }
@@ -153,9 +153,9 @@ export function FormDefineModel(props) {
             <b>Supervision</b>
             <br></br>
             <input type="radio" id="supervised" name="supervision" checked value="supervised" required onChange={(e) => setSupervision(e.target.value)} ></input>
-            <label for="supervised">Supervised</label>
+            <label htmlFor="supervised">Supervised</label>
             <input type="radio" disabled id="unsupervised" name="supervision" value="unsupervised" required onChange={(e) => setSupervision(e.target.value)} ></input>
-            <label for="unsupervised">Unsupervised <i>(Coming soon...)</i></label>
+            <label htmlFor="unsupervised">Unsupervised <i>(Coming soon...)</i></label>
             <br></br>
             <br></br>
             <b>Problem Type</b>
@@ -167,21 +167,21 @@ export function FormDefineModel(props) {
                             { ( props.datasetFields['nonCtsFields'].includes(resultParam) ) && setResultParam("") }
                             { ( props.datasetFields['nonCtsFields'].includes(resultParam) ) && document.querySelectorAll('input[att2=clearOnRegression]').forEach( el => el.checked = false ) }
                         }}></input>
-                        <label for="regression">Regression</label>
+                        <label htmlFor="regression">Regression</label>
                         <input type="radio" id="classification" name="resultType" value="classification" required onChange={(e) => {
                             setProblemType(e.target.value);
                             if (MLMethod !== "DT" && MLMethod !== "KNN") {
                                 setMLMethod("DT");
                             }
                         }}></input>
-                        <label for="classification">Classification</label>
+                        <label htmlFor="classification">Classification</label>
                     </div>
                 : (supervision==="unsupervised") ? 
                     <div>
                         <input type="radio" id="clustering" name="resultType" value="clustering" required onChange={(e) => setProblemType(e.target.value)}></input>
-                        <label for="clustering">Clustering</label>
+                        <label htmlFor="clustering">Clustering</label>
                         <input type="radio" id="association" name="resultType" value="association" required onChange={(e) => setProblemType(e.target.value)}></input>
-                        <label for="association">Association</label>
+                        <label htmlFor="association">Association</label>
                     </div>
                 : <div>Please specifiy a supervision...</div>
             }
@@ -241,9 +241,9 @@ export function FormDefineModel(props) {
             <br></br>
             <b>Features - Continuous</b>
             <br></br>
-            <div class="grid-container">
+            <div className="grid-container">
                 { datasetFieldsNo.map( (index) => (
-                    <div class="grid-item">
+                    <div className="grid-item" key={'cts-'+index}>
                         {cateParams[index]===true}
                         { !(MLMethod==="PolyFit") ?
                                 !(props.datasetFields['fields']) ?
@@ -271,17 +271,17 @@ export function FormDefineModel(props) {
                                         }}
                                     ></input>
                         }
-                        {(datasetFields['fields'][index].length>15) && <label for={datasetFields['fields'][index]+"cts"}>{datasetFields['fields'][index].substring(0,15)}... &nbsp;</label>}
-                        {!(datasetFields['fields'][index].length>15) && <label for={datasetFields['fields'][index]+"cts"}>{datasetFields['fields'][index]} &nbsp;</label>}
+                        {(datasetFields['fields'][index].length>15) && <label htmlFor={datasetFields['fields'][index]+"cts"}>{datasetFields['fields'][index].substring(0,15)}... &nbsp;</label>}
+                        {!(datasetFields['fields'][index].length>15) && <label htmlFor={datasetFields['fields'][index]+"cts"}>{datasetFields['fields'][index]} &nbsp;</label>}
                     </div>
                 )) }
             </div>
             <br></br>
             <b>Features - Categorical</b>
             <br></br>
-            <div class="grid-container">
+            <div className="grid-container">
                 { datasetFieldsNo.map( (index) => (
-                    <div class="grid-item">
+                    <div className="grid-item" key={'ctg-'+index}>
                         {!(props.datasetFields['fields']) ?
                                 <input type="checkbox" disabled id={datasetFields['fields'][index]+"ctg"} name="categorical features"></input>
                             : (MLMethod==="PolyFit") ?
@@ -294,25 +294,25 @@ export function FormDefineModel(props) {
                                     }
                                 ></input>
                         }
-                        {(datasetFields['fields'][index].length>15) && <label for={datasetFields['fields'][index]+"ctg"}>{datasetFields['fields'][index].substring(0,15)}... &nbsp;</label>}
-                        {!(datasetFields['fields'][index].length>15) && <label for={datasetFields['fields'][index]+"ctg"}>{datasetFields['fields'][index]} &nbsp;</label>}
+                        {(datasetFields['fields'][index].length>15) && <label htmlFor={datasetFields['fields'][index]+"ctg"}>{datasetFields['fields'][index].substring(0,15)}... &nbsp;</label>}
+                        {!(datasetFields['fields'][index].length>15) && <label htmlFor={datasetFields['fields'][index]+"ctg"}>{datasetFields['fields'][index]} &nbsp;</label>}
                     </div>
                 )) }
             </div>
             <br></br>
             <b>Result</b>
             <br></br>
-            <div class="grid-container">
+            <div className="grid-container">
                 { datasetFieldsNo.map( (index) => (
-                    <div class="grid-item">
+                    <div className="grid-item" key={'result-'+index}>
                         {!(props.datasetFields['fields']) ?
                                 <input type="radio" disabled id={datasetFields['fields'][index]} name="result"></input>
                             :( (props.datasetFields['nonCtsFields'].includes(props.datasetFields['fields'][index])) && (problemType==="regression")  ) ?
                                 <input type="radio" disabled id={datasetFields['fields'][index]} name="result" att="clearOnDataCommit" att2="clearOnRegression" required ></input>
                             :<input type="radio" id={datasetFields['fields'][index]} name="result" att="clearOnDataCommit" att2="clearOnRegression" required onChange={(e) => setResultParam(e.target.id) }></input>
                         }
-                        {(datasetFields['fields'][index].length>15) && <label for={datasetFields['fields'][index]}>{datasetFields['fields'][index].substring(0,15)}... &nbsp;</label>}
-                        {!(datasetFields['fields'][index].length>15) && <label for={datasetFields['fields'][index]}>{datasetFields['fields'][index]} &nbsp;</label>}
+                        {(datasetFields['fields'][index].length>15) && <label htmlFor={datasetFields['fields'][index]}>{datasetFields['fields'][index].substring(0,15)}... &nbsp;</label>}
+                        {!(datasetFields['fields'][index].length>15) && <label htmlFor={datasetFields['fields'][index]}>{datasetFields['fields'][index]} &nbsp;</label>}
                     </div>
                 )) }
             </div>
@@ -332,9 +332,9 @@ export function FormDefineModel(props) {
             %
             <br></br>
             <br></br>
-            { props.isLoadingModelFit ? <button disabled class="button-submit"> <b>Fitting Model...</b></button>:
-                !(props.datasetName) ? <button disabled class="button-submit"> <b>Fit Model</b></button>:
-                <button class="button-submit"> <b>Fit Model</b></button>
+            { props.isLoadingModelFit ? <button disabled className="button-submit"> <b>Fitting Model...</b></button>:
+                !(props.datasetName) ? <button disabled className="button-submit"> <b>Fit Model</b></button>:
+                <button className="button-submit"> <b>Fit Model</b></button>
             }  
         </form>
     )
@@ -400,10 +400,11 @@ export function FormPredictAt(props) {
             <b>Predict a result at</b>
             <br></br>
             <table border="0">
+                <tbody>
                 { (inputValidation['noOfFeatures']).map( (index) => (
-                    <tr>
+                    <tr key={index}>
                         <td align="right">
-                            <label for={inputValidation['features'][index]}> {inputValidation['features'][index]} </label>
+                            <label htmlFor={inputValidation['features'][index]}> {inputValidation['features'][index]} </label>
                         </td>
                         <td align="left">
                                 {(!props.inputValidation['features']) ? <input id={inputValidation['features'][index]} type="text" disabled ></input> 
@@ -431,13 +432,14 @@ export function FormPredictAt(props) {
                         </td>
                     </tr>
                 )) }
+                </tbody>
             </table>
 
             <br></br>
-            { props.isLoadingModelPredict ? <button disabled class="button-submit"> <b>Predicting {props.datasetResultParam}...</b></button>:
-                props.isLoadingModelFit ? <button disabled class="button-submit"> <b>Predict</b></button>:
-                !(props.predictionTitle) ? <button disabled class="button-submit"> <b>Predict</b></button>:
-                <button class="button-submit"> <b>Predict {props.datasetResultParam}</b></button>
+            { props.isLoadingModelPredict ? <button disabled className="button-submit"> <b>Predicting {props.datasetResultParam}...</b></button>:
+                props.isLoadingModelFit ? <button disabled className="button-submit"> <b>Predict</b></button>:
+                !(props.predictionTitle) ? <button disabled className="button-submit"> <b>Predict</b></button>:
+                <button className="button-submit"> <b>Predict {props.datasetResultParam}</b></button>
             } 
         </form>
     )
@@ -456,12 +458,13 @@ export function FormModelOutputs(props) {
         <div>
             
             <br></br>
-            <img class="img-center" src={repImageSrc} alt="Model Representation" width="80%" border="1px"></img>
+            <img className="img-center" src={repImageSrc} alt="Model Representation" width="80%"></img>
             <br></br>
             <hr color="#03bffe"></hr>
             <h3 align="center">Model Metrics</h3>
             <br></br>
             <table align="center">
+                <tbody>
                 <tr >
                     <td style={{padding: "4px 8px"}}>
                     </td>
@@ -496,7 +499,7 @@ export function FormModelOutputs(props) {
                         </th>
                     }
                 </tr>
-                <tr >
+                <tr>
                     <td align="left" style={{padding: "4px 8px", background: "#ffa78a"}}>
                         <b>Training </b>
                     </td>
@@ -517,7 +520,7 @@ export function FormModelOutputs(props) {
                         </td>
                     }
                 </tr>
-                <tr >
+                <tr>
                     <td align="left" style={{padding: "4px 8px", background: "#ffa78a"}}>
                         <b>Testing </b>
                     </td>
@@ -538,6 +541,7 @@ export function FormModelOutputs(props) {
                         </td>
                     }
                 </tr>
+                </tbody>
             </table>
         </div>
     )
@@ -588,8 +592,9 @@ export function FormModelPrediction(props) {
             <h3 align="center">Prediction</h3>
             <br></br>
             <table align="center">
+                <tbody>
                 { (datasetFeaturesNo).map( (index) => (
-                    <tr  >
+                    <tr key={'pred-'+index}>
                         { (index%2) ?
                             <td align="left" style={{padding: "4px 8px", background: "#abe3ff"}}>
                                 {datasetFeatures[index]}
@@ -625,6 +630,7 @@ export function FormModelPrediction(props) {
                         }
                     </td>
                 </tr>
+                </tbody>
             </table>
         </div>
     )

@@ -13,25 +13,25 @@ export function NavBar() {
     const isActive = (page) => currentPage === page ? 'active' : ''
     
     return (
-        <div class="navbar-container">
-            <div class="navbar">
-            <div class="logo"> <img class="img" src={logo_white} alt="Logo"></img> </div>
-            <div class="nav-links">
-                <a href="/" class={isActive('')}>Home</a>
-                <div class="dropdown">
-                    <a href="/projects" class={`dropdown-btn ${isActive('projects')}`}>Projects ▾</a>
-                    <div class="dropdown-content">
-                        <a href="/projects" class={isActive('projects')}>All Projects</a>
-                        <a href="/machinelearner" class={isActive('machinelearner')}>Machine Learner</a>
-                        <a href="/speedy-pv" class={isActive('speedy-pv')}>Speedy PV</a>
-                        <a href="/ml-vehicle-emissions" class={isActive('ml-vehicle-emissions')}>ML Vehicle Emissions</a>
+        <div className="navbar-container">
+            <div className="navbar">
+            <div className="logo"> <img className="img" src={logo_white} alt="Logo"></img> </div>
+            <div className="nav-links">
+                <a href="/" className={isActive('')}>Home</a>
+                <div className="dropdown">
+                    <a href="/projects" className={`dropdown-btn ${isActive('projects')}`}>Projects ▾</a>
+                    <div className="dropdown-content">
+                        <a href="/projects" className={isActive('projects')}>All Projects</a>
+                        <a href="/machinelearner" className={isActive('machinelearner')}>Machine Learner</a>
+                        <a href="/speedy-pv" className={isActive('speedy-pv')}>Speedy PV</a>
+                        <a href="/ml-vehicle-emissions" className={isActive('ml-vehicle-emissions')}>ML Vehicle Emissions</a>
                     </div>
                 </div>
             </div>
-                <div class="social-links">
-                    <div class="social-icon-wrapper">
+                <div className="social-links">
+                    <div className="social-icon-wrapper">
                         <button
-                            class="social-icon-btn"
+                            className="social-icon-btn"
                             onClick={async () => {
                                 try {
                                     await navigator.clipboard.writeText(EMAIL);
@@ -52,7 +52,7 @@ export function NavBar() {
                                 <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                             </svg>
                         </button>
-                        <span class={`copied-tooltip ${showCopied ? 'visible' : ''}`}>
+                        <span className={`copied-tooltip ${showCopied ? 'visible' : ''}`}>
                             Email copied!
                         </span>
                     </div>

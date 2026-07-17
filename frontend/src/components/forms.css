@@ -72,27 +72,81 @@
 }
 
 .grid-item {
-    /* grid-column: 1; */
-    /* flex: 0 0 ;
-    background-color: yellow;
-    margin: 4px;
-    text-align: left;
-    width: 100px;
-    height: 25px;
-    break-inside: avoid-column;
-    page-break-inside: avoid; */
-    /* background: lime;
-    width: auto;
-    height: 25px;
-    margin-bottom: 10px; */
-    height: 20px;
-    text-align: left;
-    /* background-color: green;
-    height: 20px;
-    margin: 10px;
-    flex-basis: calc(100% / var(--columns) - 20px); */
-    /* background-color: green;
-    height: 20px; */
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    color: #e0e0e0;
+    font-size: 14px;
+}
+
+.grid-item input[type="checkbox"],
+.grid-item input[type="radio"] {
+    margin-right: 8px;
+    accent-color: #03bffe;
+}
+
+.grid-item label {
+    color: #d0d0d0;
+    cursor: pointer;
+}
+
+form {
+    color: #e0e0e0;
+}
+
+form b,
+form strong {
+    color: #ffffff;
+}
+
+form input[type="text"],
+form input[type="number"],
+form select {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+form input[type="text"]:focus,
+form input[type="number"]:focus,
+form select:focus {
+    outline: none;
+    border-color: #03bffe;
+    box-shadow: 0 0 0 2px rgba(3, 191, 254, 0.2);
+}
+
+form input[type="radio"] {
+    accent-color: #03bffe;
+    margin-right: 6px;
+}
+
+form label {
+    color: #d0d0d0;
+}
+
+/* Table Styles for Model Metrics */
+table[align="center"] {
+    width: 100%;
+    max-width: 600px;
+    margin: 16px auto;
+    border-collapse: collapse;
+}
+
+table[align="center"] td,
+table[align="center"] th {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 12px;
+    font-size: 14px;
+}
+
+/* H3 styling */
+h3 {
+    color: #ffffff;
+    font-size: 18px;
+    margin: 12px 0;
 }
 
 /* 
