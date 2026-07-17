@@ -1,5 +1,5 @@
 import './pagestyles.css';
-import {FormDataset, FormDefineModel, FormPredictAt, FormModelOutputs, FormModelPrediction} from './forms';
+import {FormDataset, FormDefineModel, FormModelOutputs, FormModelPrediction} from './forms';
 import React, {useState, useEffect, useCallback} from 'react';
 
 export function MLerPage(props) {
@@ -10,7 +10,6 @@ export function MLerPage(props) {
     const [predictAt, setPredictAt] = useState([]);
     const [prediction, setPrediction] = useState("");
     const [predictionTitle, setPredictionTitle] = useState(false)
-    const [predictFlag, setPredictFlag] = useState(false)
     const [datasetName, setDatasetName] = useState("");
     // const [datasetFields, setDatasetFields] = useState();
     const [datasetFields, setDatasetFields] = useState({fields: '', nonCtsFields: ''});
@@ -28,7 +27,6 @@ export function MLerPage(props) {
         setPrediction("");
     }    
     const callbackFunctionDataset = (formsData) => {
-        // console.log("DATASET CALLBKAC TRIGGETRED");
         if ( !(datasetName==formsData[0]) || !(arrayEquals(datasetFields['fields'],formsData[1]['fields'])) ) {
             setDatasetName(formsData[0]);
             setDatasetFields(formsData[1]);
@@ -36,10 +34,6 @@ export function MLerPage(props) {
             setMlOuts(0);
             setPredictionTitle(false);
         }
-    }
-    const callbackFunctionPredict = (formsData) => {
-        setPredictAt(formsData); //Won't trigger useEffects if the underlying reference of the array items doesn't change
-        setPredictFlag(!predictFlag);
     }
     
     //Set session ID only once, on initial loading
@@ -58,14 +52,13 @@ export function MLerPage(props) {
                 'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    supervision: inputs[0],
-                    problemtype: inputs[1],
-                    mlmethod: inputs[2],
-                    polydeg: inputs[3],
-                    ctsparams: inputs[4],
-                    cateparams: inputs[5],
-                    resultparam: inputs[6],
-                    testprop: inputs[7],
+                    problemtype: inputs[0],
+                    mlmethod: inputs[1],
+                    polydeg: inputs[2],
+                    ctsparams: inputs[3],
+                    cateparams: inputs[4],
+                    resultparam: inputs[5],
+                    testprop: inputs[6],
                     sessionId: sessionId
                 })
             }).then(res => res.json())
@@ -89,8 +82,7 @@ export function MLerPage(props) {
 
     //Update model prediction and prediction-loading status upon trigger of predictAt changing
     useEffect(() => {
-        if (predictionTitle) {
-            // console.log("PREDICTION API FUNCTION TRIGGERED");
+        if (predictionTitle && Array.isArray(predictAt) && predictAt.length > 0) {
             setLoadingModelPredict(true);
             fetch('/api/ml/predict', {
                 method: 'post',
@@ -109,7 +101,7 @@ export function MLerPage(props) {
                     setLoadingModelPredict(false)
                 })
         }
-    }, [predictFlag])
+    }, [predictAt])
 
     //clear the model plot on unload, so they aren't presented with a random map image
     window.onbeforeunload = () => {
@@ -136,7 +128,7 @@ export function MLerPage(props) {
     // Helper for section tooltips
     const TooltipIcon = ({ text }) => (
         <span className="tooltip-wrapper">
-            <span className="tooltip-icon" title={text}>ℹ</span>
+            <span className="tooltip-icon">ℹ</span>
             <span className="tooltip-text">{text}</span>
         </span>
     );
@@ -206,21 +198,13 @@ export function MLerPage(props) {
                                     <tbody>
                                         <tr>
                                             <td className="info-label">
-                                                <b>Supervision</b>
-                                            </td>
-                                            <td className="info-content">
-                                                Currently, all models on offer are <i>Supervised</i> (meaning the dataset contains a known result for every entry).
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="info-label">
                                                 <b>Problem Type</b>
                                             </td>
                                             <td className="info-content">
                                                 Select <i>Regression</i> if the result you want to predict is a continuous variable, i.e. numerical and where some values can be "bigger" than others.
                                                 <br></br>
                                                 <br></br>
-                                                Select <i>Categorical</i> if the result you want to predict is a categorical variable, i.e. categories or types of something, with no sense of "bigger" or "smaller".
+                                                Select <i>Classification</i> if the result you want to predict is a categorical variable, i.e. categories or types of something, with no sense of "bigger" or "smaller".
                                                 <br></br>
                                             </td>
                                         </tr>
@@ -463,10 +447,13 @@ export function MLerPage(props) {
                             description="Complete steps 1 and 2, then fit your model before making predictions."
                         />
                     ) : (
-                        <>
-                            <FormPredictAt key="predictAt" inputValidation={inputValidation} datasetResultParam={datasetResultParam} parentCallback={callbackFunctionPredict} isLoadingModelPredict={loadingModelPredict} isLoadingModelFit={loadingModelFit} predictionTitle={predictionTitle}/>
-                            <FormModelPrediction key="modelPrediction" modelPrediction={prediction} datasetFeatures={datasetFeatures} datasetResultParam={datasetResultParam} />
-                        </>
+                        <FormModelPrediction
+                            key="modelPrediction"
+                            modelPrediction={{ predictAt: predictAt, prediction: prediction }}
+                            datasetFeatures={datasetFeatures}
+                            datasetResultParam={datasetResultParam}
+                            inputValidation={inputValidation}
+                        />
                     )}
                 </div>
             </div>

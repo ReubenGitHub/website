@@ -75,21 +75,41 @@ export function FormDataset(props) {
                 if(dataset || datasetIsUpload==false)handleSubmit()
             }}>
             <b>Select a .csv Dataset </b>
-            <br></br>
-            <input type="radio" id="default" name="datasetSelect" required defaultChecked onChange={(e) => {setDatasetIsUpload(false); setDataset()} } ></input>
-            <label htmlFor="default">Use the default dataset <i>(vehicle emissions)</i></label>
-            <br></br>
-            <input type="radio" id="uploaded" name="datasetSelect" required onChange={(e) => setDatasetIsUpload(true)} ></input>
-            <label htmlFor="uploaded">Upload a dataset (maximum size of 2MB)</label>
-            <br></br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            { !datasetIsUpload && <input disabled type="file" /> }
-            { datasetIsUpload && <input type="file" accept=".csv" id="dataset" onChange={(e) => setDataset(e.target.files[0])} /> }
-            <br></br>
+            <div className="dataset-option-group">
+                <input type="radio" id="datasetDefault" name="datasetSelect" required defaultChecked onChange={(e) => {setDatasetIsUpload(false); setDataset()} } />
+                <label className="dataset-option" htmlFor="datasetDefault">
+                    <span className="dataset-option-icon">🚗</span>
+                    <span className="dataset-option-text">
+                        <span className="dataset-option-title">Default Dataset</span>
+                        <span className="dataset-option-desc">Vehicle CO2 emissions data</span>
+                    </span>
+                </label>
+
+                <input type="radio" id="datasetUpload" name="datasetSelect" required onChange={(e) => setDatasetIsUpload(true)} />
+                <label className="dataset-option" htmlFor="datasetUpload">
+                    <span className="dataset-option-icon">📁</span>
+                    <span className="dataset-option-text">
+                        <span className="dataset-option-title">Upload Your Own</span>
+                        <span className="dataset-option-desc">CSV file, max 2MB</span>
+                    </span>
+                </label>
+            </div>
+
+            {datasetIsUpload && (
+                <div className="glass-file-input">
+                    <input type="file" accept=".csv" id="dataset" onChange={(e) => setDataset(e.target.files[0])} />
+                    <label htmlFor="dataset" className="glass-file-label">
+                        <span className="glass-file-icon">📄</span>
+                        <span className="glass-file-text">Choose a CSV file</span>
+                    </label>
+                </div>
+            )}
+
             <br></br>
             { (!datasetIsUpload || dataset) ?
                 <button className="ml-button">Commit Dataset</button> :
                 <button disabled className="ml-button">Commit Dataset</button> }
-            
+
             {datasetName && (
                 <div className="dataset-badge">
                     <span className="dataset-badge-icon">📄</span>
@@ -112,7 +132,6 @@ export function FormDefineModel(props) {
     const [datasetFields, setDatasetFields] = useState({fields: ["Fields..."], nonCtsFields: []});
     const [datasetFieldsNo, setDatasetFieldsNo] = useState(["0"]);
     const [count, setCount] = useState(0);
-    const [supervision, setSupervision] = useState("supervised")
     
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -129,9 +148,8 @@ export function FormDefineModel(props) {
         if (ctsFeatures.every(v => v===false) && cateFeatures.every(v => v===false)) {
             alert('Please select at least one feature in the Machine Learner Inputs  :)');
         } else {
-            setInputs([supervision, problemType, MLMethod, Number(PolyDeg), ctsFeatures, cateFeatures, resultParam, testProp/100]) //Asynchronous, just starts a queue so small delay, use below vv
+            setInputs([problemType, MLMethod, Number(PolyDeg), ctsFeatures, cateFeatures, resultParam, testProp/100])
         }
-        // setInputs([supervision, problemType, MLMethod, Number(PolyDeg), ctsFeatures, cateFeatures, resultParam, testProp/100]) //Asynchronous, just starts a queue so small delay, use below vv
     }
 
     useEffect(() => {
@@ -157,41 +175,23 @@ export function FormDefineModel(props) {
 
     return (
         <form onSubmit={handleSubmit}>
-            <b>Supervision</b>
-            <br></br>
-            <input type="radio" id="supervised" name="supervision" checked value="supervised" required onChange={(e) => setSupervision(e.target.value)} ></input>
-            <label htmlFor="supervised">Supervised</label>
-            <input type="radio" disabled id="unsupervised" name="supervision" value="unsupervised" required onChange={(e) => setSupervision(e.target.value)} ></input>
-            <label htmlFor="unsupervised">Unsupervised <i>(Coming soon...)</i></label>
-            <br></br>
-            <br></br>
             <b>Problem Type</b>
-            <br></br>
-            { (supervision==="supervised") ?
-                    <div>
-                        <input type="radio" id="regression" name="resultType" value="regression" required onChange={(e) => {
-                            setProblemType(e.target.value);
-                            { ( props.datasetFields['nonCtsFields'].includes(resultParam) ) && setResultParam("") }
-                            { ( props.datasetFields['nonCtsFields'].includes(resultParam) ) && document.querySelectorAll('input[att2=clearOnRegression]').forEach( el => el.checked = false ) }
-                        }}></input>
-                        <label htmlFor="regression">Regression</label>
-                        <input type="radio" id="classification" name="resultType" value="classification" required onChange={(e) => {
-                            setProblemType(e.target.value);
-                            if (MLMethod !== "DT" && MLMethod !== "KNN") {
-                                setMLMethod("DT");
-                            }
-                        }}></input>
-                        <label htmlFor="classification">Classification</label>
-                    </div>
-                : (supervision==="unsupervised") ? 
-                    <div>
-                        <input type="radio" id="clustering" name="resultType" value="clustering" required onChange={(e) => setProblemType(e.target.value)}></input>
-                        <label htmlFor="clustering">Clustering</label>
-                        <input type="radio" id="association" name="resultType" value="association" required onChange={(e) => setProblemType(e.target.value)}></input>
-                        <label htmlFor="association">Association</label>
-                    </div>
-                : <div>Please specifiy a supervision...</div>
-            }
+            <div className="pill-selector">
+                <input type="radio" id="regression" name="problemType" value="regression" required onChange={(e) => {
+                    setProblemType(e.target.value);
+                    { ( props.datasetFields['nonCtsFields'].includes(resultParam) ) && setResultParam("") }
+                    { ( props.datasetFields['nonCtsFields'].includes(resultParam) ) && document.querySelectorAll('input[att2=clearOnRegression]').forEach( el => el.checked = false ) }
+                }} />
+                <label className={problemType === "regression" ? "pill-btn" : "pill-btn"} htmlFor="regression">Regression</label>
+
+                <input type="radio" id="classification" name="problemType" value="classification" required onChange={(e) => {
+                    setProblemType(e.target.value);
+                    if (MLMethod !== "DT" && MLMethod !== "KNN") {
+                        setMLMethod("DT");
+                    }
+                }} />
+                <label className={problemType === "classification" ? "pill-btn" : "pill-btn"} htmlFor="classification">Classification</label>
+            </div>
             <br></br>
             <b>Machine Learning Method</b>
             <br></br>
@@ -279,17 +279,20 @@ export function FormDefineModel(props) {
                             <input 
                                 {...inputProps}
                                 onChange={(e) => {
+                                    const newCtsParams = [...ctsParams];
+                                    const newCateParams = [...cateParams];
                                     if (isPolyFit) {
-                                        var i;
-                                        for (i=0; i<ctsParams.length; ++i) {
-                                            ctsParams[i] = false;
+                                        for (let i=0; i<newCtsParams.length; ++i) {
+                                            newCtsParams[i] = false;
                                         }
-                                        ctsParams[index] = e.target.checked;
+                                        newCtsParams[index] = e.target.checked;
                                     } else {
-                                        ctsParams[index] = e.target.checked;
-                                        cateParams[index] = false;
+                                        newCtsParams[index] = e.target.checked;
+                                        newCateParams[index] = false;
                                         document.querySelectorAll('input[id="'+fieldName+'ctg"]').forEach( el => el.checked = false );
                                     }
+                                    setCtsParams(newCtsParams);
+                                    setCateParams(newCateParams);
                                 }}
                             />
                             <label className={pillClass} htmlFor={fieldName + "cts"}>
@@ -599,64 +602,121 @@ export function FormModelOutputs(props) {
 
 //NEEDS TO WIPE PREDICTION UPON DATASET/MODEL/INPUTS CHANGE
 export function FormModelPrediction(props) {
-    const [datasetFeatures, setDatasetFeatures] = useState(["Features..."]);
-    const [datasetResultParam, setDatasetResultParam] = useState(["Result..."])
-    const [datasetFeaturesNo, setDatasetFeaturesNo] = useState(["0"]);
-    const [predictAt, setPredictAt] = useState("");
+    const [datasetFeatures, setDatasetFeatures] = useState([]);
+    const [datasetResultParam, setDatasetResultParam] = useState("");
+    const [datasetFeaturesNo, setDatasetFeaturesNo] = useState([]);
+    const [predictAt, setPredictAt] = useState([]);
     const [prediction, setPrediction] = useState("");
+    const [inputValues, setInputValues] = useState({});
+    const [noOfCts, setNoOfCts] = useState(0);
+    const [options, setOptions] = useState([[]]);
 
     useEffect(() => {
         if (props.modelPrediction['predictAt']) {
-            if (!arrayEquals(predictAt,props.modelPrediction['predictAt'])) {
+            if (!arrayEquals(predictAt, props.modelPrediction['predictAt'])) {
                 setPredictAt(props.modelPrediction['predictAt']);
-                setPrediction( props.modelPrediction['prediction'] );
+                setPrediction(props.modelPrediction['prediction']);
             }
         } else {
-            setPredictAt("");
-            setPrediction( "" );
+            setPredictAt([]);
+            setPrediction("");
         }
     }, [props.modelPrediction]);
 
     useEffect(() => {
         if (props.datasetFeatures) {
-            if (!arrayEquals(datasetFeatures,props.datasetFeatures) | !(datasetResultParam===props.datasetResultParam)) {
+            if (!arrayEquals(datasetFeatures, props.datasetFeatures) || !(datasetResultParam === props.datasetResultParam)) {
                 setDatasetFeatures(props.datasetFeatures);
-                setDatasetFeaturesNo( [...Array( props.datasetFeatures.length).keys()] ); //For checkboxes table setup
-                setDatasetResultParam( props.datasetResultParam );
-                setPredictAt("");
-                setPrediction( "" );
+                setDatasetFeaturesNo([...Array(props.datasetFeatures.length).keys()]);
+                setDatasetResultParam(props.datasetResultParam);
+                setPredictAt([]);
+                setPrediction("");
+                // Initialize input values
+                const initialValues = props.datasetFeatures.reduce(
+                    (acc, feature) => ({ ...acc, [feature]: "" }),
+                    {}
+                );
+                setInputValues(initialValues);
             }
         } else {
-            setDatasetFeatures(["Features..."]);
-            setDatasetFeaturesNo( [...Array( 1).keys()] ); //For checkboxes table setup
-            setDatasetResultParam( ["Result..." ]);
-            setPredictAt("");
-            setPrediction( "" );
+            setDatasetFeatures([]);
+            setDatasetFeaturesNo([]);
+            setDatasetResultParam("");
+            setPredictAt([]);
+            setPrediction("");
+            setInputValues({});
         }
     }, [props.datasetFeatures, props.datasetResultParam]);
 
+    const handlePredict = () => {
+        // Trigger prediction by updating predictAt
+        setPredictAt(Object.values(inputValues));
+    };
+
+    const isPredicting = Array.isArray(predictAt) && predictAt.length > 0 && !prediction;
 
     return (
-        <div>
+        <div className="prediction-section">
             <h3>Prediction</h3>
-            <div className="prediction-list">
-                { (Array.isArray(predictAt)) ? predictAt.map( (val, index) => (
-                    <div key={'pred-'+index} className="prediction-row">
-                        <span className="prediction-feature">{datasetFeatures[index]}</span>
-                        <span className="prediction-value">{val}</span>
-                    </div>
-                )) : (
-                    <div className="prediction-row">
-                        <span className="prediction-feature">Loading...</span>
-                        <span className="prediction-value">...</span>
-                    </div>
-                )}
-                <div className="prediction-row prediction-result">
-                    <span className="prediction-feature"><b>{datasetResultParam}</b></span>
-                    <span className="prediction-value">
-                        {prediction ? prediction : "..."}
-                    </span>
-                </div>
+            <div className="prediction-table-wrapper">
+                <table className="prediction-table">
+                    <tbody>
+                        {datasetFeaturesNo.map((index) => {
+                            const feature = datasetFeatures[index] || '';
+                            const isNumber = index < (props.inputValidation?.noOfCts || noOfCts);
+                            const featureOptions = props.inputValidation?.options?.[index - (props.inputValidation?.noOfCts || noOfCts)] || [];
+                            const currentValue = inputValues[feature] || '';
+                            
+                            return (
+                                <tr key={'pred-' + index}>
+                                    <td className="prediction-feature-cell">{feature}</td>
+                                    <td className="prediction-input-cell">
+                                        {isNumber ? (
+                                            <input
+                                                type="number"
+                                                step="any"
+                                                className="prediction-input"
+                                                value={currentValue}
+                                                placeholder="Enter value"
+                                                onChange={(e) => {
+                                                    setInputValues({ ...inputValues, [feature]: e.target.value });
+                                                }}
+                                            />
+                                        ) : (
+                                            <select
+                                                className="prediction-input"
+                                                value={currentValue}
+                                                onChange={(e) => {
+                                                    setInputValues({ ...inputValues, [feature]: e.target.value });
+                                                }}
+                                            >
+                                                <option value="">Select...</option>
+                                                {featureOptions.map((option, i) => (
+                                                    <option key={i} value={option}>{option}</option>
+                                                ))}
+                                            </select>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                        <tr className="prediction-result-row">
+                            <td className="prediction-feature-cell"><b>{datasetResultParam}</b></td>
+                            <td className="prediction-result-cell">
+                                {prediction || '—'}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div className="prediction-actions">
+                <button
+                    className="ml-button"
+                    onClick={handlePredict}
+                    disabled={!datasetFeatures.length || isPredicting}
+                >
+                    {isPredicting ? 'Predicting...' : `Predict ${datasetResultParam}`}
+                </button>
             </div>
         </div>
     )

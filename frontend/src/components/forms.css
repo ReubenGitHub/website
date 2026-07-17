@@ -100,6 +100,111 @@ form strong {
 }
 
 /* ============================================================
+   Dataset Selection Options
+   ============================================================ */
+
+.dataset-option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.dataset-option-group input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.dataset-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dataset-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dataset-option-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.dataset-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dataset-option-title {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.dataset-option-desc {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.dataset-option-group input[type="radio"]:checked + .dataset-option {
+  background: rgba(3, 191, 254, 0.15);
+  border-color: rgba(3, 191, 254, 0.4);
+  box-shadow: 0 0 0 1px rgba(3, 191, 254, 0.1);
+}
+
+.dataset-option-group input[type="radio"]:checked + .dataset-option .dataset-option-title {
+  color: #03bffe;
+}
+
+/* Glass File Input */
+.glass-file-input {
+  margin: 12px 0;
+  position: relative;
+}
+
+.glass-file-input input[type="file"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.glass-file-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+}
+
+.glass-file-label:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.glass-file-icon {
+  font-size: 18px;
+}
+
+/* ============================================================
    Dataset Name Badge
    ============================================================ */
 
@@ -196,14 +301,73 @@ form strong {
 }
 
 form input[type="text"],
-form input[type="number"],
-form select {
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+form input[type="number"] {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: #e0e0e0;
-    padding: 6px 10px;
-    border-radius: 4px;
+    padding: 8px 12px;
+    border-radius: 10px;
     font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+/* Remove default number input spinners */
+form input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+    -webkit-appearance: textfield;
+}
+
+form input[type="number"]::-webkit-inner-spin-button,
+form input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+}
+
+form select {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #e0e0e0;
+    padding: 8px 32px 8px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2303bffe' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+form select:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+form select option {
+    background: rgba(20, 20, 35, 0.98);
+    color: #e0e0e0;
+    padding: 10px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+form select option:checked {
+    background: rgba(3, 191, 254, 0.2);
+    color: #03bffe;
+}
+
+form select option:disabled {
+    color: #666;
+    background: rgba(30, 30, 50, 0.98);
 }
 
 form input[type="text"]:focus,

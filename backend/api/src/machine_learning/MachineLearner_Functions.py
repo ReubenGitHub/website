@@ -9,7 +9,7 @@ from .models.predict import predict
 import matplotlib
 matplotlib.use('Agg')
 
-def machineLearner(supervision, problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, session_id):
+def machineLearner(problem_type, model_type, poly_degree, continuous_features, categorical_features, result, test_proportion, session_id):
     # Get dataset from session data
     dataset = session_context_manager.get_session_data(session_id)['dataset']
     fields_of_interest = continuous_features + categorical_features + [result]

@@ -26,7 +26,6 @@ def get_current_time():
 @cross_origin()
 def mlModelFit():
     return machine_learning.MachineLearner_Functions.machineLearner(
-        request.json['supervision'],
         request.json['problemtype'],
         request.json['mlmethod'],
         request.json['polydeg'],

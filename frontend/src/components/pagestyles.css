@@ -232,59 +232,40 @@ p.intro {
 }
 
 /* ML Page Primary Buttons (Commit Dataset, Fit Model, Predict) */
-.ml-button {
+.ml-button, .ml-button-predict {
   border: none;
   outline: 0;
-  display: inline-block;
-  padding: 10px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 28px;
   color: white;
-  background-color: #000;
+  background: linear-gradient(135deg, #fe4203, #ff6b35);
   text-align: center;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 50px;
   font: inherit;
   font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(254, 66, 3, 0.3);
 }
 
-.ml-button:hover:not(:disabled) {
-  background-color: #555;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+.ml-button:hover:not(:disabled), .ml-button-predict:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(254, 66, 3, 0.45);
 }
 
-.ml-button:disabled {
-  background-color: #333;
-  color: #888;
+.ml-button:active:not(:disabled), .ml-button-predict:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.ml-button:disabled, .ml-button-predict:disabled {
+  background: linear-gradient(135deg, #666, #888);
+  color: #bbb;
   cursor: not-allowed;
-}
-
-/* ML Page Secondary Buttons (Predict button in FormPredictAt) */
-.ml-button-predict {
-  border: none;
-  outline: 0;
-  display: inline-block;
-  padding: 10px 24px;
-  color: white;
-  background-color: #03bffe;
-  text-align: center;
-  cursor: pointer;
-  border-radius: 8px;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.ml-button-predict:hover:not(:disabled) {
-  background-color: #0288d1;
-  box-shadow: 0 2px 12px rgba(3, 191, 254, 0.3);
-}
-
-.ml-button-predict:disabled {
-  background-color: #5a9fc4;
-  color: #a0c8e0;
-  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 @media screen and (max-width: 650px) {
@@ -822,7 +803,8 @@ p.intro {
 }
 
 .ml-results-image img {
-  max-width: 50%;
+  max-width: 75%;
+  width: 400px;
   height: auto;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -898,57 +880,107 @@ p.intro {
 }
 
 /* ============================================================
-   Modern Prediction Table
+   Prediction Section with Table Layout
    ============================================================ */
 
-.prediction-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.prediction-section {
   margin-top: 12px;
 }
 
-.prediction-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  font-size: 14px;
+.prediction-section h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  color: #ffffff;
+  font-weight: 600;
 }
 
-.prediction-feature {
-  flex: 1;
+.prediction-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.prediction-table {
+  border-collapse: collapse;
+  width: auto;
+  min-width: 280px;
+}
+
+.prediction-table td {
+  padding: 10px 16px;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.prediction-feature-cell {
   color: rgba(255, 255, 255, 0.7);
   font-weight: 500;
+  white-space: nowrap;
+  min-width: 100px;
 }
 
-.prediction-value {
-  flex: 1;
-  color: #03bffe;
-  font-weight: 600;
-  text-align: center;
-  font-family: "Segoe UI", monospace;
+.prediction-input-cell {
+  min-width: 160px;
 }
 
-.prediction-result {
-  grid-column: 1 / -1;
-  padding: 12px 16px;
-  background: rgba(255, 132, 91, 0.15);
-  border: 1px solid rgba(255, 132, 91, 0.3);
+.prediction-input {
+  width: 100%;
+  min-width: 120px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 14px;
+  font-family: "Segoe UI", monospace;
+  transition: all 0.2s ease;
 }
 
-.prediction-result .prediction-feature {
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 600;
+/* Remove spinners from prediction number inputs */
+.prediction-input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+  -webkit-appearance: textfield;
 }
 
-.prediction-result .prediction-value {
+.prediction-input[type="number"]::-webkit-inner-spin-button,
+.prediction-input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.prediction-input:focus {
+  outline: none;
+  border-color: #03bffe;
+  box-shadow: 0 0 0 2px rgba(3, 191, 254, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.prediction-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.prediction-result-row {
+  border-top: 2px solid rgba(255, 132, 91, 0.3);
+}
+
+.prediction-result-row td {
+  padding: 12px 16px;
+  background: rgba(255, 132, 91, 0.1);
+}
+
+.prediction-result-cell {
   color: #ff845b;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: "Segoe UI", monospace;
+  white-space: nowrap;
+}
+
+.prediction-actions {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
 }
 
 /* Responsive adjustments */
@@ -957,10 +989,12 @@ p.intro {
     grid-template-columns: 1fr 1fr;
   }
   
-  .prediction-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+  .prediction-table {
+    width: 100%;
+  }
+  
+  .prediction-input-cell {
+    min-width: 120px;
   }
   
   .ml-results-image img {
