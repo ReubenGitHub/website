@@ -87,8 +87,15 @@ export function FormDataset(props) {
             <br></br>
             <br></br>
             { (!datasetIsUpload || dataset) ?
-                <button className="button-submit"> <b>Commit Dataset</b></button> :
-                <button disabled className="button-submit"> <b>Commit Dataset</b></button> }
+                <button className="ml-button">Commit Dataset</button> :
+                <button disabled className="ml-button">Commit Dataset</button> }
+            
+            {datasetName && (
+                <div className="dataset-badge">
+                    <span className="dataset-badge-icon">📄</span>
+                    <span>{datasetName}</span>
+                </div>
+            )}
         </form>
     )
 }
@@ -240,81 +247,138 @@ export function FormDefineModel(props) {
             }
             <br></br>
             <b>Features - Continuous</b>
-            <br></br>
-            <div className="grid-container">
-                { datasetFieldsNo.map( (index) => (
-                    <div className="grid-item" key={'cts-'+index}>
-                        {cateParams[index]===true}
-                        { !(MLMethod==="PolyFit") ?
-                                !(props.datasetFields['fields']) ?
-                                    <input type="checkbox" disabled id={datasetFields['fields'][index]+"cts"} name="continuous features"></input>
-                                : ( props.datasetFields['nonCtsFields'].includes(props.datasetFields['fields'][index]) ) ?
-                                    <input type="checkbox" disabled id={datasetFields['fields'][index]+"cts"} name="continuous features" att="clearOnDataCommit" att3="clearOnPolyFit" ></input>
-                                : <input type="checkbox" id={datasetFields['fields'][index]+"cts"} name="continuous features" att="clearOnDataCommit" att3="clearOnPolyFit" onChange={(e) =>  
-                                            {ctsParams[index]=e.target.checked;
-                                                cateParams[index]=false;
-                                                document.querySelectorAll('input[id="'+datasetFields['fields'][index]+'ctg"]').forEach( el => el.checked = false )
-                                            }
+            <div className="pill-selector">
+                { datasetFieldsNo.map( (index) => {
+                    const fieldName = datasetFields['fields'][index];
+                    const isDisabled = !(props.datasetFields['fields']) || props.datasetFields['nonCtsFields'].includes(fieldName);
+                    const isPolyFit = MLMethod === "PolyFit";
+                    const inputType = isPolyFit ? "radio" : "checkbox";
+                    const pillClass = isDisabled ? "pill-btn pill-disabled" : "pill-btn";
+                    const inputProps = {
+                        id: fieldName + "cts",
+                        type: inputType,
+                        name: "continuous features",
+                        att: "clearOnDataCommit",
+                        att3: "clearOnPolyFit",
+                        className: "pill-input"
+                    };
+                    
+                    if (isDisabled) {
+                        return (
+                            <React.Fragment key={'cts-'+index}>
+                                <input {...inputProps} disabled />
+                                <label className="pill-btn pill-disabled" htmlFor={fieldName + "cts"}>
+                                    {fieldName.length > 15 ? fieldName.substring(0, 15) + '...' : fieldName}
+                                </label>
+                            </React.Fragment>
+                        );
+                    }
+                    
+                    return (
+                        <React.Fragment key={'cts-'+index}>
+                            <input 
+                                {...inputProps}
+                                onChange={(e) => {
+                                    if (isPolyFit) {
+                                        var i;
+                                        for (i=0; i<ctsParams.length; ++i) {
+                                            ctsParams[i] = false;
                                         }
-                                    ></input>
-                            : (MLMethod==="PolyFit") && 
-                                !(props.datasetFields['fields']) ?
-                                    <input type="radio" disabled id={datasetFields['fields'][index]+"cts"} name="continuous features"></input>
-                                : ( props.datasetFields['nonCtsFields'].includes(props.datasetFields['fields'][index]) ) ?
-                                    <input type="radio" disabled id={datasetFields['fields'][index]+"cts"} name="continuous features" att="clearOnDataCommit" att3="clearOnPolyFit" ></input>
-                                : <input type="radio" id={datasetFields['fields'][index]+"cts"} name="continuous features" att="clearOnDataCommit" att3="clearOnPolyFit" onChange={(e) =>
-                                        {var i;
-                                            for (i=0; i<ctsParams.length; ++i) {
-                                                ctsParams[i] = false;
-                                            }
-                                            ctsParams[index]=e.target.checked;
-                                        }}
-                                    ></input>
-                        }
-                        {(datasetFields['fields'][index].length>15) && <label htmlFor={datasetFields['fields'][index]+"cts"}>{datasetFields['fields'][index].substring(0,15)}... &nbsp;</label>}
-                        {!(datasetFields['fields'][index].length>15) && <label htmlFor={datasetFields['fields'][index]+"cts"}>{datasetFields['fields'][index]} &nbsp;</label>}
-                    </div>
-                )) }
+                                        ctsParams[index] = e.target.checked;
+                                    } else {
+                                        ctsParams[index] = e.target.checked;
+                                        cateParams[index] = false;
+                                        document.querySelectorAll('input[id="'+fieldName+'ctg"]').forEach( el => el.checked = false );
+                                    }
+                                }}
+                            />
+                            <label className={pillClass} htmlFor={fieldName + "cts"}>
+                                {fieldName.length > 15 ? fieldName.substring(0, 15) + '...' : fieldName}
+                            </label>
+                        </React.Fragment>
+                    );
+                }) }
             </div>
             <br></br>
             <b>Features - Categorical</b>
-            <br></br>
-            <div className="grid-container">
-                { datasetFieldsNo.map( (index) => (
-                    <div className="grid-item" key={'ctg-'+index}>
-                        {!(props.datasetFields['fields']) ?
-                                <input type="checkbox" disabled id={datasetFields['fields'][index]+"ctg"} name="categorical features"></input>
-                            : (MLMethod==="PolyFit") ?
-                                <input type="checkbox" disabled id={datasetFields['fields'][index]+"ctg"} name="categorical features" att="clearOnDataCommit" att3="clearOnPolyFit"></input>
-                            : <input type="checkbox" id={datasetFields['fields'][index]+"ctg"} name="categorical features" att="clearOnDataCommit" att3="clearOnPolyFit" onChange={(e) => 
-                                        {cateParams[index]=e.target.checked;
-                                            ctsParams[index]=false;
-                                            document.querySelectorAll('input[id="'+datasetFields['fields'][index]+'cts"]').forEach( el => el.checked = false )
-                                        }  
-                                    }
-                                ></input>
-                        }
-                        {(datasetFields['fields'][index].length>15) && <label htmlFor={datasetFields['fields'][index]+"ctg"}>{datasetFields['fields'][index].substring(0,15)}... &nbsp;</label>}
-                        {!(datasetFields['fields'][index].length>15) && <label htmlFor={datasetFields['fields'][index]+"ctg"}>{datasetFields['fields'][index]} &nbsp;</label>}
-                    </div>
-                )) }
+            <div className="pill-selector">
+                { datasetFieldsNo.map( (index) => {
+                    const fieldName = datasetFields['fields'][index];
+                    const isDisabled = !(props.datasetFields['fields']) || MLMethod === "PolyFit";
+                    const pillClass = isDisabled ? "pill-btn pill-disabled" : "pill-btn";
+                    
+                    if (isDisabled) {
+                        return (
+                            <React.Fragment key={'ctg-'+index}>
+                                <input type="checkbox" disabled id={fieldName + "ctg"} name="categorical features" att="clearOnDataCommit" att3="clearOnPolyFit" className="pill-input" />
+                                <label className="pill-btn pill-disabled" htmlFor={fieldName + "ctg"}>
+                                    {fieldName.length > 15 ? fieldName.substring(0, 15) + '...' : fieldName}
+                                </label>
+                            </React.Fragment>
+                        );
+                    }
+                    
+                    return (
+                        <React.Fragment key={'ctg-'+index}>
+                            <input 
+                                type="checkbox"
+                                id={fieldName + "ctg"}
+                                name="categorical features"
+                                att="clearOnDataCommit"
+                                att3="clearOnPolyFit"
+                                className="pill-input"
+                                onChange={(e) => {
+                                    cateParams[index] = e.target.checked;
+                                    ctsParams[index] = false;
+                                    document.querySelectorAll('input[id="'+fieldName+'cts"]').forEach( el => el.checked = false );
+                                }}
+                            />
+                            <label className={pillClass} htmlFor={fieldName + "ctg"}>
+                                {fieldName.length > 15 ? fieldName.substring(0, 15) + '...' : fieldName}
+                            </label>
+                        </React.Fragment>
+                    );
+                }) }
             </div>
             <br></br>
             <b>Result</b>
-            <br></br>
-            <div className="grid-container">
-                { datasetFieldsNo.map( (index) => (
-                    <div className="grid-item" key={'result-'+index}>
-                        {!(props.datasetFields['fields']) ?
-                                <input type="radio" disabled id={datasetFields['fields'][index]} name="result"></input>
-                            :( (props.datasetFields['nonCtsFields'].includes(props.datasetFields['fields'][index])) && (problemType==="regression")  ) ?
-                                <input type="radio" disabled id={datasetFields['fields'][index]} name="result" att="clearOnDataCommit" att2="clearOnRegression" required ></input>
-                            :<input type="radio" id={datasetFields['fields'][index]} name="result" att="clearOnDataCommit" att2="clearOnRegression" required onChange={(e) => setResultParam(e.target.id) }></input>
-                        }
-                        {(datasetFields['fields'][index].length>15) && <label htmlFor={datasetFields['fields'][index]}>{datasetFields['fields'][index].substring(0,15)}... &nbsp;</label>}
-                        {!(datasetFields['fields'][index].length>15) && <label htmlFor={datasetFields['fields'][index]}>{datasetFields['fields'][index]} &nbsp;</label>}
-                    </div>
-                )) }
+            <div className="pill-selector">
+                { datasetFieldsNo.map( (index) => {
+                    const fieldName = datasetFields['fields'][index];
+                    const isDisabled = !(props.datasetFields['fields']) || (props.datasetFields['nonCtsFields'].includes(fieldName) && problemType === "regression");
+                    const pillClass = isDisabled ? "pill-btn pill-disabled" : "pill-btn";
+                    const isSelected = resultParam === fieldName;
+                    
+                    if (isDisabled) {
+                        return (
+                            <React.Fragment key={'result-'+index}>
+                                <input type="radio" disabled id={fieldName} name="result" att="clearOnDataCommit" att2="clearOnRegression" className="pill-input" />
+                                <label className="pill-btn pill-disabled" htmlFor={fieldName}>
+                                    {fieldName.length > 15 ? fieldName.substring(0, 15) + '...' : fieldName}
+                                </label>
+                            </React.Fragment>
+                        );
+                    }
+                    
+                    return (
+                        <React.Fragment key={'result-'+index}>
+                            <input 
+                                type="radio"
+                                id={fieldName}
+                                name="result"
+                                att="clearOnDataCommit"
+                                att2="clearOnRegression"
+                                required
+                                className="pill-input"
+                                checked={isSelected}
+                                onChange={(e) => setResultParam(e.target.id)}
+                            />
+                            <label className={isSelected ? "pill-btn" : pillClass} htmlFor={fieldName}>
+                                {fieldName.length > 15 ? fieldName.substring(0, 15) + '...' : fieldName}
+                            </label>
+                        </React.Fragment>
+                    );
+                }) }
             </div>
             <br></br>
             <b>Test Data Proportion</b>
@@ -332,9 +396,9 @@ export function FormDefineModel(props) {
             %
             <br></br>
             <br></br>
-            { props.isLoadingModelFit ? <button disabled className="button-submit"> <b>Fitting Model...</b></button>:
-                !(props.datasetName) ? <button disabled className="button-submit"> <b>Fit Model</b></button>:
-                <button className="button-submit"> <b>Fit Model</b></button>
+            { props.isLoadingModelFit ? <button disabled className="ml-button">Fitting Model...</button>:
+                !(props.datasetName) ? <button disabled className="ml-button">Fit Model</button>:
+                <button className="ml-button">Fit Model</button>
             }  
         </form>
     )
@@ -436,10 +500,10 @@ export function FormPredictAt(props) {
             </table>
 
             <br></br>
-            { props.isLoadingModelPredict ? <button disabled className="button-submit"> <b>Predicting {props.datasetResultParam}...</b></button>:
-                props.isLoadingModelFit ? <button disabled className="button-submit"> <b>Predict</b></button>:
-                !(props.predictionTitle) ? <button disabled className="button-submit"> <b>Predict</b></button>:
-                <button className="button-submit"> <b>Predict {props.datasetResultParam}</b></button>
+            { props.isLoadingModelPredict ? <button disabled className="ml-button ml-button-predict">Predicting {props.datasetResultParam}...</button>:
+                props.isLoadingModelFit ? <button disabled className="ml-button ml-button-predict">Predict</button>:
+                !(props.predictionTitle) ? <button disabled className="ml-button ml-button-predict">Predict</button>:
+                <button className="ml-button ml-button-predict">Predict {props.datasetResultParam}</button>
             } 
         </form>
     )
@@ -454,95 +518,80 @@ export function FormModelOutputs(props) {
             ? representationNAIcon
             : `data:image/png;base64,${graphImageBase64}`
 
+    const isClassification = !!modelMetrics?.train_macro_precision;
+    const accuracyLabel = isClassification ? 'Classifier Accuracy' : 'R-Squared Accuracy';
+
     return (
-        <div>
-            
-            <br></br>
-            <img className="img-center" src={repImageSrc} alt="Model Representation" width="80%"></img>
-            <br></br>
-            <hr color="#03bffe"></hr>
-            <h3 align="center">Model Metrics</h3>
-            <br></br>
-            <table align="center">
-                <tbody>
-                <tr >
-                    <td style={{padding: "4px 8px"}}>
-                    </td>
-                    {(modelMetrics?.train_macro_precision) ?
-                            <th style={{padding: "4px 8px", background: "#ffa78a"}}>
-                                Classifier
-                                <br></br>
-                                Accuracy
-                            </th>:
-                        (modelMetrics?.train_accuracy) ?
-                            <th style={{padding: "4px 8px", background: "#ffa78a"}}>
-                                R-Squared
-                                <br></br>
-                                Accuracy
-                            </th>:
-                        <th style={{padding: "4px 8px", background: "#ffa78a"}}>
-                            Accuracy
-                        </th>
-                    }
-                    {(modelMetrics?.train_macro_precision) &&
-                        <th style={{padding: "4px 8px", background: "#ffa78a"}}>
-                            Macro | Micro
-                            <br></br>
-                            Precision
-                        </th>
-                    }
-                    {(modelMetrics?.train_macro_precision) &&
-                        <th style={{padding: "4px 8px", background: "#ffa78a"}}>
-                            Macro | Micro
-                            <br></br>
-                            Recall
-                        </th>
-                    }
-                </tr>
-                <tr>
-                    <td align="left" style={{padding: "4px 8px", background: "#ffa78a"}}>
-                        <b>Training </b>
-                    </td>
-                    <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                        { !(modelMetrics?.train_accuracy==null) ? 
-                            ( 1*modelMetrics?.train_accuracy + Number.EPSILON ).toFixed(3) :
-                            "..."
-                        }
-                    </td>
-                    {(modelMetrics?.train_macro_precision) && 
-                        <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                            <div> {( 1*modelMetrics?.train_macro_precision + Number.EPSILON ).toFixed(3)} &nbsp;|&nbsp; {( 1*modelMetrics?.train_micro_precision + Number.EPSILON ).toFixed(3)} </div>
-                        </td>
-                    }
-                    {(modelMetrics?.train_macro_recall) &&
-                        <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                            <div> {( 1*modelMetrics?.train_macro_recall + Number.EPSILON ).toFixed(3)} &nbsp;|&nbsp; {( 1*modelMetrics?.train_micro_recall + Number.EPSILON ).toFixed(3)} </div>
-                        </td>
-                    }
-                </tr>
-                <tr>
-                    <td align="left" style={{padding: "4px 8px", background: "#ffa78a"}}>
-                        <b>Testing </b>
-                    </td>
-                    <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                        { !(modelMetrics?.test_accuracy==null) ? 
-                            ( 1*modelMetrics?.test_accuracy + Number.EPSILON ).toFixed(3) :
-                            "..."
-                        }
-                    </td>
-                    {(modelMetrics?.test_macro_precision) && 
-                        <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                            <div> {( 1*modelMetrics?.test_macro_precision + Number.EPSILON ).toFixed(3)} &nbsp;|&nbsp; {( 1*modelMetrics?.test_micro_precision + Number.EPSILON ).toFixed(3)} </div>
-                        </td>
-                    }
-                    {(modelMetrics?.test_macro_recall) &&
-                        <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                            <div> {( 1*modelMetrics?.test_macro_recall + Number.EPSILON ).toFixed(3)} &nbsp;|&nbsp; {( 1*modelMetrics?.test_micro_recall + Number.EPSILON ).toFixed(3)} </div>
-                        </td>
-                    }
-                </tr>
-                </tbody>
-            </table>
+        <div className="ml-results-layout">
+            <div className="ml-results-image">
+                <img src={repImageSrc} alt="Model Representation" />
+            </div>
+            <div className="ml-results-metrics">
+                <h3>Model Metrics</h3>
+                <div className="metric-cards">
+                    {/* Accuracy Card */}
+                    <div className="metric-card">
+                        <div className="metric-card-header">{accuracyLabel}</div>
+                        <div className="metric-card-row">
+                            <span className="metric-card-label">Training</span>
+                            <span className="metric-card-value">
+                                {!(modelMetrics?.train_accuracy == null) ?
+                                    (1 * modelMetrics?.train_accuracy + Number.EPSILON).toFixed(3) :
+                                    "..."}
+                            </span>
+                        </div>
+                        <div className="metric-card-divider"></div>
+                        <div className="metric-card-row">
+                            <span className="metric-card-label">Testing</span>
+                            <span className="metric-card-value">
+                                {!(modelMetrics?.test_accuracy == null) ?
+                                    (1 * modelMetrics?.test_accuracy + Number.EPSILON).toFixed(3) :
+                                    "..."}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Precision Card (Classification only) */}
+                    {isClassification && (
+                        <div className="metric-card">
+                            <div className="metric-card-header">Precision</div>
+                            <div className="metric-card-row">
+                                <span className="metric-card-label">Train Macro</span>
+                                <span className="metric-card-value">
+                                    {(1 * modelMetrics?.train_macro_precision + Number.EPSILON).toFixed(3)}
+                                </span>
+                            </div>
+                            <div className="metric-card-divider"></div>
+                            <div className="metric-card-row">
+                                <span className="metric-card-label">Train Micro</span>
+                                <span className="metric-card-value">
+                                    {(1 * modelMetrics?.train_micro_precision + Number.EPSILON).toFixed(3)}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Recall Card (Classification only) */}
+                    {isClassification && (
+                        <div className="metric-card">
+                            <div className="metric-card-header">Recall</div>
+                            <div className="metric-card-row">
+                                <span className="metric-card-label">Train Macro</span>
+                                <span className="metric-card-value">
+                                    {(1 * modelMetrics?.train_macro_recall + Number.EPSILON).toFixed(3)}
+                                </span>
+                            </div>
+                            <div className="metric-card-divider"></div>
+                            <div className="metric-card-row">
+                                <span className="metric-card-label">Train Micro</span>
+                                <span className="metric-card-value">
+                                    {(1 * modelMetrics?.train_micro_recall + Number.EPSILON).toFixed(3)}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     )
 
@@ -589,49 +638,26 @@ export function FormModelPrediction(props) {
 
     return (
         <div>
-            <h3 align="center">Prediction</h3>
-            <br></br>
-            <table align="center">
-                <tbody>
-                { (datasetFeaturesNo).map( (index) => (
-                    <tr key={'pred-'+index}>
-                        { (index%2) ?
-                            <td align="left" style={{padding: "4px 8px", background: "#abe3ff"}}>
-                                {datasetFeatures[index]}
-                            </td>:
-                            <td align="left" style={{padding: "4px 8px", background: "#abe3ff"}}>
-                                {datasetFeatures[index]}
-                            </td>
-                        }
-                        { (index%2) ?
-                            <td align="center" style={{padding: "4px 8px", background: "#def4ff"}}>
-                                { (Array.isArray(predictAt)) ? 
-                                    predictAt[index] :
-                                    "..."
-                                }
-                            </td>:
-                            <td align="center" style={{padding: "4px 8px", background: "#def4ff"}}>
-                                { (Array.isArray(predictAt)) ? 
-                                    predictAt[index] :
-                                    "..."
-                                }
-                            </td>
-                        }
-                    </tr>
-                )) }
-                <tr>
-                    <td align="left" style={{padding: "4px 8px", background: "#ffa78a"}}>
-                        <b>{datasetResultParam}</b>
-                    </td>
-                    <td align="center" style={{padding: "4px 8px", background: "#ffcab8"}}>
-                        { (prediction) ? 
-                            prediction :
-                            "..."
-                        }
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+            <h3>Prediction</h3>
+            <div className="prediction-list">
+                { (Array.isArray(predictAt)) ? predictAt.map( (val, index) => (
+                    <div key={'pred-'+index} className="prediction-row">
+                        <span className="prediction-feature">{datasetFeatures[index]}</span>
+                        <span className="prediction-value">{val}</span>
+                    </div>
+                )) : (
+                    <div className="prediction-row">
+                        <span className="prediction-feature">Loading...</span>
+                        <span className="prediction-value">...</span>
+                    </div>
+                )}
+                <div className="prediction-row prediction-result">
+                    <span className="prediction-feature"><b>{datasetResultParam}</b></span>
+                    <span className="prediction-value">
+                        {prediction ? prediction : "..."}
+                    </span>
+                </div>
+            </div>
         </div>
     )
 

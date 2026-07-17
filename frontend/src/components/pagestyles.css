@@ -217,16 +217,74 @@ p.intro {
   border: none;
   outline: 0;
   display: inline-block;
-  padding: 8px;
+  padding: 10px 20px;
   color: white;
   background-color: #000;
   text-align: center;
   cursor: pointer;
-  width: 100%;
+  border-radius: 8px;
+  font: inherit;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .button:hover {
   background-color: #555;
+}
+
+/* ML Page Primary Buttons (Commit Dataset, Fit Model, Predict) */
+.ml-button {
+  border: none;
+  outline: 0;
+  display: inline-block;
+  padding: 10px 24px;
+  color: white;
+  background-color: #000;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ml-button:hover:not(:disabled) {
+  background-color: #555;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.ml-button:disabled {
+  background-color: #333;
+  color: #888;
+  cursor: not-allowed;
+}
+
+/* ML Page Secondary Buttons (Predict button in FormPredictAt) */
+.ml-button-predict {
+  border: none;
+  outline: 0;
+  display: inline-block;
+  padding: 10px 24px;
+  color: white;
+  background-color: #03bffe;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ml-button-predict:hover:not(:disabled) {
+  background-color: #0288d1;
+  box-shadow: 0 2px 12px rgba(3, 191, 254, 0.3);
+}
+
+.ml-button-predict:disabled {
+  background-color: #5a9fc4;
+  color: #a0c8e0;
+  cursor: not-allowed;
 }
 
 @media screen and (max-width: 650px) {
@@ -570,7 +628,7 @@ p.intro {
 
 .tooltip-text {
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   background: rgba(20, 20, 35, 0.98) !important;
@@ -597,11 +655,11 @@ p.intro {
 .tooltip-text::after {
   content: '';
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-top-color: rgba(26, 26, 46, 0.95);
+  border-bottom-color: rgba(26, 26, 46, 0.98);
 }
 
 .tooltip-wrapper:hover .tooltip-text {
@@ -633,5 +691,279 @@ p.intro {
   
   .ghost-icon {
     font-size: 36px;
+  }
+}
+
+/* ============================================================
+   Dataset Name Badge
+   ============================================================ */
+
+.dataset-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin-top: 12px;
+  background: rgba(3, 191, 254, 0.15);
+  border: 1px solid rgba(3, 191, 254, 0.3);
+  border-radius: 20px;
+  color: #03bffe;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dataset-badge-icon {
+  font-size: 16px;
+}
+
+/* ============================================================
+   Pill Feature Selectors (Continuous/Categorical/Result)
+   ============================================================ */
+
+.pill-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.pill-selector-label {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Hide the actual checkbox/radio input */
+.pill-selector input[type="checkbox"],
+.pill-selector input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Pill button styling */
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #d0d0d0;
+  user-select: none;
+}
+
+.pill-btn:hover:not(.pill-disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Checkbox pills - checked state */
+.pill-selector input[type="checkbox"]:checked + .pill-btn {
+  background: rgba(3, 191, 254, 0.2);
+  border-color: rgba(3, 191, 254, 0.5);
+  color: #03bffe;
+}
+
+.pill-selector input[type="checkbox"]:checked + .pill-btn:hover {
+  background: rgba(3, 191, 254, 0.3);
+  border-color: rgba(3, 191, 254, 0.7);
+}
+
+/* Radio pills - checked state */
+.pill-selector input[type="radio"]:checked + .pill-btn {
+  background: rgba(255, 132, 91, 0.2);
+  border-color: rgba(255, 132, 91, 0.5);
+  color: #ff845b;
+}
+
+.pill-selector input[type="radio"]:checked + .pill-btn:hover {
+  background: rgba(255, 132, 91, 0.3);
+  border-color: rgba(255, 132, 91, 0.7);
+}
+
+/* Disabled pills */
+.pill-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============================================================
+   Model Results Layout (Image + Metrics side by side)
+   ============================================================ */
+
+.ml-results-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .ml-results-layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.ml-results-image {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.ml-results-image img {
+  max-width: 50%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ml-results-metrics {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ============================================================
+   Modern Metric Cards
+   ============================================================ */
+
+.metric-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.metric-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.metric-card-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.metric-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.metric-card-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.metric-card-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #03bffe;
+  font-family: "Segoe UI", monospace;
+}
+
+.metric-card-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 0;
+}
+
+/* Classification extra columns */
+.metric-pair {
+  display: flex;
+  gap: 8px;
+}
+
+.metric-pair-value {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ============================================================
+   Modern Prediction Table
+   ============================================================ */
+
+.prediction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.prediction-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.prediction-feature {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.prediction-value {
+  flex: 1;
+  color: #03bffe;
+  font-weight: 600;
+  text-align: center;
+  font-family: "Segoe UI", monospace;
+}
+
+.prediction-result {
+  grid-column: 1 / -1;
+  padding: 12px 16px;
+  background: rgba(255, 132, 91, 0.15);
+  border: 1px solid rgba(255, 132, 91, 0.3);
+  border-radius: 8px;
+}
+
+.prediction-result .prediction-feature {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+.prediction-result .prediction-value {
+  color: #ff845b;
+  font-size: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .metric-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .prediction-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .ml-results-image img {
+    max-width: 100%;
   }
 }

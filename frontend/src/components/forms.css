@@ -99,6 +99,102 @@ form strong {
     color: #ffffff;
 }
 
+/* ============================================================
+   Dataset Name Badge
+   ============================================================ */
+
+.dataset-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin-top: 12px;
+  background: rgba(3, 191, 254, 0.15);
+  border: 1px solid rgba(3, 191, 254, 0.3);
+  border-radius: 20px;
+  color: #03bffe;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dataset-badge-icon {
+  font-size: 16px;
+}
+
+/* ============================================================
+   Pill Feature Selectors (Continuous/Categorical/Result)
+   ============================================================ */
+
+.pill-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+/* Hide the actual checkbox/radio input */
+.pill-selector input[type="checkbox"],
+.pill-selector input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Pill button styling */
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #d0d0d0;
+  user-select: none;
+}
+
+.pill-btn:hover:not(.pill-disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Checkbox pills - checked state */
+.pill-selector input[type="checkbox"]:checked + .pill-btn {
+  background: rgba(3, 191, 254, 0.2);
+  border-color: rgba(3, 191, 254, 0.5);
+  color: #03bffe;
+}
+
+.pill-selector input[type="checkbox"]:checked + .pill-btn:hover {
+  background: rgba(3, 191, 254, 0.3);
+  border-color: rgba(3, 191, 254, 0.7);
+}
+
+/* Radio pills - checked state */
+.pill-selector input[type="radio"]:checked + .pill-btn {
+  background: rgba(255, 132, 91, 0.2);
+  border-color: rgba(255, 132, 91, 0.5);
+  color: #ff845b;
+}
+
+.pill-selector input[type="radio"]:checked + .pill-btn:hover {
+  background: rgba(255, 132, 91, 0.3);
+  border-color: rgba(255, 132, 91, 0.7);
+}
+
+/* Disabled pills */
+.pill-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 form input[type="text"],
 form input[type="number"],
 form select {

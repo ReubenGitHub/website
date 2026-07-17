@@ -413,13 +413,6 @@ export function MLerPage(props) {
                 </div>
                 <div className="ml-section-content">
                     <FormDataset parentCallback={callbackFunctionDataset} sessionId={sessionId} />
-                    {!datasetName && (
-                        <GhostPlaceholder 
-                            icon="📊" 
-                            title="No Dataset Selected" 
-                            description="Select or upload a CSV dataset to get started. The default dataset contains vehicle emissions data."
-                        />
-                    )}
                 </div>
             </div>
 
