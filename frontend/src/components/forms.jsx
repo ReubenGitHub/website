@@ -430,8 +430,8 @@ export function FormDefineModel(props) {
             <br></br>
             <div className="ml-checklist">
                 <ChecklistItem met={!requiresProblemType} text="Select a problem type" />
-                <ChecklistItem met={!requiresResult} text="Select a result" />
                 <ChecklistItem met={!requiresFeature} text="Select at least one feature" />
+                <ChecklistItem met={!requiresResult} text="Select a result" />
             </div>
             <div className="ml-button-container">
                 { props.isLoadingModelFit ? <button disabled className="ml-button">Fitting Model...</button>:
