@@ -7,7 +7,7 @@ export function MLerPage(props) {
     const [sessionId, setSessionId] = useState(0);
     const [inputs, setInputs] = useState();
     const [mlOuts, setMlOuts] = useState(0);
-    const [predictAt, setPredictAt] = useState([]);
+    const [predictAt, setPredictAt] = useState({});
     const [prediction, setPrediction] = useState("");
     const [predictionTitle, setPredictionTitle] = useState(false)
     const [datasetName, setDatasetName] = useState("");
@@ -23,7 +23,7 @@ export function MLerPage(props) {
 
     const callbackFunction = (formsData) => {
         setInputs(formsData);
-        setPredictAt([]);
+        setPredictAt({});
         setPrediction("");
     }    
     const callbackFunctionDataset = (formsData) => {
@@ -82,7 +82,7 @@ export function MLerPage(props) {
 
     //Update model prediction and prediction-loading status upon trigger of predictAt changing
     useEffect(() => {
-        if (predictionTitle && Array.isArray(predictAt) && predictAt.length > 0) {
+        if (predictionTitle && predictAt && typeof predictAt === 'object' && Object.keys(predictAt).length > 0) {
             setLoadingModelPredict(true);
             fetch('/api/ml/predict', {
                 method: 'post',

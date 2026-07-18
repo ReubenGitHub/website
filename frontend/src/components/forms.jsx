@@ -115,7 +115,7 @@ export function FormDataset(props) {
             {datasetName && (
                 <div className="dataset-badge">
                     <span className="dataset-badge-icon">📄</span>
-                    <span>{datasetName}</span>
+                    <span>Dataset: {datasetName}</span>
                 </div>
             )}
         </form>
@@ -529,12 +529,11 @@ export function FormModelOutputs(props) {
     const accuracyLabel = isClassification ? 'Classifier Accuracy' : 'R-Squared Accuracy';
 
     return (
-        <div className="ml-results-layout">
+        <div className="ml-results-vertical">
             <div className="ml-results-image">
                 <img src={repImageSrc} alt="Model Representation" />
             </div>
             <div className="ml-results-metrics">
-                <h3>Model Metrics</h3>
                 <div className="metric-cards">
                     {/* Accuracy Card */}
                     <div className="metric-card">
@@ -653,12 +652,9 @@ export function FormModelPrediction(props) {
     }, [props.datasetFeatures, props.datasetResultParam]);
 
     const handlePredict = () => {
-        const values = Object.values(inputValues);
-        // Trigger prediction by updating predictAt
-        setPredictAt(values);
-        // Notify parent to trigger API call
+        // Send dictionary with feature names as keys
         if (props.onPredict) {
-            props.onPredict(values);
+            props.onPredict(inputValues);
         }
     };
 

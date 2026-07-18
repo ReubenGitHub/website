@@ -541,6 +541,7 @@ p.intro {
   font-size: 18px;
   color: #ffffff;
   font-weight: 600;
+  text-align: center;
 }
 
 /* Ghost Placeholder */
@@ -798,25 +799,27 @@ p.intro {
 
 .ml-results-image {
   flex: 0 0 auto;
-  min-width: 680px;
+  min-width: 476px;
   text-align: center;
 }
 
 .ml-results-image img {
-  width: 680px;
+  width: 476px;
   height: auto;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .ml-results-metrics {
-  flex: 1;
-  min-width: 0;
+  width: 476px;
+  max-width: 100%;
 }
 
-.ml-results-metrics h3 {
-  text-align: center;
-  margin: 0 0 12px;
+.ml-results-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
 .ml-results-layout {
@@ -904,6 +907,7 @@ p.intro {
   font-size: 18px;
   color: #ffffff;
   font-weight: 600;
+  text-align: center;
 }
 
 .prediction-table-wrapper {
@@ -911,6 +915,12 @@ p.intro {
   margin-bottom: 16px;
   display: flex;
   justify-content: center;
+}
+
+.prediction-table {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .prediction-table {
@@ -1006,7 +1016,7 @@ p.intro {
 }
 
 /* Responsive adjustments */
-@media (max-width: 1400px) {
+@media (max-width: 1000px) {
   .ml-results-layout {
     flex-direction: column;
     align-items: center;
@@ -1014,12 +1024,12 @@ p.intro {
   
   .ml-results-image {
     min-width: 0;
-    width: 680px;
+    width: 476px;
   }
   
   .ml-results-image img {
     width: 100%;
-    max-width: 680px;
+    max-width: 476px;
   }
 }
 
