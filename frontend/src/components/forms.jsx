@@ -557,7 +557,7 @@ export function FormModelOutputs(props) {
                 <div className="metric-card">
                     {/* Accuracy Section */}
                     <div className="metric-section">
-                        <div className="metric-card-header">{accuracyLabel} <TooltipIcon text={isClassification ? 'Accuracy: Percentage of correct predictions. Higher is better, with 100% being perfect classification.' : 'R-Squared: Proportion of variance explained by the model. Ranges from -∞ to 1, where 1 is perfect fit.'} /></div>
+                        <div className="metric-card-header">{accuracyLabel} <TooltipIcon text={isClassification ? 'Accuracy: Percentage of correct predictions. Higher is better, with 100% being perfect classification.' : 'R-Squared: Proportion of variance explained by the model. Ranges from 0 to 1, where 1 is a perfect fit.'} /></div>
                         <div className="metric-card-row">
                             <span className="metric-card-label">Train</span>
                             <span className="metric-card-value">
