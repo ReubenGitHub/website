@@ -566,6 +566,17 @@ p.intro {
   margin-bottom: 0;
 }
 
+.info-section a {
+  color: #03bffe;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.info-section a:hover {
+  color: #6dd5ff;
+  text-decoration: underline;
+}
+
 /* Workflow Sections */
 .ml-workflow {
   display: flex;

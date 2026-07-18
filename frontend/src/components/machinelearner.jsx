@@ -153,11 +153,12 @@ export function MLerPage(props) {
         <div className="instructions-card">
             <div className="container-header-bar">
                 <a className={instTab[0]} onClick={() => setInstTab(["active"]) }>Getting Started</a>
-                <a className={instTab[1]} onClick={() => setInstTab( Array(2).fill("").fill("active",-1) ) }>Model Definition</a>
-                <a className={instTab[2]} onClick={() => setInstTab( Array(3).fill("").fill("active",-1) ) }>Features & Result</a>
-                <a className={instTab[3]} onClick={() => setInstTab( Array(4).fill("").fill("active",-1) ) }>Model Representation</a>
-                <a className={instTab[4]} onClick={() => setInstTab( Array(5).fill("").fill("active",-1) ) }>Accuracy</a>
-                <a className={instTab[5]} onClick={() => setInstTab( Array(6).fill("").fill("active",-1) ) }>Prediction</a>
+                <a className={instTab[1]} onClick={() => setInstTab( Array(2).fill("").fill("active",-1) ) }>Data Selection</a>
+                <a className={instTab[2]} onClick={() => setInstTab( Array(3).fill("").fill("active",-1) ) }>Model Definition</a>
+                <a className={instTab[3]} onClick={() => setInstTab( Array(4).fill("").fill("active",-1) ) }>Features & Result</a>
+                <a className={instTab[4]} onClick={() => setInstTab( Array(5).fill("").fill("active",-1) ) }>Model Representation</a>
+                <a className={instTab[5]} onClick={() => setInstTab( Array(6).fill("").fill("active",-1) ) }>Accuracy</a>
+                <a className={instTab[6]} onClick={() => setInstTab( Array(7).fill("").fill("active",-1) ) }>Prediction</a>
             </div>
             <div className="container">
                 { (instTab[0]==="active") ?
@@ -166,20 +167,25 @@ export function MLerPage(props) {
                                 This app is a general machine learner: designed to be intuitive, and built to allow you to fit a machine-led model to any data you like!
                             </p>
                             <p className="info-text">
-                                The stages involved in using this app are: choosing a dataset, selecting model parameters, selecting features and the result to predict, reviewing the model representation and accuracy, and using your model to predict results.
+                                The stages involved in using this app are: choosing a dataset, configuring model parameters, selecting features and the result to predict, reviewing the model representation and accuracy, and using your model to predict results.
                             </p>
                             <p className="info-text">
-                                Click through these tabs for instructions to help you through each stage of building your models. To get started, read on below...
+                                Click through these tabs for instructions to help you through each stage of building your models.
                             </p>
-                            <div className="info-section">
-                                <h4>Data Selection</h4>
-                                <p>Upload any csv dataset, where rows are entries, columns are fields, and column headers are included.</p>
-                                <p>Alternatively, select the default dataset, which contains vehicle emissions data such as model, engine size, and CO2 emissions (g/km).<br></br>
-                                The raw data was obtained from the UK government's page <i>carfueldata.vehicle-certification-agency.gov.uk/downloads/default.aspx</i>.<br></br>
-                                I then cleaned this data as part of my ML investigation into CO2 emissions <i>github.com/ReubenGitHub/ML-Vehicle-Emissions</i>.</p>
-                            </div>
                         </div>
                     : (instTab[1]==="active") ?
+                        <div>
+                            <div className="info-section">
+                                <h4>Upload Your Data</h4>
+                                <p>Upload any CSV dataset where rows are entries, columns are fields, and column headers are included.</p>
+                            </div>
+                            <div className="info-section">
+                                <h4>Default Dataset</h4>
+                                <p>Select the default dataset, which contains vehicle emissions data such as make, model, engine size, and CO2 emissions (g/km).</p>
+                                <p>The raw data was obtained from the UK government's vehicle certification agency at <a href="https://www.gov.uk/governmentorganisations/vehicle-certification-agency" target="_blank" rel="noopener noreferrer">gov.uk</a>. I then cleaned this data as part of my ML investigation into CO2 emissions at <a href="https://github.com/ReubenGitHub/ML-Vehicle-Emissions" target="_blank" rel="noopener noreferrer">github.com/ReubenGitHub/ML-Vehicle-Emissions</a>.</p>
+                            </div>
+                        </div>
+                    : (instTab[2]==="active") ?
                         <div>
                             <div className="info-section">
                                 <h4>Problem Type</h4>
@@ -198,7 +204,7 @@ export function MLerPage(props) {
                                 <p><i>Polynomial Regression</i> assumes that the result is some polynomial of a single continuous feature. The model determines the best-fitting polynomial of the specified degree.</p>
                             </div>
                         </div>
-                    :(instTab[2]==="active") ?
+                    : (instTab[3]==="active") ?
                         <div>
                             <div className="info-section">
                                 <h4>Features</h4>
@@ -213,7 +219,7 @@ export function MLerPage(props) {
                                 <p>The field of interest that you want the model to predict from your chosen features.</p>
                             </div>
                         </div>
-                    :(instTab[3]==="active") ?
+                    : (instTab[4]==="active") ?
                         <div>
                             <div className="info-section">
                                 <h4>Model Map</h4>
@@ -221,7 +227,7 @@ export function MLerPage(props) {
                                 <p>Representations of Decision Trees are reduced down to a maximum depth of 4 for enhanced visibility, regardless of the actual maximum depth of the model.</p>
                             </div>
                         </div>
-                    :(instTab[4]==="active") ?
+                    : (instTab[5]==="active") ?
                         <div>
                             <div className="info-section">
                                 <h4>Model Accuracy</h4>
@@ -249,7 +255,7 @@ export function MLerPage(props) {
                                 <p>If your model has low accuracy on both training and testing data, your model might be <i>biased</i> or might not be complex enough. Consider providing your model with more (relevant) features.</p>
                             </div>
                         </div>
-                    :(instTab[5]==="active") &&
+                    : (instTab[6]==="active") &&
                         <div>
                             <div className="info-section">
                                 <h4>Predicting</h4>
