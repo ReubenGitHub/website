@@ -528,6 +528,42 @@ p.intro {
 /* Instructions Card */
 .instructions-card {
   margin: 24px 0;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.info-section {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.info-section:last-child {
+  border-bottom: none;
+}
+
+.info-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #03bffe;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-section p {
+  margin: 0 0 12px 0;
+  color: #c8c8c8;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.info-section p:last-child {
+  margin-bottom: 0;
 }
 
 /* Workflow Sections */

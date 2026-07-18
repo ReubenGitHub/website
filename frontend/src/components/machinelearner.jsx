@@ -171,216 +171,95 @@ export function MLerPage(props) {
                             <p className="info-text">
                                 Click through these tabs for instructions to help you through each stage of building your models. To get started, read on below...
                             </p>
-                            <div className="info-table">
-                                <table>
-                                    <tbody>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Data Selection</b>
-                                            </td>
-                                            <td className="info-content">
-                                                Upload any csv dataset, where rows are entries, columns are fields, and column headers are included.
-                                                <br></br>
-                                                <br></br>
-                                                Alternatively, select the default dataset, which contains vehicle emissions data such as model, engine size, and CO2 emissions (g/km).<br></br>
-                                                The raw data was obtained from the UK government's page <i>carfueldata.vehicle-certification-agency.gov.uk/downloads/default.aspx</i>.<br></br>
-                                                I then cleaned this data as part of my ML investigation into CO2 emissions <i>github.com/ReubenGitHub/ML-Vehicle-Emissions</i>.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div className="info-section">
+                                <h4>Data Selection</h4>
+                                <p>Upload any csv dataset, where rows are entries, columns are fields, and column headers are included.</p>
+                                <p>Alternatively, select the default dataset, which contains vehicle emissions data such as model, engine size, and CO2 emissions (g/km).<br></br>
+                                The raw data was obtained from the UK government's page <i>carfueldata.vehicle-certification-agency.gov.uk/downloads/default.aspx</i>.<br></br>
+                                I then cleaned this data as part of my ML investigation into CO2 emissions <i>github.com/ReubenGitHub/ML-Vehicle-Emissions</i>.</p>
                             </div>
                         </div>
                     : (instTab[1]==="active") ?
                         <div>
-                            <div className="info-table">
-                                <table>
-                                    <tbody>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Problem Type</b>
-                                            </td>
-                                            <td className="info-content">
-                                                Select <i>Regression</i> if the result you want to predict is a continuous variable, i.e. numerical and where some values can be "bigger" than others.
-                                                <br></br>
-                                                <br></br>
-                                                Select <i>Classification</i> if the result you want to predict is a categorical variable, i.e. categories or types of something, with no sense of "bigger" or "smaller".
-                                                <br></br>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Machine Learning Method</b>
-                                            </td>
-                                            <td className="info-content">
-                                                <i>Decision Trees</i> will derive a prediction through a sequence of decisions based on known features, similar to the game '20Q'.
-                                                <br></br>
-                                                <br></br>
-                                                <i>K-Nearest Neighbours</i> predicts a result by averaging the results of K training samples which have feature values closest to the feature values to predict with.
-                                                If the result is continuous, the result is the mean of nearby neighbours. If the result is categorical, the result is the mode (most common) of nearby neighbours.
-                                                "Closeness" of samples is determined by the Euclidean distance on continuous features, plus the Hamming distance on categorical features.
-                                                <br></br>
-                                                <br></br>
-                                                <i>Linear Regression</i> assumes that the result is a linear combination of the features (and that features are independent of one another).
-                                                For continuous features this means determining a line of best fit for one feature, or a plane of best fit for two features, and so on.
-                                                For categorical features, the model will determine the best constant to add to the prediction for each possible category.
-                                                <br></br>
-                                                <br></br>
-                                                <i>Polynomial Regression</i> assumes that the result is some polynomial of a single continuous feature. The model determines the best-fitting polynomial of the specified degree.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div className="info-section">
+                                <h4>Problem Type</h4>
+                                <p>Select <i>Regression</i> if the result you want to predict is a continuous variable, i.e. numerical and where some values can be "bigger" than others.</p>
+                                <p>Select <i>Classification</i> if the result you want to predict is a categorical variable, i.e. categories or types of something, with no sense of "bigger" or "smaller".</p>
+                            </div>
+                            <div className="info-section">
+                                <h4>Machine Learning Method</h4>
+                                <p><i>Decision Trees</i> will derive a prediction through a sequence of decisions based on known features, similar to the game '20Q'.</p>
+                                <p><i>K-Nearest Neighbours</i> predicts a result by averaging the results of K training samples which have feature values closest to the feature values to predict with.
+                                If the result is continuous, the result is the mean of nearby neighbours. If the result is categorical, the result is the mode (most common) of nearby neighbours.
+                                "Closeness" of samples is determined by the Euclidean distance on continuous features, plus the Hamming distance on categorical features.</p>
+                                <p><i>Linear Regression</i> assumes that the result is a linear combination of the features (and that features are independent of one another).
+                                For continuous features this means determining a line of best fit for one feature, or a plane of best fit for two features, and so on.
+                                For categorical features, the model will determine the best constant to add to the prediction for each possible category.</p>
+                                <p><i>Polynomial Regression</i> assumes that the result is some polynomial of a single continuous feature. The model determines the best-fitting polynomial of the specified degree.</p>
                             </div>
                         </div>
                     :(instTab[2]==="active") ?
                         <div>
-                            <div className="info-table">
-                                <table>
-                                    <tbody>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Features</b>
-                                            </td>
-                                            <td className="info-content">
-                                                These are the independent values for the model to use in predicting the result; like known 'x' values.
-                                                <br></br>
-                                                <br></br>
-                                                Select a field as a <i>continuous</i> feature if the field contains numerical data, with a sense of "bigger" or "smaller".
-                                                <br></br>
-                                                <br></br>
-                                                Select a field as a <i>categorical</i> feature if the field values are options, e.g. colours or classes.
-                                                <br></br>
-                                                <br></br>
-                                                Which features you choose are completely up to you! Experiment and see which features give the best accuracy in predicting results.
-                                                Be aware of selecting your result as one of your features: this is a form of data leakage. If your model accuracy seems too good to be true, it probably is!
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Result</b>
-                                            </td>
-                                            <td className="info-content">
-                                                The field of interest that you want the model to predict from your chosen features.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div className="info-section">
+                                <h4>Features</h4>
+                                <p>These are the independent values for the model to use in predicting the result; like known 'x' values.</p>
+                                <p>Select a field as a <i>continuous</i> feature if the field contains numerical data, with a sense of "bigger" or "smaller".</p>
+                                <p>Select a field as a <i>categorical</i> feature if the field values are options, e.g. colours or classes.</p>
+                                <p>Which features you choose are completely up to you! Experiment and see which features give the best accuracy in predicting results.
+                                Be aware of selecting your result as one of your features: this is a form of data leakage. If your model accuracy seems too good to be true, it probably is!</p>
+                            </div>
+                            <div className="info-section">
+                                <h4>Result</h4>
+                                <p>The field of interest that you want the model to predict from your chosen features.</p>
                             </div>
                         </div>
                     :(instTab[3]==="active") ?
                         <div>
-                            <div className="info-table">
-                                <table>
-                                    <tbody>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Model Map</b>
-                                            </td>
-                                            <td className="info-content">
-                                                A visual representation of your model. Representations are generated for Decision Trees, KNN with one or two continuous features, Linear Regression models with one or two continuous features, and Polynomial Regression models.
-                                                <br></br>
-                                                <br></br>
-                                                Representations of Decision Trees are reduced down to a maximum depth of 4 for enhanced visibility, regardless of the actual maximum depth of the model.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div className="info-section">
+                                <h4>Model Map</h4>
+                                <p>A visual representation of your model. Representations are generated for Decision Trees, KNN with one or two continuous features, Linear Regression models with one or two continuous features, and Polynomial Regression models.</p>
+                                <p>Representations of Decision Trees are reduced down to a maximum depth of 4 for enhanced visibility, regardless of the actual maximum depth of the model.</p>
                             </div>
                         </div>
                     :(instTab[4]==="active") ?
                         <div>
-                            <div className="info-table">
-                                <table>
-                                    <tbody>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Model Accuracy</b>
-                                            </td>
-                                            <td className="info-content">
-                                                A measure of how well your model predicts results, assessed by comparing model predictions with the true results given in the data.
-                                                <br></br>
-                                                <br></br>
-                                                <i>R2 accuracy</i>, also known as the <i>Coefficient of Determination</i>, measures the accuracy of regression models. The best possible score is 1.0. If the score is 0.0, a constant model which always predicts the mean value of the result values would be just as accurate as your model.
-                                                <br></br>
-                                                <br></br>
-                                                <i>Classifier accuracy</i> measures the accuracy of classification models. It is the proportion of predictions which are correct. The best possible score is 1.0.
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Data Leakage</b>
-                                            </td>
-                                            <td className="info-content">
-                                                If your model has a surprisingly high accuracy on both training and testing data, this could be a sign of <i>data leakage</i>, which means your model has used information while predicting that would not normally be available when making predictions in the real world.
-                                                <br></br>
-                                                <br></br>
-                                                One form of data leakage is <i>Feature Leakage</i>, where information about the result is leaked into the selected features, for example, including an "hoursAwake" feature when trying to predict "hoursAsleep".
-                                                <br></br>
-                                                <br></br>
-                                                Another form of data leakage is <i>Training Data Leakage</i>, where information is shared between entries in the dataset, meaning your model gets a sneak-peak at the testing data while training. This can happen if there are duplicate entries in the data, or if entries aren't i.i.d.
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Imbalanced Data</b>
-                                            </td>
-                                            <td className="info-content">
-                                                Surprisingly high accuracies can also be a sign of <i>Imbalanced Data</i>, meaning your data has a minority class in the result. For example, if the result is "Red" 99% of the time, your model might learn to constantly predict "Red" to achieve 99% accuracy.
-                                                <br></br>
-                                                <br></br>
-                                                While correct almost all of the time, your model will never identify rare results, so accuracy is not the be-all and end-all in assessing models. To improve models on imbalanced data, one can consider downsampling and upweighting larger classes. This is not yet performed in this app.
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Over-Fitting</b>
-                                            </td>
-                                            <td className="info-content">
-                                                If your model has high accuracy on training data, but low accuracy on testing data, this might indicate <i>over-fitting</i>, whereby your model is overly-complex and hyper-specified to perform well on your training data, but fails to generalise to unseen training data.
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Bias</b>
-                                            </td>
-                                            <td className="info-content">
-                                                If your model has low accuracy on both training and testing data, your model might be <i>biased</i> or might not be complex enough. Consider providing your model with more (relevant) features.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div className="info-section">
+                                <h4>Model Accuracy</h4>
+                                <p>A measure of how well your model predicts results, assessed by comparing model predictions with the true results given in the data.</p>
+                                <p><i>R2 accuracy</i>, also known as the <i>Coefficient of Determination</i>, measures the accuracy of regression models. The best possible score is 1.0. If the score is 0.0, a constant model which always predicts the mean value of the result values would be just as accurate as your model.</p>
+                                <p><i>Classifier accuracy</i> measures the accuracy of classification models. It is the proportion of predictions which are correct. The best possible score is 1.0.</p>
+                            </div>
+                            <div className="info-section">
+                                <h4>Data Leakage</h4>
+                                <p>If your model has a surprisingly high accuracy on both training and testing data, this could be a sign of <i>data leakage</i>, which means your model has used information while predicting that would not normally be available when making predictions in the real world.</p>
+                                <p>One form of data leakage is <i>Feature Leakage</i>, where information about the result is leaked into the selected features, for example, including an "hoursAwake" feature when trying to predict "hoursAsleep".</p>
+                                <p>Another form of data leakage is <i>Training Data Leakage</i>, where information is shared between entries in the dataset, meaning your model gets a sneak-peak at the testing data while training. This can happen if there are duplicate entries in the data, or if entries aren't i.i.d.</p>
+                            </div>
+                            <div className="info-section">
+                                <h4>Imbalanced Data</h4>
+                                <p>Surprisingly high accuracies can also be a sign of <i>Imbalanced Data</i>, meaning your data has a minority class in the result. For example, if the result is "Red" 99% of the time, your model might learn to constantly predict "Red" to achieve 99% accuracy.</p>
+                                <p>While correct almost all of the time, your model will never identify rare results, so accuracy is not the be-all and end-all in assessing models. To improve models on imbalanced data, one can consider downsampling and upweighting larger classes. This is not yet performed in this app.</p>
+                            </div>
+                            <div className="info-section">
+                                <h4>Over-Fitting</h4>
+                                <p>If your model has high accuracy on training data, but low accuracy on testing data, this might indicate <i>over-fitting</i>, whereby your model is overly-complex and hyper-specified to perform well on your training data, but fails to generalise to unseen training data.</p>
+                            </div>
+                            <div className="info-section">
+                                <h4>Bias</h4>
+                                <p>If your model has low accuracy on both training and testing data, your model might be <i>biased</i> or might not be complex enough. Consider providing your model with more (relevant) features.</p>
                             </div>
                         </div>
                     :(instTab[5]==="active") &&
                         <div>
-                            <div className="info-table">
-                                <table>
-                                    <tbody>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Predicting</b>
-                                            </td>
-                                            <td className="info-content">
-                                                Enter some feature values for which you would like to predict a result.
-                                                <br></br>
-                                                <br></br>
-                                                Be aware that if your dataset is small or contains minority classes in some fields, because some data is set aside for testing, there's a chance your model will be trained never having seen some classes, in which case you won't be able to pick them in predictions.
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className="info-label">
-                                                <b>Prediction</b>
-                                            </td>
-                                            <td className="info-content">
-                                                The prediction of your model at the specified feature values.
-                                                <br></br>
-                                                <br></br>
-                                                As for minority classes in features, be aware that if your dataset contains minority classes in the result field, your model might not ever see that result class during training and won't predict that result.
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div className="info-section">
+                                <h4>Predicting</h4>
+                                <p>Enter some feature values for which you would like to predict a result.</p>
+                                <p>Be aware that if your dataset is small or contains minority classes in some fields, because some data is set aside for testing, there's a chance your model will be trained never having seen some classes, in which case you won't be able to pick them in predictions.</p>
+                            </div>
+                            <div className="info-section">
+                                <h4>Prediction</h4>
+                                <p>The prediction of your model at the specified feature values.</p>
+                                <p>As for minority classes in features, be aware that if your dataset contains minority classes in the result field, your model might not ever see that result class during training and won't predict that result.</p>
                             </div>
                         </div>
                     }
