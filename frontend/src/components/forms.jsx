@@ -116,6 +116,10 @@ export function FormDataset(props) {
                 <div className="dataset-badge">
                     <span className="dataset-badge-icon">📄</span>
                     <span>Dataset selected: "{datasetName}"</span>
+                    <span className="tooltip-wrapper">
+                        <span className="tooltip-icon">ℹ</span>
+                        <span className="tooltip-text">⚠️ WARNING: Never use data that could reveal the answer! Remove fields like 'CO2 Emissions per Cylinder' that contain the target variable. Also remove identifiers like 'City', 'Make', 'Model' that don't help predict outcomes.</span>
+                    </span>
                 </div>
             )}
         </form>
@@ -134,6 +138,13 @@ export function FormDefineModel(props) {
     const [datasetFields, setDatasetFields] = useState({fields: ["Fields..."], nonCtsFields: []});
     const [datasetFieldsNo, setDatasetFieldsNo] = useState(["0"]);
     const [count, setCount] = useState(0);
+    
+    const TooltipIcon = ({ text }) => (
+        <span className="tooltip-wrapper">
+            <span className="tooltip-icon">ℹ</span>
+            <span className="tooltip-text">{text}</span>
+        </span>
+    );
     
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -177,7 +188,7 @@ export function FormDefineModel(props) {
 
     return (
         <form onSubmit={handleSubmit}>
-            <b>Problem Type</b>
+            <b>Problem Type <TooltipIcon text="Select Regression for continuous numerical results (e.g., predicting CO2 emissions, temperature). Select Classification for categories or classes (e.g., spam/ham, disease/no disease)." /></b>
             <div className="pill-selector">
                 <input type="radio" id="regression" name="problemType" value="regression" required onChange={(e) => {
                     setProblemType(e.target.value);
@@ -195,7 +206,7 @@ export function FormDefineModel(props) {
                 <label className={problemType === "classification" ? "pill-btn" : "pill-btn"} htmlFor="classification">Classification</label>
             </div>
             <br></br>
-            <b>Model Type</b>
+            <b>Model Type <TooltipIcon text="Decision Trees: sequence of decisions like '20 Questions'. K-Nearest Neighbours: classifies based on closest data points. Linear Regression: fits a straight line. Polynomial Regression: fits a curved line." /></b>
             <br></br>
             <div className="model-type-wrapper">
                 { (problemType==="") ?
@@ -248,7 +259,7 @@ export function FormDefineModel(props) {
                 </label>
             }
             <br></br>
-            <b>Features - Continuous</b>
+            <b>Features - Continuous <TooltipIcon text="Select fields with numerical data that can be measured or counted (e.g., age, temperature, distance, income)." /></b>
             <div className="pill-selector">
                 { datasetFieldsNo.map( (index) => {
                     const fieldName = datasetFields['fields'][index];
@@ -305,7 +316,7 @@ export function FormDefineModel(props) {
                 }) }
             </div>
             <br></br>
-            <b>Features - Categorical</b>
+            <b>Features - Categorical <TooltipIcon text="Select fields with categories or options (e.g., color: red/blue/green, type: A/B/C, yes/no). Each value represents a group, not a number." /></b>
             <div className="pill-selector">
                 { datasetFieldsNo.map( (index) => {
                     const fieldName = datasetFields['fields'][index];
@@ -346,7 +357,7 @@ export function FormDefineModel(props) {
                 }) }
             </div>
             <br></br>
-            <b>Result</b>
+            <b>Result <TooltipIcon text="The field you want the model to predict or classify. This is your target variable. For regression, choose a numerical field. For classification, choose a categorical field." /></b>
             <div className="pill-selector">
                 { datasetFieldsNo.map( (index) => {
                     const fieldName = datasetFields['fields'][index];
@@ -386,7 +397,7 @@ export function FormDefineModel(props) {
                 }) }
             </div>
             <br></br>
-            <b>Test Data Proportion</b>
+            <b>Test Data Proportion <TooltipIcon text="Percentage of your dataset set aside for testing the model's accuracy. The model never sees this data during training. Typical values: 20-30%. Higher values = more reliable testing but less data for training." /></b>
             <br></br>
             <div className="test-proportion-wrapper">
                 <label>
@@ -470,7 +481,7 @@ export function FormPredictAt(props) {
     // ---------------------------------------------------------------------------PROBABLY need to use a loop to define initial values for categorical params, or make it display blank
     return (
         <form onSubmit={handleSubmit}>
-            <b>Predict a result at</b>
+            <b>Predict a result at <TooltipIcon text="Enter values for each feature to get a prediction. Numerical fields accept numbers. Categorical fields have a dropdown of available options." /></b>
             <br></br>
             <table border="0">
                 <tbody>
@@ -512,7 +523,7 @@ export function FormPredictAt(props) {
             { props.isLoadingModelPredict ? <button disabled className="ml-button ml-button-predict">Predicting {props.datasetResultParam}...</button>:
                 props.isLoadingModelFit ? <button disabled className="ml-button ml-button-predict">Predict</button>:
                 !(props.predictionTitle) ? <button disabled className="ml-button ml-button-predict">Predict</button>:
-                <button className="ml-button ml-button-predict">Predict {props.datasetResultParam}</button>
+                <button className="ml-button ml-button-predict">Predict {props.datasetResultParam} <TooltipIcon text="Click to generate a prediction using your trained model and the feature values entered above." /></button>
             } 
         </form>
     )
@@ -530,6 +541,13 @@ export function FormModelOutputs(props) {
     const isClassification = !!modelMetrics?.train_macro_precision;
     const accuracyLabel = isClassification ? 'Classifier Accuracy' : 'R-Squared Accuracy';
 
+    const TooltipIcon = ({ text }) => (
+        <span className="tooltip-wrapper">
+            <span className="tooltip-icon">ℹ</span>
+            <span className="tooltip-text">{text}</span>
+        </span>
+    );
+
     return (
         <div className="ml-results-container">
             <div className="ml-results-image">
@@ -539,7 +557,7 @@ export function FormModelOutputs(props) {
                 <div className="metric-card">
                     {/* Accuracy Section */}
                     <div className="metric-section">
-                        <div className="metric-card-header">{accuracyLabel}</div>
+                        <div className="metric-card-header">{accuracyLabel} <TooltipIcon text={isClassification ? 'Accuracy: Percentage of correct predictions. Higher is better, with 100% being perfect classification.' : 'R-Squared: Proportion of variance explained by the model. Ranges from -∞ to 1, where 1 is perfect fit.'} /></div>
                         <div className="metric-card-row">
                             <span className="metric-card-label">Train</span>
                             <span className="metric-card-value">
@@ -560,7 +578,7 @@ export function FormModelOutputs(props) {
                     {/* Precision Section (Classification only) */}
                     {isClassification && (
                         <div className="metric-section">
-                            <div className="metric-card-header">Precision</div>
+                            <div className="metric-card-header">Precision <TooltipIcon text="Precision: Of all predicted positives, how many were actually positive? Macro averages metrics equally across classes. Micro calculates globally across all classes." /></div>
                             <div className="metric-card-row">
                                 <span className="metric-card-label">Train Macro</span>
                                 <span className="metric-card-value">
@@ -589,7 +607,7 @@ export function FormModelOutputs(props) {
                     {/* Recall Section (Classification only) */}
                     {isClassification && (
                         <div className="metric-section">
-                            <div className="metric-card-header">Recall</div>
+                            <div className="metric-card-header">Recall <TooltipIcon text="Recall (Sensitivity): Of all actual positives, how many did the model correctly predict? Higher recall means fewer false negatives." /></div>
                             <div className="metric-card-row">
                                 <span className="metric-card-label">Train Macro</span>
                                 <span className="metric-card-value">
@@ -631,6 +649,13 @@ export function FormModelPrediction(props) {
     const [inputValues, setInputValues] = useState({});
     const [noOfCts, setNoOfCts] = useState(0);
     const [options, setOptions] = useState([[]]);
+
+    const TooltipIcon = ({ text }) => (
+        <span className="tooltip-wrapper">
+            <span className="tooltip-icon">ℹ</span>
+            <span className="tooltip-text">{text}</span>
+        </span>
+    );
 
     useEffect(() => {
         if (props.modelPrediction && props.modelPrediction['predictAt'] && typeof props.modelPrediction['predictAt'] === 'object' && !Array.isArray(props.modelPrediction['predictAt']) && Object.keys(props.modelPrediction['predictAt']).length > 0) {
@@ -732,7 +757,10 @@ export function FormModelPrediction(props) {
                         <tr className="prediction-result-row">
                             <td className="prediction-feature-cell"><b>{datasetResultParam}</b></td>
                             <td className="prediction-result-cell">
-                                {typeof prediction === 'number' ? parseFloat(prediction.toPrecision(6)) : (typeof prediction === 'string' ? prediction : '—')}
+                                <span className="prediction-value-wrapper">
+                                    {typeof prediction === 'number' ? parseFloat(prediction.toPrecision(6)) : (typeof prediction === 'string' ? prediction : '—')}
+                                    <TooltipIcon text="This is the model's predicted value for your input features. It is generated from the trained model using your provided data." />
+                                </span>
                             </td>
                         </tr>
                     </tbody>

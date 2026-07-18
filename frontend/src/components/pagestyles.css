@@ -1033,6 +1033,12 @@ p.intro {
   white-space: nowrap;
 }
 
+.prediction-value-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .prediction-actions {
   display: flex;
   justify-content: center;

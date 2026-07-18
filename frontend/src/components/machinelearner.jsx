@@ -414,7 +414,21 @@ export function MLerPage(props) {
                         />
                     ) : (
                         <>
-                            <FormDefineModel key="defineModel" parentCallback={callbackFunction} isLoadingModelFit={loadingModelFit} datasetFields={datasetFields} datasetName={datasetName}/>
+                            <FormDefineModel 
+                                key="defineModel" 
+                                parentCallback={callbackFunction} 
+                                isLoadingModelFit={loadingModelFit} 
+                                datasetFields={datasetFields} 
+                                datasetName={datasetName}
+                                tooltips={{
+                                    problemType: "Select Regression for continuous numerical results (e.g. price, temperature). Select Classification for categorical results (e.g. yes/no, red/blue/green).",
+                                    modelType: "Decision Trees: sequence of decisions like '20Q'. KNN: averages nearest training samples. Linear Regression: best-fit line/plane. Polynomial Regression: best-fitting curve of specified degree.",
+                                    continuousFeatures: "Select fields with numerical data where 'bigger' or 'smaller' makes sense (e.g. age, height, weight).",
+                                    categoricalFeatures: "Select fields with categories or options (e.g. color, type, brand). Not available for Polynomial Regression.",
+                                    result: "The field you want the model to predict. Warning: don't select a feature that contains information about the result (data leakage).",
+                                    testProportion: "Percentage of data set aside for testing model accuracy. Common values are 20-30%. More test data gives more reliable accuracy estimates but less data for training."
+                                }}
+                            />
                             
                             {/* Model Representation & Metrics - shown after model is fitted */}
                             {predictionTitle && mlOuts?.modelMetrics ? (
