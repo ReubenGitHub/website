@@ -115,7 +115,7 @@ export function FormDataset(props) {
             {datasetName && (
                 <div className="dataset-badge">
                     <span className="dataset-badge-icon">📄</span>
-                    <span>Dataset: {datasetName}</span>
+                    <span>Dataset selected: {datasetName}</span>
                 </div>
             )}
         </form>
@@ -529,7 +529,7 @@ export function FormModelOutputs(props) {
     const accuracyLabel = isClassification ? 'Classifier Accuracy' : 'R-Squared Accuracy';
 
     return (
-        <div className="ml-results-vertical">
+        <div className="ml-results-container">
             <div className="ml-results-image">
                 <img src={repImageSrc} alt="Model Representation" />
             </div>
@@ -608,20 +608,25 @@ export function FormModelPrediction(props) {
     const [datasetFeatures, setDatasetFeatures] = useState([]);
     const [datasetResultParam, setDatasetResultParam] = useState("");
     const [datasetFeaturesNo, setDatasetFeaturesNo] = useState([]);
-    const [predictAt, setPredictAt] = useState([]);
+    const [predictAt, setPredictAt] = useState({});
     const [prediction, setPrediction] = useState("");
     const [inputValues, setInputValues] = useState({});
     const [noOfCts, setNoOfCts] = useState(0);
     const [options, setOptions] = useState([[]]);
 
     useEffect(() => {
-        if (props.modelPrediction['predictAt']) {
-            if (!arrayEquals(predictAt, props.modelPrediction['predictAt'])) {
-                setPredictAt(props.modelPrediction['predictAt']);
-                setPrediction(props.modelPrediction['prediction']);
+        if (props.modelPrediction && props.modelPrediction['predictAt'] && typeof props.modelPrediction['predictAt'] === 'object' && Object.keys(props.modelPrediction['predictAt']).length > 0) {
+            const newPredictAt = props.modelPrediction['predictAt'];
+            const newPrediction = props.modelPrediction['prediction'];
+            // Check if predictAt has changed by comparing keys and values
+            const predictAtChanged = Object.keys(newPredictAt).length !== Object.keys(predictAt).length ||
+                Object.keys(newPredictAt).some(key => newPredictAt[key] !== predictAt[key]);
+            if (predictAtChanged) {
+                setPredictAt(newPredictAt);
+                setPrediction(newPrediction);
             }
         } else {
-            setPredictAt([]);
+            setPredictAt({});
             setPrediction("");
         }
     }, [props.modelPrediction]);
@@ -632,7 +637,7 @@ export function FormModelPrediction(props) {
                 setDatasetFeatures(props.datasetFeatures);
                 setDatasetFeaturesNo([...Array(props.datasetFeatures.length).keys()]);
                 setDatasetResultParam(props.datasetResultParam);
-                setPredictAt([]);
+                setPredictAt({});
                 setPrediction("");
                 // Initialize input values
                 const initialValues = props.datasetFeatures.reduce(
@@ -645,7 +650,7 @@ export function FormModelPrediction(props) {
             setDatasetFeatures([]);
             setDatasetFeaturesNo([]);
             setDatasetResultParam("");
-            setPredictAt([]);
+            setPredictAt({});
             setPrediction("");
             setInputValues({});
         }
@@ -658,7 +663,7 @@ export function FormModelPrediction(props) {
         }
     };
 
-    const isPredicting = Array.isArray(predictAt) && predictAt.length > 0 && !prediction;
+    const isPredicting = predictAt && typeof predictAt === 'object' && Object.keys(predictAt).length > 0 && !prediction;
 
     return (
         <div className="prediction-section">
@@ -708,7 +713,7 @@ export function FormModelPrediction(props) {
                         <tr className="prediction-result-row">
                             <td className="prediction-feature-cell"><b>{datasetResultParam}</b></td>
                             <td className="prediction-result-cell">
-                                {prediction || '—'}
+                                {typeof prediction === 'string' || typeof prediction === 'number' ? prediction : '—'}
                             </td>
                         </tr>
                     </tbody>
