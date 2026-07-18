@@ -74,12 +74,6 @@ export function FormDataset(props) {
                 e.preventDefault()
                 if(dataset || datasetIsUpload==false)handleSubmit()
             }}>
-            {datasetName && (
-                <div className="dataset-badge-top">
-                    <span className="dataset-badge-icon">📄</span>
-                    <span>{datasetName}</span>
-                </div>
-            )}
             <b>Select a .csv Dataset </b>
             <div className="dataset-option-group">
                 <input type="radio" id="datasetDefault" name="datasetSelect" required defaultChecked onChange={(e) => {setDatasetIsUpload(false); setDataset()} } />
@@ -117,6 +111,13 @@ export function FormDataset(props) {
                     <button className="ml-button">Commit Dataset</button> :
                     <button disabled className="ml-button">Commit Dataset</button> }
             </div>
+
+            {datasetName && (
+                <div className="dataset-badge">
+                    <span className="dataset-badge-icon">📄</span>
+                    <span>{datasetName}</span>
+                </div>
+            )}
         </form>
     )
 }
@@ -386,7 +387,8 @@ export function FormDefineModel(props) {
             </div>
             <br></br>
             <b>Test Data Proportion</b>
-            <div className="test-proportion-wrapper">
+            <br></br>
+            <label>
                 <input
                     type="number"
                     min="1"
@@ -394,9 +396,10 @@ export function FormDefineModel(props) {
                     value={testProp}
                     required
                     onChange={(e) => setTestProp(e.target.value)}
+                    className="test-proportion-input"
                 />
                 <span className="test-proportion-suffix">%</span>
-            </div>
+            </label>
             <br></br>
             <div className="ml-button-container">
                 { props.isLoadingModelFit ? <button disabled className="ml-button">Fitting Model...</button>:
@@ -650,8 +653,13 @@ export function FormModelPrediction(props) {
     }, [props.datasetFeatures, props.datasetResultParam]);
 
     const handlePredict = () => {
+        const values = Object.values(inputValues);
         // Trigger prediction by updating predictAt
-        setPredictAt(Object.values(inputValues));
+        setPredictAt(values);
+        // Notify parent to trigger API call
+        if (props.onPredict) {
+            props.onPredict(values);
+        }
     };
 
     const isPredicting = Array.isArray(predictAt) && predictAt.length > 0 && !prediction;

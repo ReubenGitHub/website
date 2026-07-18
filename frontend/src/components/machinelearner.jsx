@@ -453,6 +453,7 @@ export function MLerPage(props) {
                             datasetFeatures={datasetFeatures}
                             datasetResultParam={datasetResultParam}
                             inputValidation={inputValidation}
+                            onPredict={(values) => setPredictAt(values)}
                         />
                     )}
                 </div>

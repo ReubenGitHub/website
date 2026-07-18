@@ -179,12 +179,11 @@ form strong {
 }
 
 /* ============================================================
-   Model Type Wrapper (more spacing)
+   Model Type Wrapper
    ============================================================ */
 
 .model-type-wrapper {
-  margin: 16px 0;
-  padding: 4px 0;
+  margin: 8px 0;
 }
 
 .model-type-wrapper select {
@@ -192,25 +191,14 @@ form strong {
 }
 
 /* ============================================================
-   Test Data Proportion Wrapper
+   Test Data Proportion Input
    ============================================================ */
 
-.test-proportion-wrapper {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 12px 0;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-}
-
-.test-proportion-wrapper input[type="number"] {
+.test-proportion-input {
   width: 70px;
   text-align: right;
   padding: 6px 8px;
-  margin: 0;
+  margin-right: 4px;
 }
 
 .test-proportion-suffix {

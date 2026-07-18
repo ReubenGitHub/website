@@ -797,14 +797,13 @@ p.intro {
 }
 
 .ml-results-image {
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 auto;
+  min-width: 680px;
   text-align: center;
 }
 
 .ml-results-image img {
-  max-width: 100%;
-  width: 520px;
+  width: 680px;
   height: auto;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -815,15 +814,28 @@ p.intro {
   min-width: 0;
 }
 
+.ml-results-metrics h3 {
+  text-align: center;
+  margin: 0 0 12px;
+}
+
+.ml-results-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: center;
+}
+
 /* ============================================================
    Modern Metric Cards
    ============================================================ */
 
 .metric-cards {
-  display: grid;
+  display: inline-grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   margin-top: 12px;
+  justify-content: center;
 }
 
 .metric-card {
@@ -897,6 +909,8 @@ p.intro {
 .prediction-table-wrapper {
   overflow-x: auto;
   margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
 }
 
 .prediction-table {
@@ -992,6 +1006,23 @@ p.intro {
 }
 
 /* Responsive adjustments */
+@media (max-width: 1400px) {
+  .ml-results-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .ml-results-image {
+    min-width: 0;
+    width: 680px;
+  }
+  
+  .ml-results-image img {
+    width: 100%;
+    max-width: 680px;
+  }
+}
+
 @media (max-width: 600px) {
   .metric-cards {
     grid-template-columns: 1fr 1fr;
@@ -1003,9 +1034,5 @@ p.intro {
   
   .prediction-input-cell {
     min-width: 120px;
-  }
-  
-  .ml-results-image img {
-    max-width: 100%;
   }
 }
