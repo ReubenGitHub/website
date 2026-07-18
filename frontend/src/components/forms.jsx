@@ -138,7 +138,6 @@ export function FormDefineModel(props) {
     const [datasetFields, setDatasetFields] = useState({fields: ["Fields..."], nonCtsFields: []});
     const [datasetFieldsNo, setDatasetFieldsNo] = useState(["0"]);
     const [count, setCount] = useState(0);
-    const [validationErrors, setValidationErrors] = useState([]);
     
     const TooltipIcon = ({ text }) => (
         <span className="tooltip-wrapper">
@@ -149,14 +148,6 @@ export function FormDefineModel(props) {
     
     const handleSubmit = (event) => {
         event.preventDefault();
-        var errors = [];
-        
-        if (!problemType) {
-            errors.push("Select a problem type");
-        }
-        if (!resultParam) {
-            errors.push("Select a result");
-        }
         var ctsFeatures = [];
         var cateFeatures = [];
         for(let i = 0; i < datasetFields['fields'].length; i++) {
@@ -168,19 +159,25 @@ export function FormDefineModel(props) {
             }
         }
         if (ctsFeatures.every(v => v===false) && cateFeatures.every(v => v===false)) {
-            errors.push("Select at least one feature");
-        }
-        
-        if (errors.length > 0) {
-            setValidationErrors(errors);
+            // Button is disabled so this won't happen
         } else {
-            setValidationErrors([]);
             setInputs([problemType, MLMethod, Number(PolyDeg), ctsFeatures, cateFeatures, resultParam, testProp/100])
         }
     }
     
     const hasFeatures = datasetFields['fields'].some((_, i) => ctsParams[i] || cateParams[i]);
     const canFitModel = problemType && resultParam && hasFeatures && !props.isLoadingModelFit;
+    
+    const requiresProblemType = !problemType;
+    const requiresResult = !resultParam;
+    const requiresFeature = !hasFeatures;
+    
+    const ChecklistItem = ({ met, text }) => (
+        <span className="ml-checklist-item">
+            <span className={`ml-check-icon ${met ? 'ml-check-met' : 'ml-check-unmet'}`}>{met ? '✓' : '○'}</span>
+            <span className={met ? 'ml-check-text-met' : 'ml-check-text-unmet'}>{text}</span>
+        </span>
+    );
 
     useEffect(() => {
         if (props.datasetFields['fields']) {
@@ -202,18 +199,6 @@ export function FormDefineModel(props) {
         }
         setCount(count+1);
     }, [inputs]);
-
-    useEffect(() => {
-        if (problemType) setValidationErrors(prev => prev.filter(e => e !== "Select a problem type"));
-    }, [problemType]);
-
-    useEffect(() => {
-        if (resultParam) setValidationErrors(prev => prev.filter(e => e !== "Select a result"));
-    }, [resultParam]);
-
-    useEffect(() => {
-        if (hasFeatures) setValidationErrors(prev => prev.filter(e => e !== "Select at least one feature"));
-    }, [hasFeatures]);
 
     return (
         <form onSubmit={handleSubmit}>
@@ -443,19 +428,17 @@ export function FormDefineModel(props) {
                 </label>
             </div>
             <br></br>
+            <div className="ml-checklist">
+                <ChecklistItem met={!requiresProblemType} text="Select a problem type" />
+                <ChecklistItem met={!requiresResult} text="Select a result" />
+                <ChecklistItem met={!requiresFeature} text="Select at least one feature" />
+            </div>
             <div className="ml-button-container">
                 { props.isLoadingModelFit ? <button disabled className="ml-button">Fitting Model...</button>:
                     !canFitModel ? <button disabled className="ml-button">Fit Model</button>:
                     <button className="ml-button">Fit Model</button>
                 }
-            </div>
-            {validationErrors.length > 0 && (
-                <div className="ml-validation-errors">
-                    {validationErrors.map((error, index) => (
-                        <span key={index} className="ml-validation-error">• {error}</span>
-                    ))}
-                </div>
-            )}  
+            </div>  
         </form>
     )
     
