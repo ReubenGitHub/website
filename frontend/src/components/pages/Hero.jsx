@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import './Hero.css'
+import '../Hero.css'
 
 const EMAIL = 'reubenowenwilliams@outlook.com';
 

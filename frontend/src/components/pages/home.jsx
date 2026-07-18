@@ -1,8 +1,10 @@
-import './pagestyles.css';
-import './home.css'
-import './font_kanit.css'
+import '../global.css';
+import '../headernavbar.css';
+import '../hero.css';
+import '../home.css';
+import '../font_kanit.css'
 import { Link } from "react-router-dom";
-import { VerticalTimeline } from './VerticalTimeline/VerticalTimeline'
+import { VerticalTimeline } from '../common/VerticalTimeline/VerticalTimeline'
 import { Hero } from './Hero'
 
 export default function HomePage(props) {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import './headernavbar.css';
-import logo_white from '../ReubenHOWLogo_White_Orange.png'
+import '../headernavbar.css';
+import logo_white from '../../assets/ReubenHOWLogo_White_Orange.png'
 // import headerimg from '../Header_img.jpg';
 
 const EMAIL = 'reubenowenwilliams@outlook.com';

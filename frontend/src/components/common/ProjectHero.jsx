@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import './Hero.css'
+import '../Hero.css'
 import { BlockLetters } from './BlockLetters'
 
 export function ProjectHero() {

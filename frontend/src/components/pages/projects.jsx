@@ -1,8 +1,10 @@
-import './pagestyles.css';
-import './home.css';
-import './font_kanit.css';
+import '../global.css';
+import '../headernavbar.css';
+import '../hero.css';
+import '../home.css';
+import '../font_kanit.css';
 import { Link } from 'react-router-dom';
-import { ProjectHero } from './ProjectHero';
+import { ProjectHero } from '../common/ProjectHero';
 
 export default function ProjectsPage() {
     const projects = [
@@ -23,7 +25,7 @@ export default function ProjectsPage() {
             label: 'Learn More',
             externalLink: 'https://easy-pv.co.uk/speedy-pv/demo',
             externalLabel: 'View Live Demo',
-            image: '/speedypv_screenshot.webp',
+            image: '/assets/projects/speedypv_screenshot.webp',
             imageColor: null,
             imageIcon: null
         },
@@ -35,7 +37,7 @@ export default function ProjectsPage() {
             label: 'Learn More',
             externalLink: 'https://github.com/ReubenGitHub/ML-Vehicle-Emissions',
             externalLabel: 'View on GitHub',
-            image: '/car_exhaust.webp',
+            image: '/assets/projects/car_exhaust.webp',
             imageColor: null,
             imageIcon: null
         },
@@ -45,7 +47,7 @@ export default function ProjectsPage() {
             link: null,
             label: 'Coming Soon',
             comingSoon: true,
-            image: '/film_quiz_game.webp',
+            image: '/assets/projects/film_quiz_game.webp',
             imageColor: null,
             imageIcon: null
         }

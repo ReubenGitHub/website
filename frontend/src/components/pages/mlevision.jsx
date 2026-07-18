@@ -1,5 +1,7 @@
-import './pagestyles.css';
-import './home.css';
+import '../global.css';
+import '../headernavbar.css';
+import '../hero.css';
+import '../home.css';
 
 export default function MlVehicleEmissionsPage() {
     return (
@@ -23,7 +25,7 @@ export default function MlVehicleEmissionsPage() {
                     <div className="project-images">
                         <div className="image-caption-group">
                             <img 
-                                src="/images/projects/ml-emissions/co2-vs-power.png" 
+                                src="/assets/projects/ml-emissions/co2-vs-power.png" 
                                 alt="CO2 Emissions vs Power" 
                                 className="project-image"
                             />
@@ -31,7 +33,7 @@ export default function MlVehicleEmissionsPage() {
                         </div>
                         <div className="image-caption-group">
                             <img 
-                                src="/images/projects/ml-emissions/prediction-error.png" 
+                                src="/assets/projects/ml-emissions/prediction-error.png" 
                                 alt="Prediction Error Distribution" 
                                 className="project-image"
                             />

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './DotNetDemo.css';
+import '../DotNetDemo.css';
 
 export function DotNetDemo() {
     const [helloData, setHelloData] = useState(null);

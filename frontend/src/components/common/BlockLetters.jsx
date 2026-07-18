@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import './Hero.css';
+import '../Hero.css';
 
 // 7-row block font definitions
 // 1 = filled block, 0 = empty

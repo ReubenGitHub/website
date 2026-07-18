@@ -1,12 +1,12 @@
 import React, {useState, useEffect} from 'react';
 import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
-import HomePage from './components/home';
-import {MLerPage} from './components/machinelearner';
-import {DotNetDemo} from './components/DotNetDemo';
-import ProjectsPage from './components/projects';
-import SpeedyPVPage from './components/speedypv';
-import MlVehicleEmissionsPage from './components/mlevision';
-import {NavBar} from './components/headernavbar';
+import HomePage from './components/pages/home';
+import {MLerPage} from './components/pages/machinelearner';
+import {DotNetDemo} from './components/pages/DotNetDemo';
+import ProjectsPage from './components/pages/projects';
+import SpeedyPVPage from './components/pages/speedypv';
+import MlVehicleEmissionsPage from './components/pages/mlevision';
+import {NavBar} from './components/common/headernavbar';
 
 function App() {
   const [navState, setNavState] = useState(false);

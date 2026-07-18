@@ -1,5 +1,7 @@
-import './pagestyles.css';
-import './home.css';
+import '../global.css';
+import '../headernavbar.css';
+import '../hero.css';
+import '../home.css';
 
 export default function SpeedyPVPage() {
     return (
@@ -35,7 +37,7 @@ export default function SpeedyPVPage() {
                         <div className="video-caption-group">
                             <div className="video-container video-container-desktop">
                                 <video autoPlay loop muted playsInline className="project-video desktop-video">
-                                    <source src="/speedypv_desktop.webm" type="video/webm" />
+                                    <source src="/assets/projects/speedypv_desktop.webm" type="video/webm" />
                                     Your browser does not support the video tag.
                                 </video>
                             </div>
@@ -44,7 +46,7 @@ export default function SpeedyPVPage() {
                         <div className="video-caption-group">
                             <div className="video-container video-container-mobile">
                                 <video autoPlay loop muted playsInline className="project-video">
-                                    <source src="/speedypv_mobile.webm" type="video/webm" />
+                                    <source src="/assets/projects/speedypv_mobile.webm" type="video/webm" />
                                     Your browser does not support the video tag.
                                 </video>
                             </div>
