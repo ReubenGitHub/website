@@ -16,15 +16,9 @@ const PhysicsSimulation = () => {
   const connectionRef = useRef(null);
 
   useEffect(() => {
-    // SignalR connection setup — .NET service runs on port 5001
-    const dotnetUrl = window.location.port === '3000'
-      ? 'http://localhost:5001/physicsHub'
-      : `/physicsHub`;
-
+    // SignalR connection — use relative URL, Vite proxies to port 5001
     const connection = new HubConnectionBuilder()
-      .withUrl(dotnetUrl, {
-        transport: HttpTransportType.WebSockets
-      })
+      .withUrl('/physicsHub')
       .withAutomaticReconnect()
       .build();
 
