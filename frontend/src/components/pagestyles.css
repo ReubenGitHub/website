@@ -876,6 +876,13 @@ p.intro {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
+  text-align: center;
+}
+
+.metric-divider {
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 12px;
 }
 
 .metric-card-row {

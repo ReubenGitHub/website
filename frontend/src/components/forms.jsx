@@ -544,14 +544,15 @@ export function FormModelOutputs(props) {
                             <span className="metric-card-label">Train</span>
                             <span className="metric-card-value">
                                 {!(modelMetrics?.train_accuracy == null) ?
-                                    (1 * modelMetrics?.train_accuracy + Number.EPSILON).toFixed(3) :
-                                    "..."}
+                                    ((1 * modelMetrics?.train_accuracy + Number.EPSILON) * 100).toPrecision(3) + '%'
+                                    : '...'}
                             </span>
+                            <span className="metric-divider"></span>
                             <span className="metric-card-label">Test</span>
                             <span className="metric-card-value">
                                 {!(modelMetrics?.test_accuracy == null) ?
-                                    (1 * modelMetrics?.test_accuracy + Number.EPSILON).toFixed(3) :
-                                    "..."}
+                                    ((1 * modelMetrics?.test_accuracy + Number.EPSILON) * 100).toPrecision(3) + '%'
+                                    : '...'}
                             </span>
                         </div>
                     </div>
@@ -563,21 +564,23 @@ export function FormModelOutputs(props) {
                             <div className="metric-card-row">
                                 <span className="metric-card-label">Train Macro</span>
                                 <span className="metric-card-value">
-                                    {(1 * modelMetrics?.train_macro_precision + Number.EPSILON).toFixed(4)}
+                                    {((1 * modelMetrics?.train_macro_precision + Number.EPSILON) * 100).toPrecision(3) + '%'}
                                 </span>
+                                <span className="metric-divider"></span>
                                 <span className="metric-card-label">Train Micro</span>
                                 <span className="metric-card-value">
-                                    {(1 * modelMetrics?.train_micro_precision + Number.EPSILON).toFixed(4)}
+                                    {((1 * modelMetrics?.train_micro_precision + Number.EPSILON) * 100).toPrecision(3) + '%'}
                                 </span>
                             </div>
                             <div className="metric-card-row">
                                 <span className="metric-card-label">Test Macro</span>
                                 <span className="metric-card-value">
-                                    {(1 * modelMetrics?.test_macro_precision + Number.EPSILON).toFixed(4)}
+                                    {((1 * modelMetrics?.test_macro_precision + Number.EPSILON) * 100).toPrecision(3) + '%'}
                                 </span>
+                                <span className="metric-divider"></span>
                                 <span className="metric-card-label">Test Micro</span>
                                 <span className="metric-card-value">
-                                    {(1 * modelMetrics?.test_micro_precision + Number.EPSILON).toFixed(4)}
+                                    {((1 * modelMetrics?.test_micro_precision + Number.EPSILON) * 100).toPrecision(3) + '%'}
                                 </span>
                             </div>
                         </div>
@@ -590,21 +593,23 @@ export function FormModelOutputs(props) {
                             <div className="metric-card-row">
                                 <span className="metric-card-label">Train Macro</span>
                                 <span className="metric-card-value">
-                                    {(1 * modelMetrics?.train_macro_recall + Number.EPSILON).toFixed(4)}
+                                    {((1 * modelMetrics?.train_macro_recall + Number.EPSILON) * 100).toPrecision(3) + '%'}
                                 </span>
+                                <span className="metric-divider"></span>
                                 <span className="metric-card-label">Train Micro</span>
                                 <span className="metric-card-value">
-                                    {(1 * modelMetrics?.train_micro_recall + Number.EPSILON).toFixed(4)}
+                                    {((1 * modelMetrics?.train_micro_recall + Number.EPSILON) * 100).toPrecision(3) + '%'}
                                 </span>
                             </div>
                             <div className="metric-card-row">
                                 <span className="metric-card-label">Test Macro</span>
                                 <span className="metric-card-value">
-                                    {(1 * modelMetrics?.test_macro_recall + Number.EPSILON).toFixed(4)}
+                                    {((1 * modelMetrics?.test_macro_recall + Number.EPSILON) * 100).toPrecision(3) + '%'}
                                 </span>
+                                <span className="metric-divider"></span>
                                 <span className="metric-card-label">Test Micro</span>
                                 <span className="metric-card-value">
-                                    {(1 * modelMetrics?.test_micro_recall + Number.EPSILON).toFixed(4)}
+                                    {((1 * modelMetrics?.test_micro_recall + Number.EPSILON) * 100).toPrecision(3) + '%'}
                                 </span>
                             </div>
                         </div>
