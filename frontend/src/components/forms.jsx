@@ -618,10 +618,11 @@ export function FormModelPrediction(props) {
         if (props.modelPrediction && props.modelPrediction['predictAt'] && typeof props.modelPrediction['predictAt'] === 'object' && !Array.isArray(props.modelPrediction['predictAt']) && Object.keys(props.modelPrediction['predictAt']).length > 0) {
             const newPredictAt = props.modelPrediction['predictAt'];
             const newPrediction = props.modelPrediction['prediction'];
-            // Check if predictAt has changed by comparing objects
+            // Check if predictAt OR prediction has changed
             const predictAtChanged = Object.keys(newPredictAt).length !== Object.keys(predictAt).length ||
                 Object.keys(newPredictAt).some(key => newPredictAt[key] !== predictAt[key]);
-            if (predictAtChanged) {
+            const predictionChanged = newPrediction !== prediction;
+            if (predictAtChanged || predictionChanged) {
                 setPredictAt(newPredictAt);
                 setPrediction(newPrediction);
             }
@@ -658,10 +659,8 @@ export function FormModelPrediction(props) {
 
     const handlePredict = () => {
         // Send dictionary with feature names as keys
-        console.log('HANDLE PREDICT called, inputValues:', inputValues);
         if (props.onPredict) {
             props.onPredict(inputValues);
-            console.log('onPredict called');
         }
     };
 
