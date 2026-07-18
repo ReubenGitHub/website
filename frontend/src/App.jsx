@@ -6,6 +6,7 @@ import {DotNetDemo} from './components/pages/DotNetDemo';
 import ProjectsPage from './components/pages/projects';
 import SpeedyPVPage from './components/pages/speedypv';
 import MlVehicleEmissionsPage from './components/pages/mlevision';
+import PhysicsSimulation from './components/physics-simulation/PhysicsSimulation';
 import {NavBar} from './components/common/headernavbar';
 
 function App() {
@@ -40,6 +41,7 @@ function App() {
         <Route path="/projects" element = {Projects} />
         <Route path="/speedy-pv" element = {SpeedyPV} />
         <Route path="/ml-vehicle-emissions" element = {MlEmissions} />
+        <Route path="/physics-simulation" element = {<PhysicsSimulation />} />
       </Routes>
     </Router>
   );
