@@ -15,25 +15,33 @@ public class PhysicsHub : Hub
         _logger = logger;
     }
 
-    public async Task StartSimulation(SimulationConfig config, List<SurfacePoint> surface)
+    public Task StartSimulation(SimulationConfig config, List<SurfacePoint> surface)
     {
         _session.SetConfig(config);
         _session.SetSurface(surface);
         _session.Start();
 
-        _logger.LogInformation("Simulation started for client {ClientId} with {BallCount} balls", 
+        _logger.LogInformation("Simulation started for client {ClientId} with {BallCount} balls",
             Context.ConnectionId, config.BallCount);
 
-        // Stream positions
-        Task.Run(async () =>
+        _ = Task.Run(async () =>
         {
-            while (_session.IsRunning)
+            try
             {
-                var state = _session.GetState();
-                await Clients.Caller.SendAsync("StateUpdate", state);
-                await Task.Delay((int)(_session.Config.DeltaTime * 1000));
+                while (_session.IsRunning)
+                {
+                    var state = _session.GetState();
+                    await Clients.Caller.SendAsync("StateUpdate", state);
+                    await Task.Delay((int)(_session.Config.DeltaTime * 1000));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in streaming loop");
             }
         });
+
+        return Task.CompletedTask;
     }
 
     public async Task PauseSimulation()

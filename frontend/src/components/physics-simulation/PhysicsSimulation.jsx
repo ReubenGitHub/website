@@ -16,13 +16,13 @@ const PhysicsSimulation = () => {
   const connectionRef = useRef(null);
 
   useEffect(() => {
-    // SignalR connection setup
-    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-    const host = window.location.host;
-    const url = `${protocol}${host}/physicsHub`;
+    // SignalR connection setup — .NET service runs on port 5001
+    const dotnetUrl = window.location.port === '3000'
+      ? 'http://localhost:5001/physicsHub'
+      : `/physicsHub`;
 
     const connection = new HubConnectionBuilder()
-      .withUrl(url)
+      .withUrl(dotnetUrl)
       .withAutomaticReconnect()
       .build();
 
@@ -50,12 +50,15 @@ const PhysicsSimulation = () => {
       setIsRunning(false);
     });
 
-    connection.onerror((err) => {
-      setError(err.message || 'SignalR connection error');
-      console.error('SignalR error:', err);
-    });
-
     connectionRef.current = connection;
+
+    // Catch connection errors via the start promise
+    connection.start().then(() => {
+      setIsConnected(true);
+    }).catch((err) => {
+      console.error('SignalR connection failed:', err);
+      setIsConnected(false);
+    });
 
     return () => {
       if (connectionRef.current) {
