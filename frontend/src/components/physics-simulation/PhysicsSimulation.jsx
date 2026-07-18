@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { HubConnectionBuilder } from '@microsoft/signalr';
+import { HubConnectionBuilder, HttpTransportType } from '@microsoft/signalr';
 import SurfaceDrawer from './SurfaceDrawer';
 import SpawnControls from './SpawnControls';
 import SimulationCanvas from './SimulationCanvas';
@@ -22,7 +22,9 @@ const PhysicsSimulation = () => {
       : `/physicsHub`;
 
     const connection = new HubConnectionBuilder()
-      .withUrl(dotnetUrl)
+      .withUrl(dotnetUrl, {
+        transport: HttpTransportType.WebSockets
+      })
       .withAutomaticReconnect()
       .build();
 
