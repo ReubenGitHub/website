@@ -536,9 +536,9 @@ export function FormModelOutputs(props) {
                 <img src={repImageSrc} alt="Model Representation" />
             </div>
             <div className="ml-results-metrics">
-                <div className="metric-cards">
-                    {/* Accuracy Card */}
-                    <div className="metric-card">
+                <div className="metric-card">
+                    {/* Accuracy Section */}
+                    <div className="metric-section">
                         <div className="metric-card-header">{accuracyLabel}</div>
                         <div className="metric-card-row">
                             <span className="metric-card-label">Train</span>
@@ -547,7 +547,6 @@ export function FormModelOutputs(props) {
                                     (1 * modelMetrics?.train_accuracy + Number.EPSILON).toFixed(3) :
                                     "..."}
                             </span>
-                            <span style={{width: 24}}></span>
                             <span className="metric-card-label">Test</span>
                             <span className="metric-card-value">
                                 {!(modelMetrics?.test_accuracy == null) ?
@@ -557,37 +556,55 @@ export function FormModelOutputs(props) {
                         </div>
                     </div>
 
-                    {/* Precision Card (Classification only) */}
+                    {/* Precision Section (Classification only) */}
                     {isClassification && (
-                        <div className="metric-card">
+                        <div className="metric-section">
                             <div className="metric-card-header">Precision</div>
                             <div className="metric-card-row">
-                                <span className="metric-card-label">Macro</span>
+                                <span className="metric-card-label">Train Macro</span>
                                 <span className="metric-card-value">
-                                    {(1 * modelMetrics?.train_macro_precision + Number.EPSILON).toFixed(3)}
+                                    {(1 * modelMetrics?.train_macro_precision + Number.EPSILON).toFixed(4)}
                                 </span>
-                                <span style={{width: 24}}></span>
-                                <span className="metric-card-label">Micro</span>
+                                <span className="metric-card-label">Train Micro</span>
                                 <span className="metric-card-value">
-                                    {(1 * modelMetrics?.train_micro_precision + Number.EPSILON).toFixed(3)}
+                                    {(1 * modelMetrics?.train_micro_precision + Number.EPSILON).toFixed(4)}
+                                </span>
+                            </div>
+                            <div className="metric-card-row">
+                                <span className="metric-card-label">Test Macro</span>
+                                <span className="metric-card-value">
+                                    {(1 * modelMetrics?.test_macro_precision + Number.EPSILON).toFixed(4)}
+                                </span>
+                                <span className="metric-card-label">Test Micro</span>
+                                <span className="metric-card-value">
+                                    {(1 * modelMetrics?.test_micro_precision + Number.EPSILON).toFixed(4)}
                                 </span>
                             </div>
                         </div>
                     )}
 
-                    {/* Recall Card (Classification only) */}
+                    {/* Recall Section (Classification only) */}
                     {isClassification && (
-                        <div className="metric-card">
+                        <div className="metric-section">
                             <div className="metric-card-header">Recall</div>
                             <div className="metric-card-row">
-                                <span className="metric-card-label">Macro</span>
+                                <span className="metric-card-label">Train Macro</span>
                                 <span className="metric-card-value">
-                                    {(1 * modelMetrics?.train_macro_recall + Number.EPSILON).toFixed(3)}
+                                    {(1 * modelMetrics?.train_macro_recall + Number.EPSILON).toFixed(4)}
                                 </span>
-                                <span style={{width: 24}}></span>
-                                <span className="metric-card-label">Micro</span>
+                                <span className="metric-card-label">Train Micro</span>
                                 <span className="metric-card-value">
-                                    {(1 * modelMetrics?.train_micro_recall + Number.EPSILON).toFixed(3)}
+                                    {(1 * modelMetrics?.train_micro_recall + Number.EPSILON).toFixed(4)}
+                                </span>
+                            </div>
+                            <div className="metric-card-row">
+                                <span className="metric-card-label">Test Macro</span>
+                                <span className="metric-card-value">
+                                    {(1 * modelMetrics?.test_macro_recall + Number.EPSILON).toFixed(4)}
+                                </span>
+                                <span className="metric-card-label">Test Micro</span>
+                                <span className="metric-card-value">
+                                    {(1 * modelMetrics?.test_micro_recall + Number.EPSILON).toFixed(4)}
                                 </span>
                             </div>
                         </div>
