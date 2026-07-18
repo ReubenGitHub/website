@@ -819,6 +819,17 @@ p.intro {
   max-width: 100%;
 }
 
+.ml-results-image {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.ml-results-image img {
+  width: 100%;
+  height: auto;
+}
+
 .ml-results-metrics {
   width: 100%;
 }
