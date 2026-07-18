@@ -815,19 +815,21 @@ p.intro {
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  width: 476px;
-  max-width: 100%;
+  max-width: 476px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .ml-results-image {
   width: 100%;
-  display: flex;
-  justify-content: center;
 }
 
 .ml-results-image img {
   width: 100%;
   height: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: block;
 }
 
 .ml-results-metrics {

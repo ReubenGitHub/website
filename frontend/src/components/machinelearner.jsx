@@ -97,7 +97,7 @@ export function MLerPage(props) {
             })
                 .then(res => res.json())
                 .then(data => {
-                    setPrediction(data.prediction)
+                    setPrediction(data.prediction?.prediction ?? data.prediction)
                     setLoadingModelPredict(false)
                 })
         }
