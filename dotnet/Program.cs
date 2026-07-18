@@ -10,9 +10,13 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
     {
-        builder.AllowAnyOrigin()
+        // Reflect the requesting origin instead of wildcard '*'
+        // Required for SignalR which sends credentials by default
+        builder.SetIsOriginAllowed(origin =>
+                origin != null && (origin.Contains("localhost") || origin.Contains("127.0.0.1")))
                .AllowAnyMethod()
-               .AllowAnyHeader();
+               .AllowAnyHeader()
+               .AllowCredentials();
     });
 });
 
