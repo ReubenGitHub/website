@@ -388,18 +388,20 @@ export function FormDefineModel(props) {
             <br></br>
             <b>Test Data Proportion</b>
             <br></br>
-            <label>
-                <input
-                    type="number"
-                    min="1"
-                    max="99"
-                    value={testProp}
-                    required
-                    onChange={(e) => setTestProp(e.target.value)}
-                    className="test-proportion-input"
-                />
-                <span className="test-proportion-suffix">%</span>
-            </label>
+            <div className="test-proportion-wrapper">
+                <label>
+                    <input
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={testProp}
+                        required
+                        onChange={(e) => setTestProp(e.target.value)}
+                        className="test-proportion-input"
+                    />
+                    <span className="test-proportion-suffix">%</span>
+                </label>
+            </div>
             <br></br>
             <div className="ml-button-container">
                 { props.isLoadingModelFit ? <button disabled className="ml-button">Fitting Model...</button>:
@@ -539,16 +541,14 @@ export function FormModelOutputs(props) {
                     <div className="metric-card">
                         <div className="metric-card-header">{accuracyLabel}</div>
                         <div className="metric-card-row">
-                            <span className="metric-card-label">Training</span>
+                            <span className="metric-card-label">Train</span>
                             <span className="metric-card-value">
                                 {!(modelMetrics?.train_accuracy == null) ?
                                     (1 * modelMetrics?.train_accuracy + Number.EPSILON).toFixed(3) :
                                     "..."}
                             </span>
-                        </div>
-                        <div className="metric-card-divider"></div>
-                        <div className="metric-card-row">
-                            <span className="metric-card-label">Testing</span>
+                            <span style={{width: 24}}></span>
+                            <span className="metric-card-label">Test</span>
                             <span className="metric-card-value">
                                 {!(modelMetrics?.test_accuracy == null) ?
                                     (1 * modelMetrics?.test_accuracy + Number.EPSILON).toFixed(3) :
@@ -562,14 +562,12 @@ export function FormModelOutputs(props) {
                         <div className="metric-card">
                             <div className="metric-card-header">Precision</div>
                             <div className="metric-card-row">
-                                <span className="metric-card-label">Train Macro</span>
+                                <span className="metric-card-label">Macro</span>
                                 <span className="metric-card-value">
                                     {(1 * modelMetrics?.train_macro_precision + Number.EPSILON).toFixed(3)}
                                 </span>
-                            </div>
-                            <div className="metric-card-divider"></div>
-                            <div className="metric-card-row">
-                                <span className="metric-card-label">Train Micro</span>
+                                <span style={{width: 24}}></span>
+                                <span className="metric-card-label">Micro</span>
                                 <span className="metric-card-value">
                                     {(1 * modelMetrics?.train_micro_precision + Number.EPSILON).toFixed(3)}
                                 </span>
@@ -582,14 +580,12 @@ export function FormModelOutputs(props) {
                         <div className="metric-card">
                             <div className="metric-card-header">Recall</div>
                             <div className="metric-card-row">
-                                <span className="metric-card-label">Train Macro</span>
+                                <span className="metric-card-label">Macro</span>
                                 <span className="metric-card-value">
                                     {(1 * modelMetrics?.train_macro_recall + Number.EPSILON).toFixed(3)}
                                 </span>
-                            </div>
-                            <div className="metric-card-divider"></div>
-                            <div className="metric-card-row">
-                                <span className="metric-card-label">Train Micro</span>
+                                <span style={{width: 24}}></span>
+                                <span className="metric-card-label">Micro</span>
                                 <span className="metric-card-value">
                                     {(1 * modelMetrics?.train_micro_recall + Number.EPSILON).toFixed(3)}
                                 </span>

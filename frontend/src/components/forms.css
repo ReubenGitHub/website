@@ -194,6 +194,10 @@ form strong {
    Test Data Proportion Input
    ============================================================ */
 
+.test-proportion-wrapper {
+  margin: 8px 0;
+}
+
 .test-proportion-input {
   width: 70px;
   text-align: right;

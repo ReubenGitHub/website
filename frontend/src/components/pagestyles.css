@@ -848,10 +848,14 @@ p.intro {
    ============================================================ */
 
 .metric-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   margin-top: 12px;
+  width: 100%;
+}
+
+.metric-card {
   width: 100%;
 }
 
@@ -874,14 +878,16 @@ p.intro {
 
 .metric-card-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  gap: 8px;
   padding: 4px 0;
 }
 
 .metric-card-label {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
+  min-width: 40px;
 }
 
 .metric-card-value {
@@ -889,12 +895,7 @@ p.intro {
   font-weight: 600;
   color: #03bffe;
   font-family: "Segoe UI", monospace;
-}
-
-.metric-card-divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.08);
-  margin: 4px 0;
+  min-width: 60px;
 }
 
 /* Classification extra columns */
