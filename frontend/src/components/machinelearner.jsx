@@ -82,7 +82,9 @@ export function MLerPage(props) {
 
     //Update model prediction and prediction-loading status upon trigger of predictAt changing
     useEffect(() => {
+        console.log('PREDICT USEEFFECT triggered', { predictionTitle, predictAt, keys: predictAt ? Object.keys(predictAt) : 'null' });
         if (predictionTitle && predictAt && typeof predictAt === 'object' && Object.keys(predictAt).length > 0) {
+            console.log('FETCHING prediction with', JSON.stringify(predictAt));
             setLoadingModelPredict(true);
             fetch('/api/ml/predict', {
                 method: 'post',

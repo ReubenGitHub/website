@@ -848,11 +848,11 @@ p.intro {
    ============================================================ */
 
 .metric-cards {
-  display: inline-grid;
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   margin-top: 12px;
-  justify-content: center;
+  width: 100%;
 }
 
 .metric-card {

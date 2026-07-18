@@ -658,8 +658,10 @@ export function FormModelPrediction(props) {
 
     const handlePredict = () => {
         // Send dictionary with feature names as keys
+        console.log('HANDLE PREDICT called, inputValues:', inputValues);
         if (props.onPredict) {
             props.onPredict(inputValues);
+            console.log('onPredict called');
         }
     };
 
