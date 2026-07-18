@@ -714,7 +714,7 @@ export function FormModelPrediction(props) {
                         <tr className="prediction-result-row">
                             <td className="prediction-feature-cell"><b>{datasetResultParam}</b></td>
                             <td className="prediction-result-cell">
-                                {typeof prediction === 'string' || typeof prediction === 'number' ? prediction : '—'}
+                                {typeof prediction === 'number' ? parseFloat(prediction.toPrecision(6)) : (typeof prediction === 'string' ? prediction : '—')}
                             </td>
                         </tr>
                     </tbody>
