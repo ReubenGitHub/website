@@ -44,13 +44,17 @@ A 2D physics simulation where users draw a surface, spawn thousands of balls abo
 └───────────────────────────┼─────────────────────────────┘
                             │
 ┌───────────────────────────┼─────────────────────────────┐
-│  DOCKER COMPOSE                                           │
+│  DEVCONTAINER (single container — VS Code tasks)        │
 │  ┌─────────────┐    ┌──────────────┐    ┌────────────┐  │
 │  │ Frontend    │    │ .NET API     │    │ Existing   │  │
 │  │ (port 3000) │    │ + SignalR    │    │ ML API     │  │
 │  │             │    │ (port 5001)  │    │ (port 5000)│  │
 │  └─────────────┘    └──────────────┘    └────────────┘  │
 └─────────────────────────────────────────────────────────┘
+
+Note: All services run inside a single devcontainer (python:3.9-slim base).
+Services start via VS Code tasks on folder open, not Docker compose.
+Production deployment files moved to /app/deployment/.
 ```
 
 ---
@@ -73,10 +77,10 @@ dotnet/
 │   ├── SimulationConfig.cs              # Gravity, restitution, ball count, etc.
 │   └── SimulationState.cs               # Full state for streaming
 ├── Middleware/
-│   └── SimulationCleanupMiddleware.cs   # Clean up abandoned sessions
-├── Program.cs                           # SignalR registration, CORS
-├── appsettings.json
-└── dotnet-api.csproj
+│   └── (empty — cleanup middleware not yet implemented)
+├── Program.cs                           # SignalR registration, CORS, Serilog logging
+├── dotnet-api.csproj                    # Includes Serilog.AspNetCore, Serilog.Sinks.File
+└── appsettings.json
 
 frontend/src/components/
 ├── physics-simulation/
@@ -195,9 +199,149 @@ public struct Ball
 ```
 
 ### Connection Management
-- One SignalR connection per simulation session
-- Session ID in URL: `/physics-simulation?session=abc123`
-- Server cleans up abandoned sessions after timeout
+- One SignalR connection per simulation session (scoped via DI)
+- Server cleans up abandoned sessions after timeout (not yet implemented)
+
+---
+
+## Current Status
+
+### Working
+- ✅ dotnet service builds and runs on port 5001
+- ✅ SignalR hub connects (WebSocket transport, confirmed working)
+- ✅ Frontend component renders at `/physics-simulation`
+- ✅ Surface drawing UI functional
+- ✅ Spawn controls UI functional
+- ✅ REST endpoint `/api/example/hello` responds
+- ✅ CORS configured for localhost:3000 + [::1]:3000
+- ✅ Serilog file logging to `/app/logs/dotnet-.log`
+- ✅ Task output logging to `/app/logs/task-{flask,dotnet,react}.log` (auto-cleared on restart)
+- ✅ SignalR parameter passing bug fixed (StartSimulation takes separate config + surface args)
+- ✅ `_streamingCts` cancellation bug fixed (fresh CTS created in StartSimulation)
+- ✅ DI scoping bug fixed (GetOrCreateSession stores session in Context.Items)
+- ✅ ObjectDisposedException fixed (SimulationStreamService BackgroundService using IHubContext)
+- ✅ Clients.User → Clients.Client fix (send to connection ID, not user claim)
+- ✅ WebSocket transport confirmed working (LongPolling had issues through Vite proxy)
+- ✅ Streaming loop continues during pause (sends frozen positions), restarts on resume
+- ✅ Pause() sets IsRunning=false (physics loop skips updates, preserves state)
+- ✅ Resume() sets IsRunning=true (physics loop resumes immediately from frozen state)
+- ✅ ResumeSimulation hub method accepts config + surface params (safety net)
+- ✅ Frontend StateUpdate handler ignores empty balls arrays (defensive)
+- ✅ SimulationSession registered as singleton (persists across all hub invocations)
+- ✅ ResetSimulation calls _streamService.StopStreaming()
+- ✅ PhysicsHub methods: StartSimulation, PauseSimulation, ResumeSimulation, ResetSimulation all functional
+- ✅ DI registration fixed (SimulationStreamService → singleton, SimulationSession → singleton, SurfaceService → singleton)
+- ✅ Session cleanup on disconnect added (OnDisconnectedAsync disposes session + scope)
+- ✅ JSON serialization fixed (camelCase for SignalR to match frontend property names)
+- ✅ Frontend uses refs for ball data (not React state) — avoids re-render overhead
+- ✅ Canvas renders continuously with requestAnimationFrame (not only on state change)
+- ✅ Canvas re-renders when surface changes (surface added to useEffect deps)
+- ✅ Default surface auto-selected on mount
+- ✅ Surface collision detection already implemented in PhysicsEngine/SimulationSession
+- ✅ Ball spawning with gradient coloring already implemented in SpawnBalls/CreateBall
+- ✅ Use Surface button works — surface appears in simulation canvas
+- ✅ StartSimulation invocation reaches backend with correct payload
+- ✅ SignalR connection retry mechanism added (handles HMR race conditions)
+- ✅ Animation loop starts correctly when isRunning changes (isRunning added to useEffect deps)
+- ✅ Balls spawn, stream, and animate visibly in canvas
+- ✅ Pause/Resume/Reset controls work correctly with reconnection logic
+- ✅ Start() waits for old task before creating new (prevents ObjectDisposedException)
+- ✅ Frontend ensureConnected() helper for pause/resume/reset (auto-reconnects if needed)
+
+### Previously Blocked (Now Resolved)
+- ✅ StartSimulation DI registration — resolved with full restart + connection retry
+- ✅ Animation loop not starting — fixed by adding `isRunning` to SimulationCanvas useEffect deps
+
+### Known Issues
+1. **Hot reload doesn't apply DI changes** — must fully restart dotnet task when Program.cs DI registration changes
+2. **No session timeout cleanup** — abandoned sessions persist until explicit disconnect
+3. **Canvas responsive scaling** — fixed: uses CSS `aspect-ratio: 2/1` to maintain proportions (balls stay round)
+4. **React Strict Mode double connections** — accepted as dev-only behavior (1 connection in production)
+5. **Edge balls may fall through** — ~38/2000 balls near surface edges fall through (1.9%), all others (98.1%) stay on surface
+
+### Recent Fixes
+- ✅ **Animation loop not starting** — added `isRunning` to useEffect deps in SimulationCanvas
+- ✅ **SignalR connection fails after HMR** — added retry mechanism with exponential backoff
+- ✅ **Canvas aspect ratio distortion** — replaced fixed `height: 600px` with `aspect-ratio: 2/1`
+- ✅ **Double SignalR connection on mount** — accepted as expected Strict Mode behavior (only 1 connection in prod)
+- ✅ **Resume resets simulation** — switched to singleton session + ManualResetEventSlim pause event (physics loop blocks instead of cancelling, preserving all ball positions/velocities)
+- ✅ **Session persistence** — SimulationSession registered as singleton, GetOrCreateSession resolves directly (no more scoped DI session recreation)
+- ✅ **Balls frozen during pause** — removed ManualResetEventSlim blocking, physics loop checks IsRunning flag (skips physics when paused, continues loop)
+- ✅ **Resume didn't restart streaming** — StreamingLoop no longer breaks on IsRunning=false, continues with frozen positions
+- ✅ **Subsequent Start() calls failed** — Start() waits up to 2s for old task before creating new (prevents ObjectDisposedException)
+- ✅ **Resume sometimes fails with "not connected" error** — added ensureConnected() helper to pause/resume/reset (auto-reconnects via SignalR start())
+- ✅ **Sub-stepping** — 8 sub-steps per frame prevents tunneling
+- ✅ **Velocity clamping** — MaxDistancePerStep = 1.5px prevents balls from moving too far per sub-step
+- ✅ **Resting state detection** — balls settle when velocity is low and near surface
+- ✅ **Physics parameters tuned** — gravity=4.0, restitution=0.4, airResistance=0.03
+- ✅ **CRITICAL: Balls falling through surface** — fixed inverted dotProduct condition (`if (dotProduct > 0)` → `if (dotProduct < 0)`) in PhysicsEngine.cs CheckSurfaceCollision. Ball count improved from 122-142/2000 (6-7%) to 1962/2000 (98.1%)
+
+### Next Steps
+1. ✅ Test StartSimulation — balls spawn, stream, and animate (VERIFIED)
+2. ✅ Test Pause/Resume/Reset controls (VERIFIED — resume preserves ball state, reconnection works)
+3. ✅ UI streamlined — single Play button (section 3), single Reset button (section 3), Remove button removed from section 2
+4. Remove debug rendering (green ball + timestamp) from SimulationCanvas
+5. Add session cleanup middleware (timeout-based)
+6. Performance optimization (ArrayPool, Span<T>)
+7. Visual polish (trails, glow effects, responsive design)
+8. ✅ Unit tests added (42 tests, all passing) — SimulationSession, SurfaceService, Ball, SimulationConfig
+9. ✅ **All 42 tests passing** — updated test assertions to match new default physics values (gravity=4.0, restitution=0.4, airResistance=0.03) and corrected default surface geometry (X=100 instead of X=400)
+10. **Unify canvases** — merge SurfaceDrawer and SimulationCanvas into a single canvas. Drawing mode active only when simulation is stopped/paused. SimulationCanvas renders surface + balls, SurfaceDrawer renders grid + drawing strokes. HTML overlay controls remain (brush size, Default Surface, Clear, Draw Surface buttons). Canvas size: 1200x600 (SimulationCanvas dimensions).
+
+---
+
+## Testing Strategy
+
+### Unit Tests ✅ COMPLETE (42 tests)
+**Location**: `/app/tests/dotnet.Tests/`
+**Framework**: xUnit + coverlet collector
+**Status**: All 42 tests passing
+
+| Test File | Tests | What's Covered |
+|---|---|---|
+| `SimulationSessionTests.cs` | 20 | Start/Pause/Resume/Reset lifecycle, state preservation, ball spawning, multiple cycles, dispose |
+| `SurfaceServiceTests.cs` | 9 | SetSurface, AddPoint, Clear, IsValid, GetDefaultSurface, null handling |
+| `BallTests.cs` | 6 | Constructor, properties, array storage, negative velocity |
+| `SimulationConfigTests.cs` | 7 | Default values, settable properties, independence |
+
+### Integration Tests (Deferred)
+**Priority: MEDIUM** — Worth adding after Phase 6 (deployment)
+
+| Test Target | What to Test |
+|---|---|
+| SignalR Hub | StartSimulation → StateUpdate stream → Pause → Resume → Reset |
+| SimulationController | REST endpoints (validate config, presets) |
+| Full lifecycle | Client connects → starts → streams → disconnects |
+
+**Framework**: xUnit + WebApplicationFactory<T> + InMemory messaging
+
+### E2E Tests (Deferred)
+**Priority: LOW** — Complex to set up, low ROI until UI is final
+
+**What to test**: Full user flow (draw surface → start → pause → resume → reset)
+**Framework**: Playwright (already available in devcontainer)
+**When**: After visual polish is complete
+
+### Integration Tests (Deferred)
+**Priority: MEDIUM** — Worth adding after Phase 6 (deployment)
+
+| Test Target | What to Test |
+|---|---|
+| SignalR Hub | StartSimulation → StateUpdate stream → Pause → Resume → Reset |
+| SimulationController | REST endpoints (validate config, presets) |
+| Full lifecycle | Client connects → starts → streams → disconnects |
+
+**Framework**: xUnit + WebApplicationFactory<T> + InMemory messaging
+
+### E2E Tests (Deferred)
+**Priority: LOW** — Complex to set up, low ROI until UI is final
+
+**What to test**: Full user flow (draw surface → start → pause → resume → reset)
+**Framework**: Playwright (already available in devcontainer)
+**When**: After visual polish is complete
+
+### Recommendation
+**Add unit tests NOW** for `SimulationSession` and `SurfaceService` — these are the most critical and stable components. Integration tests can wait until after deployment is working.
 
 ---
 
@@ -235,36 +379,51 @@ public struct Ball
 
 ## Implementation Phases
 
-### Phase 1: Foundation
-- [ ] Create .NET project structure (Hubs, Services, Models)
-- [ ] Implement SignalR hub
-- [ ] Create basic physics engine (gravity + surface collision)
-- [ ] Single-threaded version first
-- [ ] Docker compose integration
+### Phase 1: Foundation ✅ COMPLETE
+- [x] Create .NET project structure (Hubs, Services, Models)
+- [x] Implement SignalR hub (`PhysicsHub.cs`)
+- [x] Create basic physics engine (gravity + surface collision) — single-threaded
+- [x] Session management (`SimulationSession.cs`)
+- [x] Devcontainer setup (all 3 services running via VS Code tasks)
+- [x] Serilog file logging configured
+- [x] Task output logging configured (`/app/logs/task-{name}.log`)
+- [x] Session cleanup on disconnect implemented
+- [ ] Middleware for session cleanup (timeout-based, not yet implemented)
 
 ### Phase 2: Parallelization
-- [ ] Convert to `Parallel.For`
-- [ ] Optimize with `Span<T>`, `ArrayPool`
-- [ ] Benchmark single vs parallel performance
-- [ ] Add session management
+- [x] Parallel.For implemented in SimulationLoop
+- [ ] Optimize with `Span<T>`, `ArrayPool` (future)
+- [ ] Benchmark single vs parallel performance (future)
 
-### Phase 3: Frontend — Drawing
-- [ ] Surface drawer component (click to place points)
-- [ ] Canvas rendering (surface + balls)
-- [ ] Spawn controls UI
+### Phase 3: Frontend — Drawing ✅ COMPLETE
+- [x] Surface drawer component (`SurfaceDrawer.jsx`)
+- [x] Canvas rendering component (`SimulationCanvas.jsx`)
+- [x] Spawn controls UI (`SpawnControls.jsx`)
+- [x] Simulation controls UI (`SimulationControls.jsx`)
 
-### Phase 4: Frontend — Simulation
-- [ ] SignalR connection management
-- [ ] Real-time ball rendering from streamed data
-- [ ] Play/pause/reset controls
-- [ ] Speed multiplier
+### Phase 4: Frontend — Simulation ✅ COMPLETE
+- [x] SignalR connection management (WebSocket transport, connection works)
+- [x] Real-time ball rendering from streamed data (VERIFIED working)
+- [x] Unified Play/Pause/Reset controls (Play handles both start and resume)
+- [x] Ball data stored in refs (not state) — no re-render overhead
+- [x] Canvas renders continuously with requestAnimationFrame
+- [x] Connection retry mechanism for HMR resilience
+- [x] Animation loop correctly starts on isRunning change
+- [ ] Speed multiplier (future)
 
 ### Phase 5: Polish
 - [ ] Preset scenarios
 - [ ] Visual polish (colors, trails, gradients)
 - [ ] Responsive design
 - [ ] Performance optimization
-- [ ] Add to navbar and home page
+- [x] Add to navbar and home page (page exists at `/physics-simulation`)
+
+### Phase 5: Polish
+- [ ] Preset scenarios
+- [ ] Visual polish (colors, trails, gradients)
+- [ ] Responsive design
+- [ ] Performance optimization
+- [x] Add to navbar and home page (page exists at `/physics-simulation`)
 
 ### Phase 6: Deployment
 - [ ] Docker compose update (add physics service)

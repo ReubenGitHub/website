@@ -2,26 +2,75 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Start React Dev Server (Hot Reload)",
+            "label": "Start Flask Server (Port 5000)",
             "type": "shell",
-            "command": "npm start",
+            "command": "bash -c '> /app/logs/task-flask.log && python -m flask run --host=0.0.0.0 --port=5000 --reload 2>&1 | tee -a /app/logs/task-flask.log'",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "FLASK_APP": "backend/api/api.py",
+                    "FLASK_ENV": "development"
+                }
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": false,
+                "group": "flask",
+                "showReuseMessage": false,
+                "clear": false
+            },
+            "isBackground": true,
+            "group": "flask",
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        },
+        {
+            "label": "Start dotnet Service (Port 5001)",
+            "type": "shell",
+            "command": "bash -c '> /app/logs/task-dotnet.log && dotnet watch run 2>&1 | tee -a /app/logs/task-dotnet.log'",
+            "options": {
+                "cwd": "${workspaceFolder}/dotnet",
+                "env": {
+                    "ASPNETCORE_URLS": "http://+:5001",
+                    "ASPNETCORE_ENVIRONMENT": "Development"
+                }
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": false,
+                "group": "dotnet",
+                "showReuseMessage": false,
+                "clear": false
+            },
+            "isBackground": true,
+            "group": "dotnet",
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        },
+        {
+            "label": "Start React Dev Server (Port 3000)",
+            "type": "shell",
+            "command": "bash -c '> /app/logs/task-react.log && npm start 2>&1 | tee -a /app/logs/task-react.log'",
             "options": {
                 "cwd": "${workspaceFolder}/frontend"
             },
             "problemMatcher": [],
             "presentation": {
                 "reveal": "always",
-                "panel": "new",
+                "panel": "dedicated",
                 "focus": true,
-                "group": "build",
+                "group": "react",
                 "showReuseMessage": false,
                 "clear": false
             },
             "isBackground": true,
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "group": "react",
             "runOptions": {
                 "runOn": "folderOpen"
             }

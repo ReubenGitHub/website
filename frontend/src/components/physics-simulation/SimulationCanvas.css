@@ -8,12 +8,6 @@
 
 .simulation-canvas {
   width: 100%;
-  height: 600px;
+  aspect-ratio: 2 / 1;
   display: block;
-}
-
-@media (max-width: 768px) {
-  .simulation-canvas {
-    height: 400px;
-  }
 }

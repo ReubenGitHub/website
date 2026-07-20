@@ -7,15 +7,14 @@ ARG NODE_VERSION_NUMBER
 
 WORKDIR /app
 
-# Create directories for backend and frontend
-RUN mkdir -p /app/backend /app/frontend
+# Create directories for all project components
+RUN mkdir -p /app/backend /app/frontend /app/dotnet /app/notes /app/logs
 
-# Copy package files
+# Copy package files for dependency installation
 COPY frontend/package.json /app/frontend/
 COPY backend/requirements.txt /app/backend/
 
-# Install all dependencies in one efficient layer
-# This includes: build tools, Node.js, npm, Python packages
+# Install build tools, Node.js, and .NET SDK
 RUN apt-get update && \
     apt-get install -y \
         build-essential \
@@ -27,27 +26,42 @@ RUN apt-get update && \
         apt-transport-https && \
     curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION_NUMBER}.x | bash - && \
     apt-get install -y nodejs && \
-    cd /app/backend && pip install -r requirements.txt && \
-    cd /app/frontend && npm install && \
+    # Install .NET SDK 8.0 using official install script (avoids apt repo signing issues on Debian 13)
+    curl -fsSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --version 8.0.404 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy source code
 COPY frontend/ /app/frontend/
 COPY backend/ /app/backend/
+COPY dotnet/ /app/dotnet/
 
-# Build custom metric
+# Install Python packages
+RUN cd /app/backend && pip install -r requirements.txt
+
+# Install Node.js dependencies
+RUN cd /app/frontend && npm install
+
+# Build custom metric (Cython extension must be built, not mounted)
 WORKDIR /app/backend/api/src/machine_learning/models/model_types/k_nearest_neighbours/custom_metric
 RUN python3 setup.py build_ext --inplace
 
 WORKDIR /app
 
-# Configure git to use host credentials (shared .gitconfig via volume mount)
+# Restore dotnet packages (dotnet is in /root/.dotnet from install script)
+ENV PATH="$PATH:/root/.dotnet"
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+RUN cd /app/dotnet && dotnet restore
+
+# Configure git to use host credentials
 RUN git config --global --add safe.directory /app
 
-EXPOSE 5000 5001
+EXPOSE 3000 5000 5001
 
 ENV FLASK_APP=backend/api/api.py
 ENV FLASK_ENV=development
 ENV PYTHONUNBUFFERED=1
+ENV ASPNETCORE_URLS=http://+:5001
+ENV ASPNETCORE_ENVIRONMENT=Development
 
-CMD ["sh", "-c", "python -m flask run --host=0.0.0.0 --port=5000 --reload"]
+# Keep container alive — services are started via VS Code tasks on folder open
+CMD ["sleep", "infinity"]

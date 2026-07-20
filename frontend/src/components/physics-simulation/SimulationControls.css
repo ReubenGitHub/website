@@ -70,3 +70,7 @@
 .status-indicator.stopped {
   color: #ff4757;
 }
+
+.status-indicator.paused {
+  color: #ffa500;
+}

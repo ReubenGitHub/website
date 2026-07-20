@@ -9,7 +9,7 @@ export function DotNetDemo() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const DOTNET_API_BASE = 'http://localhost:5001/api';
+    const DOTNET_API_BASE = '/dotnet-api';
 
     const callDotNetHello = async () => {
         setLoading(true);

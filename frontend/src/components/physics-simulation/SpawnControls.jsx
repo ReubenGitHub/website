@@ -1,16 +1,6 @@
 import './SpawnControls.css';
 
-const SpawnControls = ({ ballCount, setBallCount, onStart, onReset, isRunning }) => {
-  const handleStart = () => {
-    if (ballCount >= 10 && ballCount <= 10000) {
-      onStart(ballCount);
-    }
-  };
-
-  const handleReset = () => {
-    onReset();
-  };
-
+const SpawnControls = ({ ballCount, setBallCount }) => {
   return (
     <div className="spawn-controls">
       <div className="spawn-control-group">
@@ -31,22 +21,6 @@ const SpawnControls = ({ ballCount, setBallCount, onStart, onReset, isRunning })
           <span>5,000</span>
           <span>10,000</span>
         </div>
-      </div>
-
-      <div className="spawn-buttons">
-        <button
-          className={`btn btn-primary spawn-btn ${isRunning ? 'paused' : ''}`}
-          onClick={handleStart}
-          disabled={isRunning}
-        >
-          {isRunning ? 'Running...' : 'Start Simulation'}
-        </button>
-        <button
-          className="btn btn-secondary spawn-btn"
-          onClick={handleReset}
-        >
-          Reset
-        </button>
       </div>
     </div>
   );

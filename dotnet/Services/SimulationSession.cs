@@ -15,6 +15,7 @@ public class SimulationSession : IDisposable
 
     public SimulationConfig Config { get; private set; } = new();
     public bool IsRunning { get; private set; }
+    private CancellationTokenSource? _streamingCts;
 
     public SimulationSession(SurfaceService surfaceService, ILogger<SimulationSession> logger)
     {
@@ -42,12 +43,22 @@ public class SimulationSession : IDisposable
 
     public void Start()
     {
+        _logger.LogInformation("Start() called on session {SessionId}", System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this));
         lock (_stateLock)
         {
-            if (IsRunning) return;
-            IsRunning = true;
+            // Wait for old task to finish before disposing (prevents ObjectDisposedException)
+            if (_simulationTask != null && !_simulationTask.IsCompleted)
+            {
+                _cancellationTokenSource?.Cancel();
+                Task.WaitAny(new[] { _simulationTask }, 2000);
+                _cancellationTokenSource?.Dispose();
+            }
+            
             _cancellationTokenSource = new CancellationTokenSource();
             var ct = _cancellationTokenSource.Token;
+            
+            IsRunning = true;
+            
             if (_balls.Length == 0 || _balls.All(b => !b.Active))
             {
                 _balls = SpawnBalls(Config.BallCount);
@@ -62,22 +73,17 @@ public class SimulationSession : IDisposable
         lock (_stateLock)
         {
             IsRunning = false;
-            _cancellationTokenSource?.Cancel();
-            _logger.LogInformation("Simulation paused");
+            _logger.LogInformation("Simulation paused (physics held, streaming stopped)");
         }
     }
 
     public void Resume()
     {
+        _logger.LogInformation("Simulation resumed");
         lock (_stateLock)
         {
-            if (IsRunning) return;
             IsRunning = true;
-            _cancellationTokenSource?.Cancel();
-            _cancellationTokenSource = new CancellationTokenSource();
-            var ct = _cancellationTokenSource.Token;
-            _simulationTask = Task.Run(() => SimulationLoop(ct), ct);
-            _logger.LogInformation("Simulation resumed");
+            _logger.LogInformation("Simulation loop resumed (balls preserved)");
         }
     }
 
@@ -85,9 +91,19 @@ public class SimulationSession : IDisposable
     {
         lock (_stateLock)
         {
-            IsRunning = false;
-            _cancellationTokenSource?.Cancel();
+            if (_simulationTask != null && !_simulationTask.IsCompleted)
+            {
+                _cancellationTokenSource?.Cancel();
+                Task.WaitAny(new[] { _simulationTask }, 2000);
+                _cancellationTokenSource?.Dispose();
+            }
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+            _simulationTask = null;
+            _streamingCts?.Cancel();
+            _streamingCts = null;
             _balls = Array.Empty<Ball>();
+            IsRunning = false;
             _logger.LogInformation("Simulation reset");
         }
     }
@@ -96,9 +112,19 @@ public class SimulationSession : IDisposable
     {
         lock (_stateLock)
         {
-            IsRunning = false;
-            _cancellationTokenSource?.Cancel();
+            if (_simulationTask != null && !_simulationTask.IsCompleted)
+            {
+                _cancellationTokenSource?.Cancel();
+                Task.WaitAny(new[] { _simulationTask }, 2000);
+                _cancellationTokenSource?.Dispose();
+            }
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+            _simulationTask = null;
+            _streamingCts?.Cancel();
+            _streamingCts = null;
             _balls = Array.Empty<Ball>();
+            IsRunning = false;
         }
     }
 
@@ -158,30 +184,27 @@ public class SimulationSession : IDisposable
 
     private async Task SimulationLoop(CancellationToken ct)
     {
-        while (!ct.IsCancellationRequested && IsRunning)
+        while (!ct.IsCancellationRequested)
         {
             try
             {
-                var gravity = Config.Gravity * 100;
-                var deltaTime = Config.DeltaTime;
-                var restitution = Config.Restitution;
-                var airResistance = Config.AirResistance;
-                Parallel.For(0, _balls.Length, i =>
+                // Only update physics if running (paused = skip physics, preserve state)
+                if (IsRunning)
                 {
-                    if (!_balls[i].Active) return;
-                    var ball = _balls[i];
-                    ball.Vy += gravity * deltaTime;
-                    ball.Vx *= (1 - airResistance);
-                    ball.Vy *= (1 - airResistance);
-                    ball.X += ball.Vx * deltaTime;
-                    ball.Y += ball.Vy * deltaTime;
-                    CheckSurfaceCollision(ref ball, restitution);
-                    if (ball.X < -50 || ball.X > _canvasWidth + 50 || ball.Y < -50 || ball.Y > _canvasHeight + 50)
+                    // Capture array reference to avoid race conditions
+                    var currentBalls = _balls;
+                    var surface = _surfaceService.Surface;
+                    
+                    // Use PhysicsEngine with sub-stepping and resting state detection
+                    var engine = new PhysicsEngine(Config, surface, _canvasWidth, _canvasHeight);
+                    var state = engine.Update(currentBalls);
+                    
+                    // Update balls array after physics processing completes
+                    lock (_stateLock)
                     {
-                        ball.Active = false;
+                        _balls = state.Balls;
                     }
-                    _balls[i] = ball;
-                });
+                }
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex) { _logger.LogError(ex, "Error in simulation loop"); break; }
@@ -189,40 +212,29 @@ public class SimulationSession : IDisposable
         }
     }
 
-    private void CheckSurfaceCollision(ref Ball ball, double restitution)
+    public CancellationTokenSource? GetOrCreateStreamingCts()
     {
-        var surface = _surfaceService.Surface;
-        if (surface.Count < 2) return;
-        for (int i = 0; i < surface.Count - 1; i++)
+        lock (_stateLock)
         {
-            var p1 = surface[i];
-            var p2 = surface[i + 1];
-            var dx = p2.X - p1.X;
-            var dy = p2.Y - p1.Y;
-            var lengthSq = dx * dx + dy * dy;
-            if (lengthSq == 0) continue;
-            var t = Math.Max(0, Math.Min(1, ((ball.X - p1.X) * dx + (ball.Y - p1.Y) * dy) / lengthSq));
-            var closestX = p1.X + t * dx;
-            var closestY = p1.Y + t * dy;
-            var distX = ball.X - closestX;
-            var distY = ball.Y - closestY;
-            var distance = Math.Sqrt(distX * distX + distY * distY);
-            if (distance < ball.Radius)
+            if (_streamingCts == null || _streamingCts.IsCancellationRequested)
             {
-                var normalX = distX / distance;
-                var normalY = distY / distance;
-                var dotProduct = ball.Vx * normalX + ball.Vy * normalY;
-                ball.Vx = (ball.Vx - 2 * dotProduct * normalX) * restitution;
-                ball.Vy = (ball.Vy - 2 * dotProduct * normalY) * restitution;
-                ball.X = closestX + normalX * (ball.Radius + 0.1);
-                ball.Y = closestY + normalY * (ball.Radius + 0.1);
+                _streamingCts = new CancellationTokenSource();
+                _logger.LogInformation("Created new streaming CTS for session {SessionId}", System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this));
             }
+            return _streamingCts;
+        }
+    }
+
+    public void CancelStreaming()
+    {
+        lock (_stateLock)
+        {
+            _streamingCts?.Cancel();
         }
     }
 
     public void Dispose()
     {
         Stop();
-        _cancellationTokenSource?.Dispose();
     }
 }

@@ -1,9 +1,17 @@
 import './SimulationControls.css';
 
-const SimulationControls = ({ isRunning, onPause, onResume, onReset }) => {
+const SimulationControls = ({ isRunning, isPaused, onPlay, onPause, onReset }) => {
   return (
     <div className="simulation-controls">
       <div className="controls-group">
+        <button
+          className={`control-btn ${!isRunning ? 'active' : ''}`}
+          onClick={onPlay}
+          disabled={isRunning}
+          title={isPaused ? 'Resume' : 'Play'}
+        >
+          {isPaused ? '▶ Resume' : '▶ Play'}
+        </button>
         <button
           className={`control-btn ${isRunning ? 'paused' : 'active'}`}
           onClick={onPause}
@@ -11,14 +19,6 @@ const SimulationControls = ({ isRunning, onPause, onResume, onReset }) => {
           title="Pause"
         >
           ⏸ Pause
-        </button>
-        <button
-          className={`control-btn ${!isRunning ? 'active' : ''}`}
-          onClick={onResume}
-          disabled={isRunning}
-          title="Resume"
-        >
-          ▶ Resume
         </button>
         <button
           className="control-btn reset"
@@ -29,8 +29,8 @@ const SimulationControls = ({ isRunning, onPause, onResume, onReset }) => {
         </button>
       </div>
       <div className="controls-info">
-        <span className={`status-indicator ${isRunning ? 'running' : 'stopped'}`}>
-          {isRunning ? '● Running' : '○ Stopped'}
+        <span className={`status-indicator ${isRunning ? 'running' : isPaused ? 'paused' : 'stopped'}`}>
+          {isRunning ? '● Running' : isPaused ? '◌ Paused' : '○ Stopped'}
         </span>
       </div>
     </div>
