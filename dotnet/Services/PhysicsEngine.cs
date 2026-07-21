@@ -8,6 +8,10 @@ public class PhysicsEngine
     private readonly List<SurfacePoint> _surface;
     private readonly int _canvasWidth;
     private readonly int _canvasHeight;
+    private readonly SpatialHashGrid _hashGrid;
+    
+    // Spatial hash grid cell size (matches ball diameter for efficient lookups)
+    private const int CellSize = 5;
     
     // Sub-stepping: split each frame into smaller steps to prevent tunneling
     // 16 sub-steps with velocity clamping prevents tunneling while maintaining performance
@@ -22,6 +26,9 @@ public class PhysicsEngine
         _surface = surface;
         _canvasWidth = canvasWidth;
         _canvasHeight = canvasHeight;
+        
+        // Pre-compute spatial hash grid for fast surface segment lookups
+        _hashGrid = new SpatialHashGrid(surface, CellSize);
     }
 
     public SimulationState Update(Ball[] balls)
@@ -83,10 +90,16 @@ public class PhysicsEngine
 
         bool collisionOccurred = false;
 
-        for (int i = 0; i < _surface.Count - 1; i++)
+        // Use spatial hash grid to only check segments near the ball
+        var ballMinX = ball.X - ball.Radius;
+        var ballMinY = ball.Y - ball.Radius;
+        var ballMaxX = ball.X + ball.Radius;
+        var ballMaxY = ball.Y + ball.Radius;
+
+        foreach (var segIndex in _hashGrid.GetSegmentsInRect(ballMinX, ballMinY, ballMaxX, ballMaxY, 0))
         {
-            var p1 = _surface[i];
-            var p2 = _surface[i + 1];
+            var p1 = _surface[segIndex];
+            var p2 = _surface[segIndex + 1];
 
             // Calculate distance from ball to line segment
             var dx = p2.X - p1.X;
