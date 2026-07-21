@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { HubConnectionBuilder, HttpTransportType, HubConnectionState } from '@microsoft/signalr';
-import SurfaceDrawer from './SurfaceDrawer';
 import SpawnControls from './SpawnControls';
-import SimulationCanvas from './SimulationCanvas';
 import SimulationControls from './SimulationControls';
+import UnifiedCanvas from './UnifiedCanvas';
 import './PhysicsSimulation.css';
 
 const PhysicsSimulation = () => {
-  const [surface, setSurface] = useState([]);
   const ballsRef = useRef([]);
   const mountedRef = useRef(false);
   const [ballCount, setBallCount] = useState(2000);
@@ -17,6 +15,16 @@ const PhysicsSimulation = () => {
   const [error, setError] = useState(null);
   const [activeBallCount, setActiveBallCount] = useState(0);
   const connectionRef = useRef(null);
+  
+  // Drawing state
+  const [drawPoints, setDrawPoints] = useState([]);
+  const [brushSize, setBrushSize] = useState(8);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [isCleared, setIsCleared] = useState(false);
+  const [surfaceType, setSurfaceType] = useState('v'); // 'v' or 'flat'
+  
+  // Simulation parameters
+  const [restitution, setRestitution] = useState(0.4);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -145,28 +153,52 @@ const PhysicsSimulation = () => {
     };
   }, []);
 
-  // Auto-select default surface on mount
-  useEffect(() => {
-    const defaultSurface = [
-      { x: 350, y: 350 },
-      { x: 600, y: 400 },
-      { x: 850, y: 350 }
-    ];
-    setSurface(defaultSurface);
-    console.log('[PhysicsSim] Auto-selected default surface');
-  }, []);
+  // Centered V-shape surface (1/4 off bottom, centered horizontally)
+  const defaultSurface = [
+    { x: 300, y: 350 },
+    { x: 600, y: 450 },
+    { x: 900, y: 350 }
+  ];
 
-  const handleSurfaceDrawn = (surfacePoints) => {
-    console.log('[PhysicsSim] Surface drawn:', surfacePoints.length, 'points');
-    setSurface(surfacePoints);
+  // Flat surface (centered horizontally, 1/4 off bottom)
+  const flatSurface = [
+    { x: 100, y: 450 },
+    { x: 1100, y: 450 }
+  ];
+
+  const handleClearDrawing = () => {
+    console.log('[PhysicsSim] Clearing drawing completely');
+    setDrawPoints([]);
+    setIsCleared(true);
   };
+
+  const handleUseDefaultSurface = () => {
+    console.log('[PhysicsSim] Using default V-surface');
+    setDrawPoints([]);
+    setIsCleared(false);
+    setSurfaceType('v');
+  };
+
+  const handleUseFlatSurface = () => {
+    console.log('[PhysicsSim] Using flat surface');
+    setDrawPoints([]);
+    setIsCleared(false);
+    setSurfaceType('flat');
+  };
+
+  // Reset cleared state when user starts drawing
+  useEffect(() => {
+    if (drawPoints.length > 0) {
+      setIsCleared(false);
+    }
+  }, [drawPoints]);
 
   const validateConfig = async (count) => {
     try {
       const response = await fetch('/api/simulation/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ballCount: count, gravity: 9.8, restitution: 0.7 })
+        body: JSON.stringify({ ballCount: count, gravity: 4.0, restitution })
       });
       const result = await response.json();
       if (!result.valid) {
@@ -182,15 +214,13 @@ const PhysicsSimulation = () => {
 
   const handlePlay = async () => {
     console.log('[PhysicsSim] handlePlay called, isPaused:', isPaused, 'ballCount:', ballCount);
-    console.log('[PhysicsSim] Surface points:', surface.length);
+    console.log('[PhysicsSim] Draw points:', drawPoints.length);
     console.log('[PhysicsSim] IsConnected:', isConnected);
     setError(null);
 
-    if (!surface || surface.length < 2) {
-      console.error('[PhysicsSim] No surface drawn');
-      setError('Please draw or select a surface first');
-      return;
-    }
+    // Use drawPoints if available and not cleared, otherwise use default surface
+    const currentSurface = (drawPoints.length > 0 && !isCleared) ? drawPoints : (isCleared ? [] : (surfaceType === 'flat' ? flatSurface : defaultSurface));
+    console.log('[PhysicsSim] Using surface with', currentSurface?.length, 'points, isCleared:', isCleared);
 
     const isValid = await validateConfig(ballCount);
     if (!isValid) return;
@@ -206,15 +236,15 @@ const PhysicsSimulation = () => {
         // Resume paused simulation (preserves ball positions)
         console.log('[PhysicsSim] Resuming simulation...');
         await connectionRef.current.invoke('ResumeSimulation', 
-          { ballCount: ballCount, gravity: 9.8, restitution: 0.7, airResistance: 0.01, deltaTime: 1.0 / 30.0 },
-          surface);
+          { ballCount: ballCount, gravity: 4.0, restitution, deltaTime: 1.0 / 30.0 },
+          currentSurface);
         console.log('[PhysicsSim] ResumeSimulation invoked successfully');
       } else {
         // Start fresh simulation
         console.log('[PhysicsSim] Starting new simulation...');
         await connectionRef.current.invoke('StartSimulation', 
-          { ballCount: ballCount, gravity: 9.8, restitution: 0.7, airResistance: 0.01, deltaTime: 1.0 / 30.0 },
-          surface);
+          { ballCount: ballCount, gravity: 4.0, restitution, deltaTime: 1.0 / 30.0 },
+          currentSurface);
         console.log('[PhysicsSim] StartSimulation invoked successfully');
       }
     } catch (err) {
@@ -297,16 +327,13 @@ const PhysicsSimulation = () => {
 
       <div className="simulation-content">
         <div className="simulation-left">
-          <div className="panel surface-panel">
-            <h2>1. Draw Your Surface</h2>
-            <SurfaceDrawer onSurfaceDrawn={handleSurfaceDrawn} />
-          </div>
-
           <div className="panel spawn-panel">
-            <h2>2. Set Ball Count</h2>
+            <h2>Set Ball Count</h2>
             <SpawnControls
               ballCount={ballCount}
               setBallCount={setBallCount}
+              restitution={restitution}
+              setRestitution={setRestitution}
             />
           </div>
         </div>
@@ -314,7 +341,7 @@ const PhysicsSimulation = () => {
         <div className="simulation-right">
           <div className="panel canvas-panel">
             <div className="canvas-header">
-              <h2>3. Simulation</h2>
+              <h2>Simulation</h2>
               <SimulationControls
                 isRunning={isRunning}
                 isPaused={isPaused}
@@ -323,14 +350,64 @@ const PhysicsSimulation = () => {
                 onReset={handleReset}
               />
             </div>
+            
+            {/* Canvas Controls */}
+            <div className="canvas-controls">
+              <span className="canvas-controls-label">Canvas Controls:</span>
+              
+              <button 
+                onClick={handleUseDefaultSurface} 
+                className="canvas-control-btn"
+                disabled={isRunning || isPaused}
+              >
+                Use Default Surface
+              </button>
+              
+              <button 
+                onClick={handleUseFlatSurface} 
+                className="canvas-control-btn"
+                disabled={isRunning || isPaused}
+              >
+                Flat Surface
+              </button>
+              
+              <button 
+                onClick={handleClearDrawing} 
+                className="canvas-control-btn btn-clear"
+                disabled={isRunning || isPaused}
+              >
+                Clear Drawing
+              </button>
+              
+              <label className="canvas-control-label">
+                Brush: {brushSize}px
+                <input
+                  type="range"
+                  min="4"
+                  max="20"
+                  value={brushSize}
+                  onChange={(e) => setBrushSize(Number(e.target.value))}
+                  className="canvas-control-slider"
+                  disabled={isRunning || isPaused}
+                />
+              </label>
+            </div>
+
             <div className="canvas-container">
               <div className="simulation-stats">
                 <span>Active: {activeBallCount} balls</span>
               </div>
-              <SimulationCanvas
+              <UnifiedCanvas
                 ballsRef={ballsRef}
-                surface={surface}
                 isRunning={isRunning}
+                isPaused={isPaused}
+                drawPoints={drawPoints}
+                setDrawPoints={setDrawPoints}
+                brushSize={brushSize}
+                isCleared={isCleared}
+                isDrawing={isDrawing}
+                setIsDrawing={setIsDrawing}
+                surfaceType={surfaceType}
               />
             </div>
           </div>

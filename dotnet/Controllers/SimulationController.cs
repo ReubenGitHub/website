@@ -29,7 +29,6 @@ public class SimulationController : ControllerBase
             BallCount = 2000,
             Gravity = 9.8,
             Restitution = 0.7,
-            AirResistance = 0.01,
             DeltaTime = 1.0 / 30.0
         };
         return Ok(config);

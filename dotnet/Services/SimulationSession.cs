@@ -179,7 +179,7 @@ public class SimulationSession : IDisposable
         var r = (byte)(normalizedX * 255);
         var g = (byte)(255 - Math.Abs(normalizedX - 0.5) * 2 * 255);
         var b = (byte)((1 - normalizedX) * 255);
-        return new Ball(x, y, (Random.Shared.NextDouble() - 0.5) * 100, 0, 2.5, r, g, b);
+        return new Ball(x, y, 0, 0, 2.5, r, g, b);
     }
 
     private async Task SimulationLoop(CancellationToken ct)
@@ -195,7 +195,7 @@ public class SimulationSession : IDisposable
                     var currentBalls = _balls;
                     var surface = _surfaceService.Surface;
                     
-                    // Use PhysicsEngine with sub-stepping and resting state detection
+                    // Use PhysicsEngine with sub-stepping
                     var engine = new PhysicsEngine(Config, surface, _canvasWidth, _canvasHeight);
                     var state = engine.Update(currentBalls);
                     

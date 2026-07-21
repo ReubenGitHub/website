@@ -23,12 +23,6 @@ public class SimulationConfigTests
     }
 
     [Fact]
-    public void DefaultAirResistance_Is0_01()
-    {
-        Assert.Equal(0.03, new SimulationConfig().AirResistance);
-    }
-
-    [Fact]
     public void DefaultDeltaTime_Is1_30()
     {
         Assert.Equal(1.0 / 30.0, new SimulationConfig().DeltaTime);
@@ -42,13 +36,11 @@ public class SimulationConfigTests
             BallCount = 5000,
             Gravity = 15.0,
             Restitution = 0.9,
-            AirResistance = 0.05,
             DeltaTime = 1.0 / 60.0
         };
         Assert.Equal(5000, config.BallCount);
         Assert.Equal(15.0, config.Gravity);
         Assert.Equal(0.9, config.Restitution);
-        Assert.Equal(0.05, config.AirResistance);
         Assert.Equal(1.0 / 60.0, config.DeltaTime);
     }
 

@@ -12,14 +12,14 @@ public class SurfaceServiceTests
         var points = new List<SurfacePoint>
         {
             new SurfacePoint(0, 0),
-            new SurfacePoint(100, 100)
+            new SurfacePoint(2, 2)  // Close points to avoid densification changing count
         };
 
         service.SetSurface(points);
 
         Assert.Equal(2, service.Surface.Count);
         Assert.Equal(0, service.Surface[0].X);
-        Assert.Equal(100, service.Surface[1].X);
+        Assert.Equal(2, service.Surface[1].X);
     }
 
     [Fact]
@@ -38,8 +38,8 @@ public class SurfaceServiceTests
         service.SetSurface(new List<SurfacePoint>
         {
             new SurfacePoint(10, 10),
-            new SurfacePoint(20, 20),
-            new SurfacePoint(30, 30)
+            new SurfacePoint(12, 12),  // Close points to avoid densification
+            new SurfacePoint(14, 14)
         });
         Assert.Equal(3, service.Surface.Count);
     }

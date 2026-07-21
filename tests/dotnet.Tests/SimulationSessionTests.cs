@@ -21,7 +21,6 @@ public class SimulationSessionTests
         Assert.Equal(2000, _session.Config.BallCount);
         Assert.Equal(4.0, _session.Config.Gravity);
         Assert.Equal(0.4, _session.Config.Restitution);
-        Assert.Equal(0.03, _session.Config.AirResistance);
         Assert.Equal(1.0 / 30.0, _session.Config.DeltaTime);
     }
 
@@ -46,14 +45,12 @@ public class SimulationSessionTests
             BallCount = 5000,
             Gravity = 15.0,
             Restitution = 0.9,
-            AirResistance = 0.05,
             DeltaTime = 1.0 / 60.0
         };
         _session.SetConfig(config);
         Assert.Equal(5000, _session.Config.BallCount);
         Assert.Equal(15.0, _session.Config.Gravity);
         Assert.Equal(0.9, _session.Config.Restitution);
-        Assert.Equal(0.05, _session.Config.AirResistance);
         Assert.Equal(1.0 / 60.0, _session.Config.DeltaTime);
     }
 
@@ -63,8 +60,8 @@ public class SimulationSessionTests
         var points = new List<SurfacePoint>
         {
             new SurfacePoint(0, 0),
-            new SurfacePoint(100, 100),
-            new SurfacePoint(200, 0)
+            new SurfacePoint(2, 2),   // Close points to avoid densification
+            new SurfacePoint(4, 0)
         };
         _session.SetSurface(points);
         Assert.Equal(3, _surfaceService.Surface.Count);

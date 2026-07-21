@@ -260,6 +260,9 @@ public struct Ball
 5. **Edge balls may fall through** — ~38/2000 balls near surface edges fall through (1.9%), all others (98.1%) stay on surface
 
 ### Recent Fixes
+- ✅ **Restitution parameter now configurable** — added slider (0-1, step 0.01) to SpawnControls. Backend default is 0.4. Frontend was previously sending hardcoded 0.7 (mismatch). Now uses user-selected value passed to backend in StartSimulation/ResumeSimulation.
+- ✅ **Clear Drawing + simulation surface bug** — clicking "Clear Drawing" sets isCleared=true, but drawing new points didn't reset it, causing handlePlay to pass null/empty surface to backend (balls fell through). Added useEffect to auto-reset isCleared when drawPoints.length > 0.
+- ✅ **Surface invisible during simulation** — UnifiedCanvas drew surfaceRef.current which was empty after removing surface prop. Now draws drawPoints or default surface during simulation mode.
 - ✅ **Animation loop not starting** — added `isRunning` to useEffect deps in SimulationCanvas
 - ✅ **SignalR connection fails after HMR** — added retry mechanism with exponential backoff
 - ✅ **Canvas aspect ratio distortion** — replaced fixed `height: 600px` with `aspect-ratio: 2/1`
@@ -280,13 +283,15 @@ public struct Ball
 1. ✅ Test StartSimulation — balls spawn, stream, and animate (VERIFIED)
 2. ✅ Test Pause/Resume/Reset controls (VERIFIED — resume preserves ball state, reconnection works)
 3. ✅ UI streamlined — single Play button (section 3), single Reset button (section 3), Remove button removed from section 2
-4. Remove debug rendering (green ball + timestamp) from SimulationCanvas
 5. Add session cleanup middleware (timeout-based)
 6. Performance optimization (ArrayPool, Span<T>)
 7. Visual polish (trails, glow effects, responsive design)
 8. ✅ Unit tests added (42 tests, all passing) — SimulationSession, SurfaceService, Ball, SimulationConfig
 9. ✅ **All 42 tests passing** — updated test assertions to match new default physics values (gravity=4.0, restitution=0.4, airResistance=0.03) and corrected default surface geometry (X=100 instead of X=400)
-10. **Unify canvases** — merge SurfaceDrawer and SimulationCanvas into a single canvas. Drawing mode active only when simulation is stopped/paused. SimulationCanvas renders surface + balls, SurfaceDrawer renders grid + drawing strokes. HTML overlay controls remain (brush size, Default Surface, Clear, Draw Surface buttons). Canvas size: 1200x600 (SimulationCanvas dimensions).
+10. ✅ **Unified canvas implemented** — merged SurfaceDrawer and SimulationCanvas into single UnifiedCanvas component. Drawing mode active ONLY when simulation stopped (not paused). When paused, balls remain visible (simulation mode). Canvas shows default V-shape or custom drawn surface when stopped. HTML overlay controls (dropdown, brush slider, clear, use surface) above canvas. Canvas size: 1200x600.
+11. ✅ **Canvas UX simplified** — removed default/custom mode dropdown. Canvas always starts with default V-shape visible, user can immediately draw without switching modes. Added "Use Default Surface" button (clears drawing, shows default) and "Clear Drawing" button (clears canvas completely). Removed "Use Surface" button — surface is auto-used when "Play" is clicked (drawPoints if available, otherwise defaultSurface). Coordinate alignment fixed (scaleX/scaleY to account for CSS scaling). Simulation mode now correctly draws surface (drawPoints or default) instead of empty surfaceRef. isCleared state auto-resets when user starts drawing.
+12. ✅ **Clear Drawing + simulation surface bug fixed** — clicking "Clear Drawing" sets isCleared=true, but drawing new points didn't reset it, causing handlePlay to pass null surface to backend. Added useEffect to reset isCleared when drawPoints.length > 0. Surface now correctly sent to backend after clearing and redrawing.
+13. ✅ **Restitution (bounciness) parameter added** — backend default is 0.4. Added restitution slider (0-1, step 0.01) to SpawnControls UI. Value passed to backend in StartSimulation and ResumeSimulation hub calls. Can be changed at any time — updates apply on next play/resume.
 
 ---
 
@@ -395,15 +400,19 @@ public struct Ball
 - [ ] Optimize with `Span<T>`, `ArrayPool` (future)
 - [ ] Benchmark single vs parallel performance (future)
 
-### Phase 3: Frontend — Drawing ✅ COMPLETE
-- [x] Surface drawer component (`SurfaceDrawer.jsx`)
-- [x] Canvas rendering component (`SimulationCanvas.jsx`)
+### Phase 3: Frontend — Drawing & Canvas ✅ COMPLETE
+- [x] Unified canvas component (`UnifiedCanvas.jsx`) — merges SurfaceDrawer + SimulationCanvas
+- [x] Drawing mode when simulation stopped/paused — shows default V-shape or custom drawn surface
+- [x] Simulation mode when running — shows surface + animated balls
+- [x] Canvas controls UI — "Use Default Surface" button, "Clear Drawing" button, brush slider
+- [x] No mode switching needed — canvas starts with default surface, user can draw immediately
+- [x] Auto-use surface on play — whatever is on canvas when "Play" clicked is used (drawPoints or defaultSurface)
 - [x] Spawn controls UI (`SpawnControls.jsx`)
 - [x] Simulation controls UI (`SimulationControls.jsx`)
 
 ### Phase 4: Frontend — Simulation ✅ COMPLETE
 - [x] SignalR connection management (WebSocket transport, connection works)
-- [x] Real-time ball rendering from streamed data (VERIFIED working)
+- [x] Real-time ball rendering from streamed data (VERIFIED working — 1958/2000 balls visible)
 - [x] Unified Play/Pause/Reset controls (Play handles both start and resume)
 - [x] Ball data stored in refs (not state) — no re-render overhead
 - [x] Canvas renders continuously with requestAnimationFrame

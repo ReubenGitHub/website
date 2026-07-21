@@ -6,6 +6,7 @@ const SurfaceDrawer = ({ onSurfaceDrawn, defaultSurface }) => {
   const [brushSize, setBrushSize] = useState(8);
   const [points, setPoints] = useState([]);
   const [useDefault, setUseDefault] = useState(true);
+  const [surfaceType, setSurfaceType] = useState('v'); // 'v' or 'flat'
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -56,27 +57,46 @@ const SurfaceDrawer = ({ onSurfaceDrawn, defaultSurface }) => {
 
   const drawDefaultSurface = (ctx, canvas) => {
     const centerX = canvas.width / 2;
-    const bottomY = canvas.height - 50;
+    const surfaceY = canvas.height - 50;
 
     ctx.strokeStyle = 'rgba(100, 200, 255, 0.8)';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    ctx.beginPath();
-    ctx.moveTo(centerX - 250, bottomY);
-    ctx.lineTo(centerX, bottomY + 50);
-    ctx.lineTo(centerX + 250, bottomY);
-    ctx.stroke();
+    if (surfaceType === 'flat') {
+      // Flat surface centered horizontally
+      ctx.beginPath();
+      ctx.moveTo(centerX - 300, surfaceY);
+      ctx.lineTo(centerX + 300, surfaceY);
+      ctx.stroke();
 
-    // Fill surface area
-    ctx.fillStyle = 'rgba(100, 200, 255, 0.05)';
-    ctx.beginPath();
-    ctx.moveTo(centerX - 250, bottomY);
-    ctx.lineTo(centerX, bottomY + 50);
-    ctx.lineTo(centerX + 250, bottomY);
-    ctx.closePath();
-    ctx.fill();
+      // Fill surface area
+      ctx.fillStyle = 'rgba(100, 200, 255, 0.05)';
+      ctx.beginPath();
+      ctx.moveTo(centerX - 300, surfaceY);
+      ctx.lineTo(centerX + 300, surfaceY);
+      ctx.lineTo(centerX + 300, canvas.height);
+      ctx.lineTo(centerX - 300, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      // V-shape surface
+      ctx.beginPath();
+      ctx.moveTo(centerX - 250, surfaceY);
+      ctx.lineTo(centerX, surfaceY + 50);
+      ctx.lineTo(centerX + 250, surfaceY);
+      ctx.stroke();
+
+      // Fill surface area
+      ctx.fillStyle = 'rgba(100, 200, 255, 0.05)';
+      ctx.beginPath();
+      ctx.moveTo(centerX - 250, surfaceY);
+      ctx.lineTo(centerX, surfaceY + 50);
+      ctx.lineTo(centerX + 250, surfaceY);
+      ctx.closePath();
+      ctx.fill();
+    }
   };
 
   const drawCustomSurface = (ctx) => {
@@ -144,6 +164,13 @@ const SurfaceDrawer = ({ onSurfaceDrawn, defaultSurface }) => {
   const handleUseDefault = () => {
     setUseDefault(true);
     setPoints([]);
+    setSurfaceType('v');
+  };
+
+  const handleUseFlat = () => {
+    setUseDefault(true);
+    setPoints([]);
+    setSurfaceType('flat');
   };
 
   const handleDrawMode = () => {
@@ -155,12 +182,21 @@ const SurfaceDrawer = ({ onSurfaceDrawn, defaultSurface }) => {
       // Use default surface
       const canvas = canvasRef.current;
       const centerX = canvas.width / 2;
-      const bottomY = canvas.height - 50;
-      const surfacePoints = [
-        { x: centerX - 250, y: bottomY },
-        { x: centerX, y: bottomY + 50 },
-        { x: centerX + 250, y: bottomY }
-      ];
+      const surfaceY = canvas.height - 50;
+      
+      let surfacePoints;
+      if (surfaceType === 'flat') {
+        surfacePoints = [
+          { x: centerX - 300, y: surfaceY },
+          { x: centerX + 300, y: surfaceY }
+        ];
+      } else {
+        surfacePoints = [
+          { x: centerX - 250, y: surfaceY },
+          { x: centerX, y: surfaceY + 50 },
+          { x: centerX + 250, y: surfaceY }
+        ];
+      }
       onSurfaceDrawn(surfacePoints);
     } else if (points.length >= 2) {
       onSurfaceDrawn(points);
@@ -183,10 +219,16 @@ const SurfaceDrawer = ({ onSurfaceDrawn, defaultSurface }) => {
         </div>
         <div className="control-buttons">
           <button
-            className={`btn ${useDefault ? 'active' : ''}`}
+            className={`btn ${useDefault && surfaceType === 'v' ? 'active' : ''}`}
             onClick={handleUseDefault}
           >
-            Default Surface
+            V-Surface
+          </button>
+          <button
+            className={`btn ${useDefault && surfaceType === 'flat' ? 'active' : ''}`}
+            onClick={handleUseFlat}
+          >
+            Flat Surface
           </button>
           <button
             className={`btn ${!useDefault ? 'active' : ''}`}
@@ -212,7 +254,9 @@ const SurfaceDrawer = ({ onSurfaceDrawn, defaultSurface }) => {
       />
       <p className="drawer-hint">
         {useDefault
-          ? 'Using default right-angle corner surface (45° up-left and up-right)'
+          ? (surfaceType === 'flat' 
+            ? 'Using flat horizontal surface'
+            : 'Using default V-shape surface')
           : points.length > 0
             ? `Drawn ${points.length} points. Click "Use Surface" when ready.`
             : 'Click and drag to draw your surface'}
