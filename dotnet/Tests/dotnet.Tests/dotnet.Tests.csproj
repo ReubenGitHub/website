@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../dotnet/dotnet-api.csproj" />
+    <ProjectReference Include="../../dotnet-api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,5 +1,5 @@
 # Benchmark artifacts
-tests/dotnet.Benchmarks/BenchmarkDotNet.Artifacts/
+dotnet/Tests/dotnet.Benchmarks/BenchmarkDotNet.Artifacts/
 
 # Build artifacts
 bin/
