@@ -12,6 +12,7 @@ public class SimulationSession : IDisposable
     private Ball[] _balls = Array.Empty<Ball>();
     private int _canvasWidth = 1200;
     private int _canvasHeight = 600;
+    private bool _isResetting = false;
 
     public SimulationConfig Config { get; private set; } = new();
     public bool IsRunning { get; private set; }
@@ -46,11 +47,13 @@ public class SimulationSession : IDisposable
         _logger.LogInformation("Start() called on session {SessionId}", System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this));
         lock (_stateLock)
         {
+            _isResetting = false;
             // Wait for old task to finish before disposing (prevents ObjectDisposedException)
             if (_simulationTask != null && !_simulationTask.IsCompleted)
             {
                 _cancellationTokenSource?.Cancel();
-                Task.WaitAny(new[] { _simulationTask }, 2000);
+                try { _simulationTask.Wait(TimeSpan.FromSeconds(2)); }
+                catch (AggregateException) { /* Task was cancelled, ignore */ }
                 _cancellationTokenSource?.Dispose();
             }
             
@@ -91,10 +94,12 @@ public class SimulationSession : IDisposable
     {
         lock (_stateLock)
         {
+            _isResetting = true;
             if (_simulationTask != null && !_simulationTask.IsCompleted)
             {
                 _cancellationTokenSource?.Cancel();
-                Task.WaitAny(new[] { _simulationTask }, 2000);
+                try { _simulationTask.Wait(TimeSpan.FromSeconds(2)); }
+                catch (AggregateException) { /* Task was cancelled, ignore */ }
                 _cancellationTokenSource?.Dispose();
             }
             _cancellationTokenSource?.Dispose();
@@ -112,10 +117,12 @@ public class SimulationSession : IDisposable
     {
         lock (_stateLock)
         {
+            _isResetting = true;
             if (_simulationTask != null && !_simulationTask.IsCompleted)
             {
                 _cancellationTokenSource?.Cancel();
-                Task.WaitAny(new[] { _simulationTask }, 2000);
+                try { _simulationTask.Wait(TimeSpan.FromSeconds(2)); }
+                catch (AggregateException) { /* Task was cancelled, ignore */ }
                 _cancellationTokenSource?.Dispose();
             }
             _cancellationTokenSource?.Dispose();
@@ -125,6 +132,7 @@ public class SimulationSession : IDisposable
             _streamingCts = null;
             _balls = Array.Empty<Ball>();
             IsRunning = false;
+            _isResetting = false;
         }
     }
 
@@ -189,7 +197,7 @@ public class SimulationSession : IDisposable
             try
             {
                 // Only update physics if running (paused = skip physics, preserve state)
-                if (IsRunning)
+                if (IsRunning && !_isResetting)
                 {
                     // Capture array reference to avoid race conditions
                     var currentBalls = _balls;
@@ -202,6 +210,7 @@ public class SimulationSession : IDisposable
                     // Update balls array after physics processing completes
                     lock (_stateLock)
                     {
+                        if (_isResetting) break;
                         _balls = state.Balls;
                     }
                 }
