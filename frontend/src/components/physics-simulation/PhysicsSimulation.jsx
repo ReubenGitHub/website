@@ -426,9 +426,8 @@ const PhysicsSimulation = () => {
             disabled={isRunning}
             title="Use Default Spawn Area"
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="9" cy="9" r="3"/>
-              <circle cx="9" cy="9" r="6" strokeDasharray="2 2"/>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
+              <rect x="3" y="5" width="12" height="8" rx="1" fill="currentColor" stroke="none"/>
             </svg>
           </button>
           <button 

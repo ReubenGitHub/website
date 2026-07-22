@@ -37,6 +37,7 @@ const UnifiedCanvas = ({
   const isSurfaceDrawingEnabledRef = useRef(isSurfaceDrawingEnabled);
   const isBallPaintingEnabledRef = useRef(isBallPaintingEnabled);
   const isBallPaintingRef = useRef(false); // Track if mouse is pressed during ball painting
+  const paintingBoundsRef = useRef({ minX: 0, maxX: 0 }); // Bounding box during active painting
   const currentStrokeRef = useRef([]); // Batched points during active stroke
   const connectorEndRef = useRef(null); // End point of connector line (from old surface to new stroke start)
 
@@ -153,7 +154,13 @@ const UnifiedCanvas = ({
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
     ctx.fill();
-    console.log('[Canvas] paintSpawnArea: painted at', pos, 'radius:', radius);
+    
+    // Update painting bounds live (account for brush radius)
+    const bounds = paintingBoundsRef.current;
+    if (pos.x - radius < bounds.minX) bounds.minX = pos.x - radius;
+    if (pos.x + radius > bounds.maxX) bounds.maxX = pos.x + radius;
+    
+    console.log('[Canvas] paintSpawnArea: painted at', pos, 'radius:', radius, 'bounds:', bounds);
   }, []);
 
   // Generate default spawn area rectangle pixels (20% width/height, centered, 25% from top)
@@ -198,7 +205,7 @@ const UnifiedCanvas = ({
     return pixels;
   }, []);
 
-  // Draw spawn mask overlay on main canvas
+  // Draw spawn mask overlay on main canvas with rainbow gradient
   const drawSpawnMaskOverlay = useCallback((ctx, maskCanvas) => {
     if (!maskCanvas) return;
     
@@ -206,14 +213,49 @@ const UnifiedCanvas = ({
     const currentSpawnPixels = spawnPixelsRef.current;
     const hasSpawnArea = currentSpawnPixels !== null && currentSpawnPixels.length > 0;
     
-    // For custom painted areas OR active painting, draw from mask canvas
+    // Save context state
+    ctx.save();
+    
     if (hasSpawnArea || isBallPaintingRef.current) {
-      ctx.globalAlpha = 0.15;
-      ctx.fillStyle = 'rgba(100, 150, 255, 1)';
+      // Custom painted area: draw rainbow gradient using mask as stencil
+      ctx.save();
+      
+      // Draw the mask canvas first (white pixels = painted areas)
       ctx.drawImage(maskCanvas, 0, 0);
-      ctx.globalAlpha = 1.0;
+      
+      // Get bounding box: use live painting bounds during painting, otherwise from spawnPixels
+      let minX, maxX;
+      if (isBallPaintingRef.current) {
+        minX = paintingBoundsRef.current.minX;
+        maxX = paintingBoundsRef.current.maxX;
+      } else {
+        // Calculate from spawnPixels (fast, no canvas scanning)
+        minX = maskCanvas.width;
+        maxX = 0;
+        for (let i = 0; i < currentSpawnPixels.length; i++) {
+          if (currentSpawnPixels[i].x < minX) minX = currentSpawnPixels[i].x;
+          if (currentSpawnPixels[i].x > maxX) maxX = currentSpawnPixels[i].x;
+        }
+      }
+      
+      // Now draw gradient with source-in - keeps only pixels overlapping with mask
+      // Gradient spans from left edge to right edge of painted area
+      const gradient = ctx.createLinearGradient(minX, 0, maxX, 0);
+      gradient.addColorStop(0.00, 'rgba(255, 0, 0, 1)');
+      gradient.addColorStop(0.17, 'rgba(255, 127, 0, 1)');
+      gradient.addColorStop(0.33, 'rgba(255, 255, 0, 1)');
+      gradient.addColorStop(0.50, 'rgba(0, 255, 0, 1)');
+      gradient.addColorStop(0.67, 'rgba(0, 0, 255, 1)');
+      gradient.addColorStop(0.83, 'rgba(75, 0, 130, 1)');
+      gradient.addColorStop(1.00, 'rgba(148, 0, 211, 1)');
+      ctx.fillStyle = gradient;
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.globalAlpha = 0.2;
+      ctx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+      
+      ctx.restore();
     } else if (currentSpawnPixels === null) {
-      // Default spawn area: draw rectangle overlay
+      // Default spawn area: draw rainbow gradient rectangle
       const width = maskCanvas.width;
       const height = maskCanvas.height;
       const rectWidth = width * 0.2;
@@ -221,11 +263,21 @@ const UnifiedCanvas = ({
       const rectX = (width - rectWidth) / 2;
       const rectY = height * 0.25;
       
-      ctx.globalAlpha = 0.15;
-      ctx.fillStyle = 'rgba(100, 150, 255, 1)';
+      ctx.globalAlpha = 0.2;
+      const gradient = ctx.createLinearGradient(rectX, 0, rectX + rectWidth, 0);
+      gradient.addColorStop(0.00, 'rgba(255, 0, 0, 1)');
+      gradient.addColorStop(0.17, 'rgba(255, 127, 0, 1)');
+      gradient.addColorStop(0.33, 'rgba(255, 255, 0, 1)');
+      gradient.addColorStop(0.50, 'rgba(0, 255, 0, 1)');
+      gradient.addColorStop(0.67, 'rgba(0, 0, 255, 1)');
+      gradient.addColorStop(0.83, 'rgba(75, 0, 130, 1)');
+      gradient.addColorStop(1.00, 'rgba(148, 0, 211, 1)');
+      ctx.fillStyle = gradient;
       ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
-      ctx.globalAlpha = 1.0;
     }
+    
+    ctx.globalAlpha = 1.0;
+    ctx.restore();
   }, []);
 
   const drawCustomSurface = useCallback((ctx, points) => {
@@ -356,14 +408,16 @@ const UnifiedCanvas = ({
     render(drawPoints);
   }, [drawPoints, brushSize, isCleared, surfaceType, render]);
 
-  // Clear spawn mask canvas when spawnPixels is cleared
+  // Clear spawn mask canvas when spawnPixels is null (default) or [] (cleared)
   useEffect(() => {
-    if (spawnPixels === null || spawnPixels.length > 0) return;
+    if (spawnPixels && spawnPixels.length > 0) return;
     const maskCanvas = spawnMaskCanvasRef.current;
     if (!maskCanvas) return;
     const ctx = maskCanvas.getContext('2d');
     ctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-    console.log('[Canvas] useEffect[spawnPixels]: cleared spawn mask canvas');
+    // Reset painting bounds when clearing
+    paintingBoundsRef.current = { minX: 0, maxX: 0 };
+    console.log('[Canvas] useEffect[spawnPixels]: cleared spawn mask canvas (spawnPixels:', spawnPixels === null ? 'null' : '[]', ')');
   }, [spawnPixels]);
 
   // Re-render when spawnPixels changes (to update spawn area overlay)
@@ -423,6 +477,18 @@ const UnifiedCanvas = ({
     if (isBallPaintingEnabledRef.current) {
       console.log('[Canvas] mousedown: ball painting mode');
       isBallPaintingRef.current = true;
+      // Initialize or expand bounds based on whether we have existing painted pixels
+      const currentSpawnPixels = spawnPixelsRef.current;
+      const hasExistingPixels = currentSpawnPixels && currentSpawnPixels.length > 0;
+      if (!hasExistingPixels) {
+        // Fresh start after clear: initialize bounds to start position
+        paintingBoundsRef.current = { minX: pos.x, maxX: pos.x };
+      } else {
+        // Expand bounds to include new start point (preserve total painted width)
+        const bounds = paintingBoundsRef.current;
+        if (pos.x < bounds.minX) bounds.minX = pos.x;
+        if (pos.x > bounds.maxX) bounds.maxX = pos.x;
+      }
       paintSpawnArea(pos);
       render();
       return;
