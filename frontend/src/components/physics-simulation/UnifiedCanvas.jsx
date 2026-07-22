@@ -14,11 +14,16 @@ const UnifiedCanvas = ({
   setDrawPoints,
   surfaceType,
   isSurfaceDrawingEnabled,
+  isBallPaintingEnabled,
+  spawnPixels,
+  setSpawnPixels,
   defaultSurface,
   flatSurface
 }) => {
   const canvasRef = useRef(null);
   const animationFrameRef = useRef(null);
+  const spawnMaskCanvasRef = useRef(null); // Offscreen canvas for spawn area painting
+  const spawnPixelsRef = useRef(null); // Ref to current spawn pixels for render access (null = default, [] = cleared, array = custom)
   const surfaceRef = useRef([]);
   const defaultSurfaceRef = useRef(defaultSurface || []);
   const flatSurfaceRef = useRef(flatSurface || []);
@@ -30,6 +35,8 @@ const UnifiedCanvas = ({
   const isDrawingRef = useRef(isDrawing);
   const surfaceTypeRef = useRef(surfaceType);
   const isSurfaceDrawingEnabledRef = useRef(isSurfaceDrawingEnabled);
+  const isBallPaintingEnabledRef = useRef(isBallPaintingEnabled);
+  const isBallPaintingRef = useRef(false); // Track if mouse is pressed during ball painting
   const currentStrokeRef = useRef([]); // Batched points during active stroke
   const connectorEndRef = useRef(null); // End point of connector line (from old surface to new stroke start)
 
@@ -44,6 +51,8 @@ const UnifiedCanvas = ({
   useEffect(() => { isDrawingRef.current = isDrawing; }, [isDrawing]);
   useEffect(() => { surfaceTypeRef.current = surfaceType; }, [surfaceType]);
   useEffect(() => { isSurfaceDrawingEnabledRef.current = isSurfaceDrawingEnabled; }, [isSurfaceDrawingEnabled]);
+  useEffect(() => { isBallPaintingEnabledRef.current = isBallPaintingEnabled; }, [isBallPaintingEnabled]);
+  useEffect(() => { spawnPixelsRef.current = spawnPixels; }, [spawnPixels]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -128,8 +137,95 @@ const UnifiedCanvas = ({
     ctx.lineJoin = 'round';
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
     ctx.stroke();
+  }, []);
+
+  // Draw on spawn mask canvas (offscreen)
+  const paintSpawnArea = useCallback((pos) => {
+    const maskCanvas = spawnMaskCanvasRef.current;
+    if (!maskCanvas) return;
+    const ctx = maskCanvas.getContext('2d');
+    const radius = brushSizeRef.current;
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    console.log('[Canvas] paintSpawnArea: painted at', pos, 'radius:', radius);
+  }, []);
+
+  // Generate default spawn area rectangle pixels (20% width/height, centered, 25% from top)
+  const getDefaultSpawnPixels = useCallback(() => {
+    const maskCanvas = spawnMaskCanvasRef.current;
+    if (!maskCanvas) return [];
+    const width = maskCanvas.width;
+    const height = maskCanvas.height;
+    const rectWidth = width * 0.2;
+    const rectHeight = height * 0.2;
+    const rectX = (width - rectWidth) / 2;
+    const rectY = height * 0.25;
+    const pixels = [];
+    const step = 4;
+    for (let y = rectY; y < rectY + rectHeight; y += step) {
+      for (let x = rectX; x < rectX + rectWidth; x += step) {
+        pixels.push({ x: Math.round(x), y: Math.round(y) });
+      }
+    }
+    console.log('[Canvas] getDefaultSpawnPixels: generated', pixels.length, 'pixels for default rectangle');
+    return pixels;
+  }, []);
+
+  // Extract painted pixel coordinates from spawn mask
+  const extractSpawnPixels = useCallback(() => {
+    const maskCanvas = spawnMaskCanvasRef.current;
+    if (!maskCanvas) return [];
+    const ctx = maskCanvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+    const pixels = [];
+    // Sample every 4th pixel for performance
+    const step = 4;
+    for (let y = 0; y < maskCanvas.height; y += step) {
+      for (let x = 0; x < maskCanvas.width; x += step) {
+        const index = (y * maskCanvas.width + x) * 4;
+        if (imageData.data[index] > 128) { // White pixel = painted
+          pixels.push({ x, y });
+        }
+      }
+    }
+    console.log('[Canvas] extractSpawnPixels: found', pixels.length, 'painted pixels');
+    return pixels;
+  }, []);
+
+  // Draw spawn mask overlay on main canvas
+  const drawSpawnMaskOverlay = useCallback((ctx, maskCanvas) => {
+    if (!maskCanvas) return;
+    
+    // Check if we have spawnPixels (null = default, [] = cleared, array = custom)
+    const currentSpawnPixels = spawnPixelsRef.current;
+    const hasSpawnArea = currentSpawnPixels !== null && currentSpawnPixels.length > 0;
+    
+    // For custom painted areas OR active painting, draw from mask canvas
+    if (hasSpawnArea || isBallPaintingRef.current) {
+      ctx.globalAlpha = 0.15;
+      ctx.fillStyle = 'rgba(100, 150, 255, 1)';
+      ctx.drawImage(maskCanvas, 0, 0);
+      ctx.globalAlpha = 1.0;
+    } else if (currentSpawnPixels === null) {
+      // Default spawn area: draw rectangle overlay
+      const width = maskCanvas.width;
+      const height = maskCanvas.height;
+      const rectWidth = width * 0.2;
+      const rectHeight = height * 0.2;
+      const rectX = (width - rectWidth) / 2;
+      const rectY = height * 0.25;
+      
+      ctx.globalAlpha = 0.15;
+      ctx.fillStyle = 'rgba(100, 150, 255, 1)';
+      ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+      ctx.globalAlpha = 1.0;
+    }
   }, []);
 
   const drawCustomSurface = useCallback((ctx, points) => {
@@ -192,6 +288,9 @@ const UnifiedCanvas = ({
     const height = canvas.height;
     ctx.clearRect(0, 0, width, height);
     drawGrid(ctx, width, height);
+    
+    // Draw spawn mask overlay (bottom layer)
+    drawSpawnMaskOverlay(ctx, spawnMaskCanvasRef.current);
 
     // In drawing mode (not running, not paused): show default or custom surface overlay
     if (!runningRef.current && !pausedRef.current) {
@@ -257,6 +356,22 @@ const UnifiedCanvas = ({
     render(drawPoints);
   }, [drawPoints, brushSize, isCleared, surfaceType, render]);
 
+  // Clear spawn mask canvas when spawnPixels is cleared
+  useEffect(() => {
+    if (spawnPixels === null || spawnPixels.length > 0) return;
+    const maskCanvas = spawnMaskCanvasRef.current;
+    if (!maskCanvas) return;
+    const ctx = maskCanvas.getContext('2d');
+    ctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+    console.log('[Canvas] useEffect[spawnPixels]: cleared spawn mask canvas');
+  }, [spawnPixels]);
+
+  // Re-render when spawnPixels changes (to update spawn area overlay)
+  useEffect(() => {
+    console.log('[Canvas] useEffect[spawnPixels] firing - spawnPixels:', spawnPixels === null ? 'default' : spawnPixels.length);
+    render(drawPointsRef.current);
+  }, [spawnPixels, render]);
+
 
   // Start/stop animation loop when running state changes
   useEffect(() => {
@@ -274,11 +389,21 @@ const UnifiedCanvas = ({
     }
   }, [isRunning, isPaused, render]);
 
-  // Setup canvas and animation loop
+  // Setup canvas and offscreen spawn mask canvas
   useEffect(() => {
     console.log('[Canvas] useEffect[canvas setup] firing - running:', runningRef.current);
     const canvas = canvasRef.current;
     if (!canvas) return;
+    
+    // Create offscreen canvas for spawn mask
+    if (!spawnMaskCanvasRef.current) {
+      const maskCanvas = document.createElement('canvas');
+      maskCanvas.width = canvas.width;
+      maskCanvas.height = canvas.height;
+      spawnMaskCanvasRef.current = maskCanvas;
+      console.log('[Canvas] Spawn mask canvas created:', canvas.width, 'x', canvas.height);
+    }
+    
     if (runningRef.current) {
       animationFrameRef.current = requestAnimationFrame(render);
     }
@@ -289,11 +414,23 @@ const UnifiedCanvas = ({
   }, [render]);
 
   const handleMouseDown = useCallback((e) => {
-    console.log('[Canvas] mousedown - isRunning:', runningRef.current, 'drawingEnabled:', isSurfaceDrawingEnabledRef.current, 'prevStrokeLen:', currentStrokeRef.current.length);
-    const isRunning = runningRef.current;
-
-    if (isRunning) { console.log('[Canvas] mousedown BLOCKED: isRunning'); return; }
+    const pos = getCanvasPosition(e);
+    console.log('[Canvas] mousedown - pos:', pos, 'ballPainting:', isBallPaintingEnabledRef.current, 'surfaceDrawing:', isSurfaceDrawingEnabledRef.current);
+    
+    if (runningRef.current) { console.log('[Canvas] mousedown BLOCKED: isRunning'); return; }
+    
+    // Ball painting mode
+    if (isBallPaintingEnabledRef.current) {
+      console.log('[Canvas] mousedown: ball painting mode');
+      isBallPaintingRef.current = true;
+      paintSpawnArea(pos);
+      render();
+      return;
+    }
+    
+    // Surface drawing mode
     if (!isSurfaceDrawingEnabledRef.current) { console.log('[Canvas] mousedown BLOCKED: drawing not enabled'); return; }
+    
     // Clear existing surface when starting a new drawing session
     const prevStroke = currentStrokeRef.current;
     if (prevStroke.length > 0) {
@@ -301,7 +438,6 @@ const UnifiedCanvas = ({
       setDrawPoints(prev => [...prev, ...prevStroke]);
       currentStrokeRef.current = [];
     }
-    const pos = getCanvasPosition(e);
     if (drawPoints.length > 0) {
       // Existing surface from previous drawing - draw connector line to new start
       const lastPoint = drawPoints[drawPoints.length - 1];
@@ -328,12 +464,20 @@ const UnifiedCanvas = ({
       ctx.moveTo(pos.x, pos.y);
       ctx.stroke();
     }
-  }, [getCanvasPosition, setIsDrawing, setDrawPoints, drawPoints, render]);
+  }, [getCanvasPosition, setIsDrawing, setDrawPoints, drawPoints, render, paintSpawnArea]);
 
   const handleMouseMove = useCallback((e) => {
+    const pos = getCanvasPosition(e);
+    
+    // Ball painting mode - only paint when mouse button is pressed
+    if (isBallPaintingEnabledRef.current && !runningRef.current && isBallPaintingRef.current) {
+      paintSpawnArea(pos);
+      render();
+      return;
+    }
+    
     if (!isDrawingRef.current || runningRef.current) { console.log('[Canvas] mousemove BLOCKED - drawing:', isDrawingRef.current, 'running:', runningRef.current); return; }
     if (!isSurfaceDrawingEnabledRef.current) { console.log('[Canvas] mousemove BLOCKED: not enabled'); return; }
-    const pos = getCanvasPosition(e);
     // Add to stroke batch
     const stroke = currentStrokeRef.current;
     console.log('[Canvas] mousemove - strokeLen:', stroke.length, 'pos:', pos);
@@ -363,6 +507,16 @@ const UnifiedCanvas = ({
   }, [getCanvasPosition]);
 
   const handleMouseUp = useCallback(() => {
+    // Reset ball painting state
+    isBallPaintingRef.current = false;
+    
+    // Extract spawn pixels if ball painting was active
+    if (isBallPaintingEnabledRef.current) {
+      const pixels = extractSpawnPixels();
+      console.log('[Canvas] mouseup: extracted', pixels.length, 'spawn pixels');
+      setSpawnPixels(pixels);
+    }
+    
     const stroke = currentStrokeRef.current;
     console.log('[Canvas] mouseup - strokeLen:', stroke.length, 'drawPoints before:', drawPointsRef.current.length);
     if (stroke.length > 0) {
@@ -374,7 +528,7 @@ const UnifiedCanvas = ({
     isDrawingRef.current = false; // Update synchronously for immediate render
     setIsDrawing(false);
     console.log('[Canvas] mouseup: done, drawPoints after:', drawPointsRef.current.length);
-  }, [setDrawPoints, setIsDrawing]);
+  }, [setDrawPoints, setIsDrawing, extractSpawnPixels, setSpawnPixels]);
 
   return (
     <canvas

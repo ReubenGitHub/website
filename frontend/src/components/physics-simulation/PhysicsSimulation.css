@@ -141,8 +141,30 @@
   color: #64c8ff;
 }
 
+.paintbrush-btn.active {
+  background: rgba(100, 200, 255, 0.2);
+  border-color: #64c8ff;
+  color: #64c8ff;
+}
+
 .ball-btn {
-  color: #8892b0;
+  color: #e0e0e0;
+}
+
+.ball-btn:hover:not(:disabled) {
+  background: rgba(100, 150, 255, 0.15);
+  border-color: #6496ff;
+  color: #6496ff;
+}
+
+.ball-btn.toolbar-btn-clear {
+  color: #ff4757;
+}
+
+.ball-btn.toolbar-btn-clear:hover:not(:disabled) {
+  background: rgba(255, 71, 87, 0.2);
+  border-color: #ff4757;
+  color: #ff4757;
 }
 
 .toolbar-btn-clear:hover:not(:disabled) {
@@ -212,6 +234,10 @@
 
 .canvas-with-controls.drawing-mode .simulation-canvas {
   cursor: crosshair;
+}
+
+.canvas-with-controls.paint-mode .simulation-canvas {
+  cursor: cell;
 }
 
 .canvas-with-controls .simulation-stats {

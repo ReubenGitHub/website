@@ -279,6 +279,21 @@ public struct Ball
 - ✅ **Physics parameters tuned** — gravity=4.0, restitution=0.4, airResistance=0.03
 - ✅ **CRITICAL: Balls falling through surface** — fixed inverted dotProduct condition (`if (dotProduct > 0)` → `if (dotProduct < 0)`) in PhysicsEngine.cs CheckSurfaceCollision. Ball count improved from 122-142/2000 (6-7%) to 1962/2000 (98.1%)
 
+### Ball Spawn Area Painting (In Progress)
+- ✅ **Backend model updated** — SimulationConfig now accepts `List<SpawnPoint>` for custom spawn pixels
+- ✅ **Backend spawning logic** — CreateEvenlySpacedSpawnPoints uses grid-based approach for even distribution in arbitrary pixel area
+- ✅ **Frontend state** — spawnPixels state (null=default, []=cleared, array=custom), isBallPaintingEnabled state added to PhysicsSimulation
+- ✅ **Offscreen spawn mask canvas** — UnifiedCanvas uses offscreen canvas for pixel-based painting
+- ✅ **Paint brush rendering** — spawn mask drawn as semi-transparent blue overlay (rgba(100, 150, 255, 0.15))
+- ✅ **Pixel extraction** — extractSpawnPixels samples every 4th pixel for performance
+- ✅ **Default spawn area rectangle** — 20% width/height, centered horizontally, 25% from top. Visible as semi-transparent blue overlay. Set by default button.
+- ✅ **Default spawn area visible** — rendered on canvas when spawnPixels is null (default state)
+- ✅ **Ball button styling fixed** — color updated from #8892b0 to #e0e0e0 to match surface buttons
+- ✅ **Clear button always enabled** — removed spawnPixels.length check, clear is a noop when empty
+- ✅ **Default spawn button sets rectangle** — calls handleDefaultSpawnArea which sets spawnPixels to null
+- ⏳ **Mutual exclusivity** — ball painting and surface drawing toggles are mutually exclusive (working)
+- ⏳ **Painting blocked during simulation** — only works when simulation stopped (working)
+
 ### Next Steps
 1. ✅ Test StartSimulation — balls spawn, stream, and animate (VERIFIED)
 2. ✅ Test Pause/Resume/Reset controls (VERIFIED — resume preserves ball state, reconnection works)

@@ -24,6 +24,11 @@ const PhysicsSimulation = () => {
   const [surfaceType, setSurfaceType] = useState('v'); // 'v' or 'flat'
   const [isSurfaceDrawingEnabled, setIsSurfaceDrawingEnabled] = useState(false);
   
+  // Ball spawn area painting state
+  // null = default spawn area (rectangle), [] = cleared (no spawn area), array = custom painted
+  const [spawnPixels, setSpawnPixels] = useState(null);
+  const [isBallPaintingEnabled, setIsBallPaintingEnabled] = useState(false);
+  
   // Simulation parameters
   const [restitution, setRestitution] = useState(1);
 
@@ -219,6 +224,7 @@ const PhysicsSimulation = () => {
   const handlePlay = async () => {
     console.log('[PhysicsSim] handlePlay called, isPaused:', isPaused, 'ballCount:', ballCount);
     console.log('[PhysicsSim] Draw points:', drawPoints.length);
+    console.log('[PhysicsSim] Spawn pixels:', spawnPixels === null ? 'default' : spawnPixels.length);
     console.log('[PhysicsSim] IsConnected:', isConnected);
     console.log('[PhysicsSim] Using surface with', currentSurface?.length, 'points, isCleared:', isCleared);
     setError(null);
@@ -233,25 +239,81 @@ const PhysicsSimulation = () => {
         return;
       }
 
+      // Generate spawn pixels for backend (null = default rectangle, [] = cleared)
+      let spawnPixelsToSend = spawnPixels;
+      console.log('[PhysicsSim] Before processing: spawnPixels is', spawnPixels === null ? 'null' : `array with ${spawnPixels.length} pixels`, spawnPixels);
+      
+      if (spawnPixels === null) {
+        // Generate default rectangle pixels (20% width/height, centered, 25% from top)
+        const canvasWidth = 1200;
+        const canvasHeight = 600;
+        const rectWidth = canvasWidth * 0.2;
+        const rectHeight = canvasHeight * 0.2;
+        const rectX = (canvasWidth - rectWidth) / 2;
+        const rectY = canvasHeight * 0.25;
+        spawnPixelsToSend = [];
+        const step = 4;
+        for (let y = rectY; y < rectY + rectHeight; y += step) {
+          for (let x = rectX; x < rectX + rectWidth; x += step) {
+            spawnPixelsToSend.push({ x: Math.round(x), y: Math.round(y) });
+          }
+        }
+        console.log('[PhysicsSim] Default spawn area: generated', spawnPixelsToSend.length, 'pixels');
+      } else if (spawnPixels.length === 0) {
+        // Cleared - no spawn area, backend will use surface-based spawning
+        spawnPixelsToSend = [];
+      }
+
+      console.log('[PhysicsSim] spawnPixelsToSend:', spawnPixelsToSend === null ? 'null' : `array with ${spawnPixelsToSend.length} pixels`, spawnPixelsToSend?.slice(0, 5));
+
+      const config = { 
+        ballCount: ballCount, 
+        gravity: 4.0, 
+        restitution, 
+        deltaTime: 1.0 / 30.0,
+        spawnPixels: spawnPixelsToSend
+      };
+
       if (isPaused) {
         // Resume paused simulation (preserves ball positions)
         console.log('[PhysicsSim] Resuming simulation...');
-        await connectionRef.current.invoke('ResumeSimulation', 
-          { ballCount: ballCount, gravity: 4.0, restitution, deltaTime: 1.0 / 30.0 },
-          currentSurface);
+        await connectionRef.current.invoke('ResumeSimulation', config, currentSurface);
         console.log('[PhysicsSim] ResumeSimulation invoked successfully');
       } else {
         // Start fresh simulation
         console.log('[PhysicsSim] Starting new simulation...');
-        await connectionRef.current.invoke('StartSimulation', 
-          { ballCount: ballCount, gravity: 4.0, restitution, deltaTime: 1.0 / 30.0 },
-          currentSurface);
+        await connectionRef.current.invoke('StartSimulation', config, currentSurface);
         console.log('[PhysicsSim] StartSimulation invoked successfully');
       }
     } catch (err) {
       console.error('[PhysicsSim] Play error:', err);
       setError(`Failed to play simulation: ${err.message}`);
     }
+  };
+
+  const handleToggleBallPainting = () => {
+    const newValue = !isBallPaintingEnabled;
+    setIsBallPaintingEnabled(newValue);
+    // Mutual exclusivity: disabling surface drawing when enabling ball painting
+    if (newValue) {
+      setIsSurfaceDrawingEnabled(false);
+    }
+    console.log('[PhysicsSim] Ball painting toggled:', newValue, 'Surface drawing:', !newValue ? !isBallPaintingEnabled : isSurfaceDrawingEnabled);
+  };
+
+  const handleDefaultSpawnArea = () => {
+    // Generate default spawn area rectangle: 20% width/height, centered, 25% from top
+    setIsBallPaintingEnabled(false);
+    setIsSurfaceDrawingEnabled(false);
+    // Set spawnPixels to null so UnifiedCanvas renders default rectangle overlay
+    setSpawnPixels(null);
+    console.log('[PhysicsSim] Default spawn area activated');
+  };
+
+  const handleClearSpawnArea = () => {
+    setSpawnPixels([]);
+    setIsBallPaintingEnabled(false);
+    console.log('[PhysicsSim] Spawn area cleared');
   };
 
   const ensureConnected = async () => {
@@ -306,6 +368,8 @@ const PhysicsSimulation = () => {
       ballsRef.current = [];
       setActiveBallCount(0);
       setIsRunning(false);
+      // Reset surface drawing only (preserve ball spawn area)
+      setIsSurfaceDrawingEnabled(false);
     } catch (err) {
       console.error('Reset error:', err);
       setError('Failed to reset: ' + err.message);
@@ -356,19 +420,34 @@ const PhysicsSimulation = () => {
         <div className="canvas-toolbar">
           {/* Ball spawn group */}
           <span className="toolbar-label">Balls:</span>
-          <button className="toolbar-btn ball-btn" disabled title="Default Spawn (placeholder)">
+          <button 
+            onClick={handleDefaultSpawnArea} 
+            className="toolbar-btn ball-btn"
+            disabled={isRunning}
+            title="Use Default Spawn Area"
+          >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
               <circle cx="9" cy="9" r="3"/>
               <circle cx="9" cy="9" r="6" strokeDasharray="2 2"/>
             </svg>
           </button>
-          <button className="toolbar-btn ball-btn toolbar-btn-clear" disabled title="Clear Ball Spawn (placeholder)">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <path d="M4 4L14 14M14 4L4 14"/>
+          <button 
+            onClick={handleClearSpawnArea} 
+            className="toolbar-btn ball-btn toolbar-btn-clear"
+            disabled={isRunning}
+            title="Clear Ball Spawn Area"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M4 4L14 14M14 4L4 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
-          <button className="toolbar-btn ball-btn paintbrush-btn" disabled title="Paint Spawn (placeholder)">
-            <svg width="18" height="18" viewBox="0 0 117.41 103.78" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round">
+          <button 
+            onClick={handleToggleBallPainting} 
+            className={`toolbar-btn ball-btn paintbrush-btn ${isBallPaintingEnabled ? 'active' : ''}`}
+            disabled={isRunning}
+            title="Paint Ball Spawn Area"
+          >
+            <svg width="18" height="18" viewBox="0 0 117.41 103.78" fill="none" stroke="currentColor" strokeWidth="8" strokeLinejoin="round">
               <path d="M0,103.78c11.7-8.38,30.46.62,37.83-14a16.66,16.66,0,0,0,.62-13.37,10.9,10.9,0,0,0-3.17-4.35,11.88,11.88,0,0,0-2.11-1.35c-9.63-4.78-19.67,1.91-25,10-4.9,7.43-7,16.71-8.18,23.07ZM54.09,43.42a54.31,54.31,0,0,1,15,18.06l50.19-49.16c3.17-3,5-5.53,2.3-10.13A6.5,6.5,0,0,0,117.41,0,7.09,7.09,0,0,0,112.8,1.6L54.09,43.42Zm-16.85,22c2.82,1.52,6.69,5.25,7.61,9.32L65.83,64c-3.78-7.54-8.61-14-15.23-18.58-6.9,9.27-5.5,11.17-13.36,20Z"/>
             </svg>
           </button>
@@ -422,7 +501,11 @@ const PhysicsSimulation = () => {
             </svg>
           </button>
           <button 
-            onClick={() => setIsSurfaceDrawingEnabled(!isSurfaceDrawingEnabled)} 
+            onClick={() => {
+              const newValue = !isSurfaceDrawingEnabled;
+              setIsSurfaceDrawingEnabled(newValue);
+              if (newValue) setIsBallPaintingEnabled(false);
+            }}
             className={`toolbar-btn pencil-btn ${isSurfaceDrawingEnabled ? 'active' : ''}`}
             disabled={isRunning}
             title="Enable Surface Drawing"
@@ -436,7 +519,7 @@ const PhysicsSimulation = () => {
 
         {/* Canvas section */}
         <div className="simulation-card-canvas">
-          <div className={`canvas-with-controls ${isSurfaceDrawingEnabled ? 'drawing-mode' : ''}`}>
+          <div className={`canvas-with-controls ${isSurfaceDrawingEnabled ? 'drawing-mode' : ''} ${isBallPaintingEnabled ? 'paint-mode' : ''}`}>
             <UnifiedCanvas
               ballsRef={ballsRef}
               surface={currentSurface}
@@ -450,6 +533,9 @@ const PhysicsSimulation = () => {
               setIsDrawing={setIsDrawing}
               surfaceType={surfaceType}
               isSurfaceDrawingEnabled={isSurfaceDrawingEnabled}
+              isBallPaintingEnabled={isBallPaintingEnabled}
+              spawnPixels={spawnPixels}
+              setSpawnPixels={setSpawnPixels}
               defaultSurface={defaultSurface}
               flatSurface={flatSurface}
             />

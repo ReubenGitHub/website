@@ -70,7 +70,7 @@ public class SimulationSession : IDisposable
             
             if (_balls.Length == 0 || _balls.All(b => !b.Active))
             {
-                _balls = SpawnBalls(Config.BallCount);
+                _balls = SpawnBalls(Config.BallCount, Config.SpawnPixels);
             }
             _simulationTask = Task.Run(() => SimulationLoop(ct), ct);
             _logger.LogInformation("Simulation started with {BallCount} balls", Config.BallCount);
@@ -150,9 +150,26 @@ public class SimulationSession : IDisposable
         }
     }
 
-    private Ball[] SpawnBalls(int count)
+    private Ball[] SpawnBalls(int count, List<SpawnPoint>? spawnPixels)
     {
         var balls = new Ball[count];
+        
+        _logger.LogInformation("SpawnBalls called: spawnPixels is null={IsNull}, count={Count}", spawnPixels == null, spawnPixels?.Count ?? 0);
+        
+        // Use spawn pixels if provided
+        if (spawnPixels != null && spawnPixels.Count > 0)
+        {
+            _logger.LogInformation("Spawning {Count} balls in custom spawn area ({PixelCount} pixels)", count, spawnPixels.Count);
+            var spawnPoints = CreateEvenlySpacedSpawnPoints(spawnPixels, count);
+            for (int i = 0; i < count; i++)
+            {
+                var point = spawnPoints[i];
+                balls[i] = CreateBall(point.X, point.Y);
+            }
+            return balls;
+        }
+        
+        // Fallback to surface-based spawning
         var surface = _surfaceService.Surface;
         if (surface.Count < 2)
         {
@@ -182,6 +199,94 @@ public class SimulationSession : IDisposable
             balls[i] = CreateBall(x, y);
         }
         return balls;
+    }
+
+    /// <summary>
+    /// Creates evenly spaced spawn points from painted pixel coordinates.
+    /// Uses grid-based approach: creates a grid from pixels, then selects points evenly.
+    /// </summary>
+    private List<(double X, double Y)> CreateEvenlySpacedSpawnPoints(List<SpawnPoint> pixels, int targetCount)
+    {
+        var result = new List<(double X, double Y)>();
+        if (pixels.Count == 0) return result;
+        
+        // Find bounds
+        var minX = pixels.Min(p => p.X);
+        var maxX = pixels.Max(p => p.X);
+        var minY = pixels.Min(p => p.Y);
+        var maxY = pixels.Max(p => p.Y);
+        
+        _logger.LogInformation("Spawn area bounds: ({MinX},{MinY}) to ({MaxX},{MaxY})", minX, minY, maxX, maxY);
+        
+        // Create grid from pixels - mark which grid cells have painted pixels
+        var gridSize = 8; // Grid cell size in pixels
+        var gridWidth = (int)Math.Ceiling((maxX - minX) / gridSize);
+        var gridHeight = (int)Math.Ceiling((maxY - minY) / gridSize);
+        var hasPixel = new bool[gridWidth, gridHeight];
+        
+        foreach (var pixel in pixels)
+        {
+            var gx = (int)((pixel.X - minX) / gridSize);
+            var gy = (int)((pixel.Y - minY) / gridSize);
+            if (gx >= 0 && gx < gridWidth && gy >= 0 && gy < gridHeight)
+            {
+                hasPixel[gx, gy] = true;
+            }
+        }
+        
+        // Count valid cells
+        var validCells = new List<(int Gx, int Gy)>();
+        for (var gx = 0; gx < gridWidth; gx++)
+        {
+            for (var gy = 0; gy < gridHeight; gy++)
+            {
+                if (hasPixel[gx, gy])
+                {
+                    validCells.Add((gx, gy));
+                }
+            }
+        }
+        
+        _logger.LogInformation("Spawn grid: {Width}x{Height}, {Valid} valid cells", gridWidth, gridHeight, validCells.Count);
+        
+        if (validCells.Count == 0) return result;
+        
+        // If we have fewer valid cells than target balls, use all cells
+        // If we have more, select evenly spaced cells
+        if (validCells.Count <= targetCount)
+        {
+            foreach (var cell in validCells)
+            {
+                var cx = minX + (cell.Gx + 0.5) * gridSize;
+                var cy = minY + (cell.Gy + 0.5) * gridSize;
+                result.Add((cx, cy));
+            }
+            // If we need more balls than cells, repeat with slight offsets
+            while (result.Count < targetCount)
+            {
+                var idx = result.Count % validCells.Count;
+                var cell = validCells[idx];
+                var cx = minX + (cell.Gx + 0.5) * gridSize + (Random.Shared.NextDouble() - 0.5) * gridSize * 0.5;
+                var cy = minY + (cell.Gy + 0.5) * gridSize + (Random.Shared.NextDouble() - 0.5) * gridSize * 0.5;
+                result.Add((cx, cy));
+            }
+        }
+        else
+        {
+            // Select evenly spaced cells using stride
+            var stride = (double)validCells.Count / targetCount;
+            for (int i = 0; i < targetCount; i++)
+            {
+                var idx = (int)(i * stride);
+                idx = Math.Min(idx, validCells.Count - 1);
+                var cell = validCells[idx];
+                var cx = minX + (cell.Gx + 0.5) * gridSize + (Random.Shared.NextDouble() - 0.5) * gridSize * 0.3;
+                var cy = minY + (cell.Gy + 0.5) * gridSize + (Random.Shared.NextDouble() - 0.5) * gridSize * 0.3;
+                result.Add((cx, cy));
+            }
+        }
+        
+        return result;
     }
 
     private Ball CreateBall(double x, double y)
