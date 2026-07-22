@@ -154,19 +154,6 @@ public class PhysicsEngine
             var normalX = geoNormalX;
             var normalY = geoNormalY;
 
-            // Snap normal to vertical for near-horizontal surfaces.
-            // This prevents systematic sideways drift caused by floating-point
-            // imprecision in the normal calculation when balls land near segment
-            // endpoints on flat surfaces. A segment is "near-horizontal" when its
-            // slope is less than ~5 degrees (|dy|/|dx| < 0.087).
-            var segDy = dy / Math.Max(Math.Abs(dx), Math.Abs(dy));
-            if (Math.Abs(segDy) < 0.087)
-            {
-                // Force normal to point straight up (normalY < 0 in canvas coords)
-                normalX = 0;
-                normalY = -1.0;
-            }
-
             // Only process collision if ball is above the surface (normal points upward).
             if (normalY > -0.1) continue;
 
