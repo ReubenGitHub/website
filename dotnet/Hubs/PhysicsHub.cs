@@ -113,6 +113,13 @@ public class PhysicsHub : Hub
         await Clients.Caller.SendAsync("SurfaceUpdated");
     }
 
+    public async Task UpdateRestitution(double restitution)
+    {
+        var session = GetOrCreateSession();
+        session.SetRestitution(restitution);
+        await Task.CompletedTask;
+    }
+
     public override async Task OnConnectedAsync()
     {
         await base.OnConnectedAsync();

@@ -42,6 +42,12 @@ public class SimulationSession : IDisposable
         _canvasHeight = height;
     }
 
+    public void SetRestitution(double restitution)
+    {
+        Config.Restitution = Math.Max(0, Math.Min(1, restitution));
+        _logger.LogInformation("Restitution updated to {Restitution}", Config.Restitution);
+    }
+
     public void Start()
     {
         _logger.LogInformation("Start() called on session {SessionId}", System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this));

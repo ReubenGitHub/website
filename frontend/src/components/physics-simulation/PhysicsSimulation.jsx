@@ -22,9 +22,10 @@ const PhysicsSimulation = () => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [isCleared, setIsCleared] = useState(false);
   const [surfaceType, setSurfaceType] = useState('v'); // 'v' or 'flat'
+  const [isSurfaceDrawingEnabled, setIsSurfaceDrawingEnabled] = useState(false);
   
   // Simulation parameters
-  const [restitution, setRestitution] = useState(0.4);
+  const [restitution, setRestitution] = useState(1);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -155,9 +156,9 @@ const PhysicsSimulation = () => {
 
   // Centered V-shape surface (1/4 off bottom, centered horizontally)
   const defaultSurface = [
-    { x: 300, y: 350 },
-    { x: 600, y: 450 },
-    { x: 900, y: 350 }
+    { x: 400, y: 320 },
+    { x: 600, y: 520 },
+    { x: 800, y: 320 }
   ];
 
   // Flat surface (centered horizontally, 1/4 off bottom)
@@ -171,6 +172,9 @@ const PhysicsSimulation = () => {
     setDrawPoints([]);
     setIsCleared(true);
   };
+
+  // Current surface for rendering and simulation
+  const currentSurface = (drawPoints.length > 0 && !isCleared) ? drawPoints : (isCleared ? [] : (surfaceType === 'flat' ? flatSurface : defaultSurface));
 
   const handleUseDefaultSurface = () => {
     console.log('[PhysicsSim] Using default V-surface');
@@ -216,11 +220,8 @@ const PhysicsSimulation = () => {
     console.log('[PhysicsSim] handlePlay called, isPaused:', isPaused, 'ballCount:', ballCount);
     console.log('[PhysicsSim] Draw points:', drawPoints.length);
     console.log('[PhysicsSim] IsConnected:', isConnected);
-    setError(null);
-
-    // Use drawPoints if available and not cleared, otherwise use default surface
-    const currentSurface = (drawPoints.length > 0 && !isCleared) ? drawPoints : (isCleared ? [] : (surfaceType === 'flat' ? flatSurface : defaultSurface));
     console.log('[PhysicsSim] Using surface with', currentSurface?.length, 'points, isCleared:', isCleared);
+    setError(null);
 
     const isValid = await validateConfig(ballCount);
     if (!isValid) return;
@@ -311,11 +312,23 @@ const PhysicsSimulation = () => {
     }
   };
 
+  const handleRestitutionChange = async (newRestitution) => {
+    setRestitution(newRestitution);
+    try {
+      const connected = await ensureConnected();
+      if (connected) {
+        await connectionRef.current.invoke('UpdateRestitution', newRestitution);
+      }
+    } catch (err) {
+      console.error('Restitution update error:', err);
+    }
+  };
+
   return (
     <div className="physics-simulation-page">
       <div className="simulation-header">
         <h1>2D Physics Simulation</h1>
-        <p>Draw a surface, set the ball count, and watch the simulation come to life!</p>
+        <p>Draw a surface to bounce balls on</p>
       </div>
 
       {error && (
@@ -325,90 +338,130 @@ const PhysicsSimulation = () => {
         </div>
       )}
 
-      <div className="simulation-content">
-        <div className="simulation-left">
-          <div className="panel spawn-panel">
-            <h2>Set Ball Count</h2>
+      <div className="simulation-card">
+        {/* Configuration section - side by side sliders */}
+        <div className="simulation-card-controls">
+          <div className="controls-section">
             <SpawnControls
               ballCount={ballCount}
               setBallCount={setBallCount}
               restitution={restitution}
-              setRestitution={setRestitution}
+              onRestitutionChange={handleRestitutionChange}
+              controlsDisabled={isRunning}
             />
           </div>
         </div>
 
-        <div className="simulation-right">
-          <div className="panel canvas-panel">
-            <div className="canvas-header">
-              <h2>Simulation</h2>
-              <SimulationControls
-                isRunning={isRunning}
-                isPaused={isPaused}
-                onPlay={handlePlay}
-                onPause={handlePause}
-                onReset={handleReset}
-              />
-            </div>
-            
-            {/* Canvas Controls */}
-            <div className="canvas-controls">
-              <span className="canvas-controls-label">Canvas Controls:</span>
-              
-              <button 
-                onClick={handleUseDefaultSurface} 
-                className="canvas-control-btn"
-                disabled={isRunning || isPaused}
-              >
-                Use Default Surface
-              </button>
-              
-              <button 
-                onClick={handleUseFlatSurface} 
-                className="canvas-control-btn"
-                disabled={isRunning || isPaused}
-              >
-                Flat Surface
-              </button>
-              
-              <button 
-                onClick={handleClearDrawing} 
-                className="canvas-control-btn btn-clear"
-                disabled={isRunning || isPaused}
-              >
-                Clear Drawing
-              </button>
-              
-              <label className="canvas-control-label">
-                Brush: {brushSize}px
-                <input
-                  type="range"
-                  min="4"
-                  max="20"
-                  value={brushSize}
-                  onChange={(e) => setBrushSize(Number(e.target.value))}
-                  className="canvas-control-slider"
-                  disabled={isRunning || isPaused}
-                />
-              </label>
-            </div>
+        {/* Surface/Canvas toolbar - glassmorphism card */}
+        <div className="canvas-toolbar">
+          {/* Ball spawn group */}
+          <span className="toolbar-label">Balls:</span>
+          <button className="toolbar-btn ball-btn" disabled title="Default Spawn (placeholder)">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="9" cy="9" r="3"/>
+              <circle cx="9" cy="9" r="6" strokeDasharray="2 2"/>
+            </svg>
+          </button>
+          <button className="toolbar-btn ball-btn toolbar-btn-clear" disabled title="Clear Ball Spawn (placeholder)">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M4 4L14 14M14 4L4 14"/>
+            </svg>
+          </button>
+          <button className="toolbar-btn ball-btn paintbrush-btn" disabled title="Paint Spawn (placeholder)">
+            <svg width="18" height="18" viewBox="0 0 117.41 103.78" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round">
+              <path d="M0,103.78c11.7-8.38,30.46.62,37.83-14a16.66,16.66,0,0,0,.62-13.37,10.9,10.9,0,0,0-3.17-4.35,11.88,11.88,0,0,0-2.11-1.35c-9.63-4.78-19.67,1.91-25,10-4.9,7.43-7,16.71-8.18,23.07ZM54.09,43.42a54.31,54.31,0,0,1,15,18.06l50.19-49.16c3.17-3,5-5.53,2.3-10.13A6.5,6.5,0,0,0,117.41,0,7.09,7.09,0,0,0,112.8,1.6L54.09,43.42Zm-16.85,22c2.82,1.52,6.69,5.25,7.61,9.32L65.83,64c-3.78-7.54-8.61-14-15.23-18.58-6.9,9.27-5.5,11.17-13.36,20Z"/>
+            </svg>
+          </button>
+          
+          <label className="brush-label-inline">
+            <span>Brush</span>
+            <input
+              type="range"
+              min="4"
+              max="20"
+              value={brushSize}
+              onChange={(e) => setBrushSize(Number(e.target.value))}
+              className="toolbar-brush-slider"
+              disabled={isRunning}
+            />
+            <span className="brush-value">{brushSize}px</span>
+          </label>
+          
+          <div className="toolbar-divider"></div>
+          
+          {/* Surface drawing group */}
+          <span className="toolbar-label">Surface:</span>
+          <button 
+            onClick={handleUseDefaultSurface} 
+            className="toolbar-btn surface-btn-v"
+            disabled={isRunning}
+            title="V-Shape Surface"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M3 10 L10 17 L17 10" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <button 
+            onClick={handleUseFlatSurface} 
+            className="toolbar-btn surface-btn-flat"
+            disabled={isRunning}
+            title="Flat Surface"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
+          <button 
+            onClick={handleClearDrawing} 
+            className="toolbar-btn toolbar-btn-clear"
+            disabled={isRunning}
+            title="Clear Drawing"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M4 4L14 14M14 4L4 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+          <button 
+            onClick={() => setIsSurfaceDrawingEnabled(!isSurfaceDrawingEnabled)} 
+            className={`toolbar-btn pencil-btn ${isSurfaceDrawingEnabled ? 'active' : ''}`}
+            disabled={isRunning}
+            title="Enable Surface Drawing"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11.5 2.5l4 4L6 16H2v-4L11.5 2.5z"/>
+              <path d="M10 4l4 4"/>
+            </svg>
+          </button>
+        </div>
 
-            <div className="canvas-container">
-              <div className="simulation-stats">
-                <span>Active: {activeBallCount} balls</span>
-              </div>
-              <UnifiedCanvas
-                ballsRef={ballsRef}
-                isRunning={isRunning}
-                isPaused={isPaused}
-                drawPoints={drawPoints}
-                setDrawPoints={setDrawPoints}
-                brushSize={brushSize}
-                isCleared={isCleared}
-                isDrawing={isDrawing}
-                setIsDrawing={setIsDrawing}
-                surfaceType={surfaceType}
-              />
+        {/* Canvas section */}
+        <div className="simulation-card-canvas">
+          <div className={`canvas-with-controls ${isSurfaceDrawingEnabled ? 'drawing-mode' : ''}`}>
+            <UnifiedCanvas
+              ballsRef={ballsRef}
+              surface={currentSurface}
+              isRunning={isRunning}
+              isPaused={isPaused}
+              drawPoints={drawPoints}
+              setDrawPoints={setDrawPoints}
+              brushSize={brushSize}
+              isCleared={isCleared}
+              isDrawing={isDrawing}
+              setIsDrawing={setIsDrawing}
+              surfaceType={surfaceType}
+              isSurfaceDrawingEnabled={isSurfaceDrawingEnabled}
+              defaultSurface={defaultSurface}
+              flatSurface={flatSurface}
+            />
+            <SimulationControls
+              isRunning={isRunning}
+              isPaused={isPaused}
+              onPlay={handlePlay}
+              onPause={handlePause}
+              onReset={handleReset}
+            />
+            <div className="simulation-stats">
+              <span>Active: {activeBallCount} balls</span>
             </div>
           </div>
         </div>
