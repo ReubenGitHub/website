@@ -339,7 +339,6 @@ const UnifiedCanvas = ({
     const width = canvas.width;
     const height = canvas.height;
     ctx.clearRect(0, 0, width, height);
-    drawGrid(ctx, width, height);
     
     // Draw spawn mask overlay (bottom layer)
     drawSpawnMaskOverlay(ctx, spawnMaskCanvasRef.current);
@@ -396,6 +395,9 @@ const UnifiedCanvas = ({
         drawBalls(ctx, ballsRef.current);
       }
     }
+    
+    // Draw grid on top of everything (spawn mask, surface, balls) for consistent visibility
+    drawGrid(ctx, width, height);
     
     if (runningRef.current) {
       animationFrameRef.current = requestAnimationFrame(render);

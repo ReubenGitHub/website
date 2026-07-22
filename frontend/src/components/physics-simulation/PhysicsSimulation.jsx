@@ -303,8 +303,6 @@ const PhysicsSimulation = () => {
 
   const handleDefaultSpawnArea = () => {
     // Generate default spawn area rectangle: 20% width/height, centered, 25% from top
-    setIsBallPaintingEnabled(false);
-    setIsSurfaceDrawingEnabled(false);
     // Set spawnPixels to null so UnifiedCanvas renders default rectangle overlay
     setSpawnPixels(null);
     console.log('[PhysicsSim] Default spawn area activated');
@@ -312,7 +310,6 @@ const PhysicsSimulation = () => {
 
   const handleClearSpawnArea = () => {
     setSpawnPixels([]);
-    setIsBallPaintingEnabled(false);
     console.log('[PhysicsSim] Spawn area cleared');
   };
 
