@@ -130,11 +130,29 @@ public class PhysicsEngine
             // Squared distance check — avoids expensive Math.Sqrt for far-away segments
             if (distSq >= radiusSq) continue;
 
-            var distance = Math.Sqrt(distSq);
+            // Use the segment's GEOMETRIC normal (constant for straight segments),
+            // NOT a position-dependent normal. This ensures balls at different
+            // positions on the same straight surface get identical bounce normals.
+            // In canvas coords, segment direction is (dx, dy). Perpendicular is (-dy, dx).
+            var geoNormalX = -dy;
+            var geoNormalY = dx;
+            var geoLen = Math.Sqrt(geoNormalX * geoNormalX + geoNormalY * geoNormalY);
+            geoNormalX /= geoLen;
+            geoNormalY /= geoLen;
 
-            // Calculate collision normal (from surface to ball)
-            var normalX = distX / Math.Max(0.001, distance);
-            var normalY = distY / Math.Max(0.001, distance);
+            // In canvas coords, Y increases downward.
+            // We want the normal pointing "upward" (toward the side balls bounce from).
+            // Check: if dot(geoNormal, ball-to-closest) < 0, the normal points away
+            // from the ball, so flip it to point toward the ball.
+            var dotToBall = geoNormalX * distX + geoNormalY * distY;
+            if (dotToBall < 0)
+            {
+                geoNormalX = -geoNormalX;
+                geoNormalY = -geoNormalY;
+            }
+
+            var normalX = geoNormalX;
+            var normalY = geoNormalY;
 
             // Snap normal to vertical for near-horizontal surfaces.
             // This prevents systematic sideways drift caused by floating-point
@@ -146,13 +164,10 @@ public class PhysicsEngine
             {
                 // Force normal to point straight up (normalY < 0 in canvas coords)
                 normalX = 0;
-                normalY = Math.Sign(normalY);
+                normalY = -1.0;
             }
 
-            // In canvas coords, Y increases downward.
-            // If normalY < 0, the normal points upward, meaning ball is above surface.
-            // If normalY > 0, the normal points downward, meaning ball is below surface.
-            // Only process collision if ball is above the surface.
+            // Only process collision if ball is above the surface (normal points upward).
             if (normalY > -0.1) continue;
 
             // Check if ball is moving toward the surface (velocity opposite to normal)
