@@ -1,21 +1,19 @@
 {
     "name": "MyWebsite Dev",
     "dockerComposeFile": "docker-compose.yml",
-    "service": "site-dev",
+    "service": "dev",
     "workspaceFolder": "/app",
     "customizations": {
         "vscode": {
             "extensions": [
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "ms-python.debugpy"
+                "ms-python.debugpy",
+                "ms-dotnettools.csharp"
             ]
         }
     },
     "forwardPorts": [3000, 5000, 5001],
     "remoteUser": "root",
-    "overrideCommand": false,
-    "mounts": [
-        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,readonly"
-    ]
+    "overrideCommand": false
 }

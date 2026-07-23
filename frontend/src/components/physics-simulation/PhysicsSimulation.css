@@ -1,27 +1,27 @@
 .physics-simulation-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #16213e 100%);
   padding: 2rem;
   color: #e0e0e0;
 }
 
 .simulation-header {
+  padding: 16px 15%;
   text-align: center;
-  margin-bottom: 2rem;
+  color: #e0e0e0;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .simulation-header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  background: linear-gradient(90deg, #64c8ff, #00d4ff, #64c8ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 0.5rem;
+  margin: 0 0 8px 0;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #e0e0e0;
 }
 
 .simulation-header p {
-  font-size: 1.1rem;
+  margin: 0;
+  font-size: 1rem;
   color: #8892b0;
 }
 
@@ -39,6 +39,40 @@
 .error-message span {
   color: #ff4757;
 }
+.simulation-info-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 0 auto 1.5rem auto;
+  max-width: 800px;
+}
+
+.simulation-info-card h2 {
+  margin: 0 0 12px 0;
+  font-size: 1.25rem;
+  color: #ffffff;
+  font-weight: 600;
+  text-align: center;
+}
+
+.simulation-info-card p {
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  color: #c0c8d8;
+  line-height: 1.55;
+}
+
+.simulation-info-card p:last-child {
+  margin-bottom: 0;
+}
+
+.simulation-info-card strong {
+  color: #e0e8f0;
+}
+
 
 .error-message button {
   background: none;
@@ -49,42 +83,236 @@
   padding: 0 0.5rem;
 }
 
-.simulation-content {
-  display: grid;
-  grid-template-columns: 1fr 1.5fr;
-  gap: 1.5rem;
-  max-width: 1600px;
+/* Single card layout */
+.simulation-card {
+  max-width: 1200px;
   margin: 0 auto;
-}
-
-.simulation-left {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.simulation-right {
-  display: flex;
-  flex-direction: column;
-}
-
-.panel {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
-.panel h2 {
-  font-size: 1.3rem;
+.simulation-card-controls {
+  padding: 1.5rem 2rem;
+}
+
+.controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.controls-section h3 {
+  font-size: 1rem;
   font-weight: 600;
-  color: #64c8ff;
-  margin-bottom: 1rem;
+  color: #8892b0;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-@media (max-width: 1024px) {
-  .simulation-content {
+/* Canvas toolbar - glassmorphism card */
+.canvas-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  margin: 1rem 2rem 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.toolbar-label {
+  font-size: 0.8rem;
+  color: #8892b0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 0.25rem;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  background: rgba(100, 200, 255, 0.15);
+  border-color: #64c8ff;
+  color: #64c8ff;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbar-btn-clear {
+  color: #ff4757;
+}
+
+.toolbar-btn-clear:hover:not(:disabled) {
+  background: rgba(255, 71, 87, 0.2);
+  border-color: #ff4757;
+  color: #ff4757;
+}
+
+.pencil-btn.active {
+  background: rgba(100, 200, 255, 0.2);
+  border-color: #64c8ff;
+  color: #64c8ff;
+}
+
+.paintbrush-btn.active {
+  background: rgba(100, 200, 255, 0.2);
+  border-color: #64c8ff;
+  color: #64c8ff;
+}
+
+.ball-btn {
+  color: #e0e0e0;
+}
+
+.ball-btn:hover:not(:disabled) {
+  background: rgba(100, 150, 255, 0.15);
+  border-color: #6496ff;
+  color: #6496ff;
+}
+
+.ball-btn.toolbar-btn-clear {
+  color: #ff4757;
+}
+
+.ball-btn.toolbar-btn-clear:hover:not(:disabled) {
+  background: rgba(255, 71, 87, 0.2);
+  border-color: #ff4757;
+  color: #ff4757;
+}
+
+.toolbar-btn-clear:hover:not(:disabled) {
+  background: rgba(255, 71, 87, 0.2);
+  border-color: #ff4757;
+  color: #ff4757;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 0.25rem;
+}
+
+.brush-label-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #8892b0;
+}
+
+.toolbar-brush-slider {
+  width: 80px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.toolbar-brush-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #64c8ff;
+  cursor: pointer;
+}
+
+.toolbar-brush-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #64c8ff;
+  cursor: pointer;
+  border: none;
+}
+
+.brush-value {
+  min-width: 35px;
+  font-size: 0.75rem;
+  color: #64c8ff;
+}
+
+.simulation-card-canvas {
+  position: relative;
+  padding: 0 2rem 2rem;
+  margin-top: 1rem;
+}
+
+.canvas-with-controls {
+  position: relative;
+}
+
+.canvas-with-controls.drawing-mode .simulation-canvas {
+  cursor: crosshair;
+}
+
+.canvas-with-controls.paint-mode .simulation-canvas {
+  cursor: cell;
+}
+
+.canvas-with-controls .simulation-stats {
+  position: absolute;
+  top: 0.75rem;
+  left: 1rem;
+  font-size: 0.9rem;
+  color: #8892b0;
+  z-index: 10;
+}
+
+.canvas-with-controls .simulation-stats span {
+  background: rgba(100, 200, 255, 0.1);
+  padding: 0.65rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid rgba(100, 200, 255, 0.2);
+  display: inline-flex;
+  align-items: center;
+}
+
+.canvas-with-controls .simulation-controls {
+  position: absolute;
+  top: 0.75rem;
+  right: 1rem;
+  z-index: 10;
+}
+
+@media (max-width: 768px) {
+  .simulation-card-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .header-left {
+    flex-direction: column;
+  }
+  
+  .simulation-card-controls {
     grid-template-columns: 1fr;
   }
 }

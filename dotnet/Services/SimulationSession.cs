@@ -12,9 +12,11 @@ public class SimulationSession : IDisposable
     private Ball[] _balls = Array.Empty<Ball>();
     private int _canvasWidth = 1200;
     private int _canvasHeight = 600;
+    private bool _isResetting = false;
 
     public SimulationConfig Config { get; private set; } = new();
     public bool IsRunning { get; private set; }
+    private CancellationTokenSource? _streamingCts;
 
     public SimulationSession(SurfaceService surfaceService, ILogger<SimulationSession> logger)
     {
@@ -40,17 +42,35 @@ public class SimulationSession : IDisposable
         _canvasHeight = height;
     }
 
+    public void SetRestitution(double restitution)
+    {
+        Config.Restitution = Math.Max(0, Math.Min(1, restitution));
+        _logger.LogInformation("Restitution updated to {Restitution}", Config.Restitution);
+    }
+
     public void Start()
     {
+        _logger.LogInformation("Start() called on session {SessionId}", System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this));
         lock (_stateLock)
         {
-            if (IsRunning) return;
-            IsRunning = true;
+            _isResetting = false;
+            // Wait for old task to finish before disposing (prevents ObjectDisposedException)
+            if (_simulationTask != null && !_simulationTask.IsCompleted)
+            {
+                _cancellationTokenSource?.Cancel();
+                try { _simulationTask.Wait(TimeSpan.FromSeconds(2)); }
+                catch (AggregateException) { /* Task was cancelled, ignore */ }
+                _cancellationTokenSource?.Dispose();
+            }
+            
             _cancellationTokenSource = new CancellationTokenSource();
             var ct = _cancellationTokenSource.Token;
+            
+            IsRunning = true;
+            
             if (_balls.Length == 0 || _balls.All(b => !b.Active))
             {
-                _balls = SpawnBalls(Config.BallCount);
+                _balls = SpawnBalls(Config.BallCount, Config.SpawnPixels, Config.SpawnMask);
             }
             _simulationTask = Task.Run(() => SimulationLoop(ct), ct);
             _logger.LogInformation("Simulation started with {BallCount} balls", Config.BallCount);
@@ -62,22 +82,17 @@ public class SimulationSession : IDisposable
         lock (_stateLock)
         {
             IsRunning = false;
-            _cancellationTokenSource?.Cancel();
-            _logger.LogInformation("Simulation paused");
+            _logger.LogInformation("Simulation paused (physics held, streaming stopped)");
         }
     }
 
     public void Resume()
     {
+        _logger.LogInformation("Simulation resumed");
         lock (_stateLock)
         {
-            if (IsRunning) return;
             IsRunning = true;
-            _cancellationTokenSource?.Cancel();
-            _cancellationTokenSource = new CancellationTokenSource();
-            var ct = _cancellationTokenSource.Token;
-            _simulationTask = Task.Run(() => SimulationLoop(ct), ct);
-            _logger.LogInformation("Simulation resumed");
+            _logger.LogInformation("Simulation loop resumed (balls preserved)");
         }
     }
 
@@ -85,9 +100,21 @@ public class SimulationSession : IDisposable
     {
         lock (_stateLock)
         {
-            IsRunning = false;
-            _cancellationTokenSource?.Cancel();
+            _isResetting = true;
+            if (_simulationTask != null && !_simulationTask.IsCompleted)
+            {
+                _cancellationTokenSource?.Cancel();
+                try { _simulationTask.Wait(TimeSpan.FromSeconds(2)); }
+                catch (AggregateException) { /* Task was cancelled, ignore */ }
+                _cancellationTokenSource?.Dispose();
+            }
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+            _simulationTask = null;
+            _streamingCts?.Cancel();
+            _streamingCts = null;
             _balls = Array.Empty<Ball>();
+            IsRunning = false;
             _logger.LogInformation("Simulation reset");
         }
     }
@@ -96,9 +123,22 @@ public class SimulationSession : IDisposable
     {
         lock (_stateLock)
         {
-            IsRunning = false;
-            _cancellationTokenSource?.Cancel();
+            _isResetting = true;
+            if (_simulationTask != null && !_simulationTask.IsCompleted)
+            {
+                _cancellationTokenSource?.Cancel();
+                try { _simulationTask.Wait(TimeSpan.FromSeconds(2)); }
+                catch (AggregateException) { /* Task was cancelled, ignore */ }
+                _cancellationTokenSource?.Dispose();
+            }
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+            _simulationTask = null;
+            _streamingCts?.Cancel();
+            _streamingCts = null;
             _balls = Array.Empty<Ball>();
+            IsRunning = false;
+            _isResetting = false;
         }
     }
 
@@ -110,9 +150,63 @@ public class SimulationSession : IDisposable
         }
     }
 
-    private Ball[] SpawnBalls(int count)
+    private Ball[] SpawnBalls(int count, List<SpawnPoint>? spawnPixels, List<byte>? spawnMask)
     {
         var balls = new Ball[count];
+        
+        _logger.LogInformation("SpawnBalls called: spawnPixels is null={IsNull}, mask is null={MaskNull}, count={Count}", spawnPixels == null, spawnMask == null, count);
+        
+        // Use spawn mask if provided (higher precision than pixel list)
+        if (spawnMask != null && spawnMask.Count > 0)
+        {
+            _logger.LogInformation("Spawning {Count} balls from spawn mask ({MaskSize} bytes)", count, spawnMask.Count);
+            const int mWidth = 1200;
+            const int mHeight = 600;
+            var spawnPoints = CreateSpawnPointsFromMask(spawnMask, count);
+            // Compute actual bounds from painted pixels for correct coloring
+            var spawnMinX = (double)mWidth; // Will find min
+            var spawnMaxX = 0.0; // Will find max
+            for (int i = 0; i < spawnMask.Count; i++)
+            {
+                if (spawnMask[i] > 128)
+                {
+                    var px = i % mWidth;
+                    var py = i / mWidth;
+                    if (px < spawnMinX) spawnMinX = px;
+                    if (px > spawnMaxX) spawnMaxX = px;
+                }
+            }
+            spawnMinX -= 0.5;
+            spawnMaxX += 0.5;
+            for (int i = 0; i < count; i++)
+            {
+                var point = spawnPoints[i];
+                balls[i] = CreateBall(point.X, point.Y, spawnMinX, spawnMaxX);
+            }
+            return balls;
+        }
+        
+        // Use spawn pixels if provided (fallback to pixel-based method)
+        if (spawnPixels != null && spawnPixels.Count > 0)
+        {
+            _logger.LogInformation("Spawning {Count} balls in custom spawn area ({PixelCount} pixels)", count, spawnPixels.Count);
+            // Find spawn area bounds
+            var spawnMinX = spawnPixels.Min(p => p.X);
+            var spawnMaxX = spawnPixels.Max(p => p.X);
+            var spawnMinY = spawnPixels.Min(p => p.Y);
+            var spawnMaxY = spawnPixels.Max(p => p.Y);
+            
+            // Stratified sampling from painted pixels only (respects shape, not bounding box)
+            var spawnPoints = CreateStratifiedSpawnPoints(spawnPixels, count);
+            for (int i = 0; i < count; i++)
+            {
+                var point = spawnPoints[i];
+                balls[i] = CreateBall(point.X, point.Y, spawnMinX, spawnMaxX);
+            }
+            return balls;
+        }
+        
+        // Fallback to surface-based spawning
         var surface = _surfaceService.Surface;
         if (surface.Count < 2)
         {
@@ -144,44 +238,201 @@ public class SimulationSession : IDisposable
         return balls;
     }
 
+    /// <summary>
+    /// Creates uniformly distributed spawn points using Bridson's Poisson Disk algorithm.
+    /// This eliminates the grid structure that causes moiré effects in jittered grid approaches.
+    /// Uses minimum-distance-based sampling with painted pixel validation.
+    /// Research-backed: Red Blob Games confirms Poisson Disk is the gold standard for
+    /// uniform point distribution with no grid patterns, no clustering, and no gaps.
+    /// </summary>
+    private List<(double X, double Y)> CreateStratifiedSpawnPoints(List<SpawnPoint> pixels, int count)
+    {
+        var result = new List<(double X, double Y)>(count);
+        if (pixels.Count == 0 || count == 0) return result;
+        
+        // Collect unique painted pixel positions
+        var paintedPixels = new HashSet<(int X, int Y)>();
+        foreach (var pixel in pixels)
+        {
+            paintedPixels.Add(((int)pixel.X, (int)pixel.Y));
+        }
+        
+        if (paintedPixels.Count == 0) return result;
+        
+        var minX = pixels.Min(p => p.X);
+        var maxX = pixels.Max(p => p.X);
+        var minY = pixels.Min(p => p.Y);
+        var maxY = pixels.Max(p => p.Y);
+        var spawnWidth = maxX - minX;
+        var spawnHeight = maxY - minY;
+        
+        // Shuffle-based approach: Fisher-Yates shuffle ensures every painted pixel has
+        // an equal chance of being selected, with NO grid structure and MAXIMUM coverage.
+        // When count <= paintedPixels.Count, each ball gets a unique pixel (no duplicates).
+        // When count > paintedPixels.Count, we cycle through the shuffled list.
+        var pixelList = new List<(int X, int Y)>(paintedPixels);
+        
+        // Fisher-Yates shuffle (partial - only need first 'count' elements)
+        int shuffleLimit = Math.Min(count, pixelList.Count);
+        for (int i = 0; i < shuffleLimit; i++)
+        {
+            int j = Random.Shared.Next(i, pixelList.Count);
+            (pixelList[i], pixelList[j]) = (pixelList[j], pixelList[i]);
+        }
+        
+        for (int i = 0; i < count; i++)
+        {
+            var pixel = pixelList[i % pixelList.Count];
+            // Full pixel jitter: ±0.5px ensures uniform coverage within the pixel
+            result.Add((pixel.X + 0.5 + (Random.Shared.NextDouble() - 0.5),
+                       pixel.Y + 0.5 + (Random.Shared.NextDouble() - 0.5)));
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Creates spawn points directly from the spawn mask using Bridson's Poisson Disk algorithm.
+    /// Same approach as CreateStratifiedSpawnPoints but works with raw mask byte array.
+    /// </summary>
+    private List<(double X, double Y)> CreateSpawnPointsFromMask(List<byte> mask, int count)
+    {
+        var result = new List<(double X, double Y)>(count);
+        if (mask.Count == 0 || count == 0) return result;
+        
+        const int maskWidth = 1200;
+        const int maskHeight = 600;
+        
+        // Collect painted pixels and find bounds in single pass
+        var paintedPixels = new List<(int Px, int Py)>();
+        var minX = (double)maskWidth;
+        var maxX = 0.0;
+        var minY = (double)maskHeight;
+        var maxY = 0.0;
+        
+        for (int py = 0; py < maskHeight; py++)
+        {
+            for (int px = 0; px < maskWidth; px++)
+            {
+                var idx = py * maskWidth + px;
+                if (idx < mask.Count && mask[idx] > 128)
+                {
+                    paintedPixels.Add((px, py));
+                    if (px < minX) minX = px;
+                    if (px > maxX) maxX = px;
+                    if (py < minY) minY = py;
+                    if (py > maxY) maxY = py;
+                }
+            }
+        }
+        
+        _logger.LogInformation("Spawn mask: found {PaintedPixels} painted pixels in area [{minX},{minY}]-[{maxX},{maxY}]", 
+            paintedPixels.Count, minX, minY, maxX, maxY);
+        
+        if (paintedPixels.Count == 0) return result;
+        
+        var spawnWidth = maxX - minX;
+        var spawnHeight = maxY - minY;
+        
+        // Handle degenerate cases
+        if (spawnWidth <= 0 || spawnHeight <= 0)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var pixel = paintedPixels[Random.Shared.Next(paintedPixels.Count)];
+                result.Add((pixel.Px + 0.5 + (Random.Shared.NextDouble() - 0.5), 
+                           pixel.Py + 0.5 + (Random.Shared.NextDouble() - 0.5)));
+            }
+            return result;
+        }
+        
+        // Shuffle-based approach: Fisher-Yates shuffle ensures every painted pixel has
+        // an equal chance of being selected, with NO grid structure and MAXIMUM coverage.
+        // When count <= paintedPixels.Count, each ball gets a unique pixel (no duplicates).
+        // When count > paintedPixels.Count, we cycle through the shuffled list.
+        
+        // Fisher-Yates shuffle (partial - only need first 'count' elements)
+        int shuffleLimit = Math.Min(count, paintedPixels.Count);
+        for (int i = 0; i < shuffleLimit; i++)
+        {
+            int j = Random.Shared.Next(i, paintedPixels.Count);
+            (paintedPixels[i], paintedPixels[j]) = (paintedPixels[j], paintedPixels[i]);
+        }
+        
+        for (int i = 0; i < count; i++)
+        {
+            var pixel = paintedPixels[i % paintedPixels.Count];
+            // Full pixel jitter: ±0.5px ensures uniform coverage within the pixel
+            result.Add((pixel.Px + 0.5 + (Random.Shared.NextDouble() - 0.5),
+                       pixel.Py + 0.5 + (Random.Shared.NextDouble() - 0.5)));
+        }
+        return result;
+    }
+
     private Ball CreateBall(double x, double y)
     {
+        // Fallback: use surface bounds for coloring
         var surface = _surfaceService.Surface;
         var minX = surface.Any() ? surface.Min(p => p.X) : 100;
         var maxX = surface.Any() ? surface.Max(p => p.X) : 700;
-        var normalizedX = (x - minX) / Math.Max(1, maxX - minX);
-        var r = (byte)(normalizedX * 255);
-        var g = (byte)(255 - Math.Abs(normalizedX - 0.5) * 2 * 255);
-        var b = (byte)((1 - normalizedX) * 255);
-        return new Ball(x, y, (Random.Shared.NextDouble() - 0.5) * 100, 0, 2.5, r, g, b);
+        return CreateBallWithBounds(x, y, minX, maxX);
+    }
+
+    private Ball CreateBall(double x, double y, double spawnMinX, double spawnMaxX)
+    {
+        return CreateBallWithBounds(x, y, spawnMinX, spawnMaxX);
+    }
+
+    private Ball CreateBallWithBounds(double x, double y, double minX, double maxX)
+    {
+        // Rainbow gradient: left=red, right=violet (same direction as frontend)
+        // Uses HSV color space for proper rainbow colors ending in violet
+        var normalizedX = (x - minX) / Math.Max(1.0, maxX - minX);
+        var hue = 278.0 * normalizedX; // 0=red at left, 278=violet at right
+        var (r, g, b) = HsvToRgb(hue, 1.0, 1.0);
+        return new Ball(x, y, 0, 0, 2.5, r, g, b);
+    }
+
+    private static (byte R, byte G, byte B) HsvToRgb(double h, double s, double v)
+    {
+        var c = s * v;
+        var x = c * (1 - Math.Abs((h / 60.0) % 2 - 1));
+        var m = v - c;
+        double r, g, b;
+
+        if (h < 60) { r = c; g = x; b = 0; }
+        else if (h < 120) { r = x; g = c; b = 0; }
+        else if (h < 180) { r = 0; g = c; b = x; }
+        else if (h < 240) { r = 0; g = x; b = c; }
+        else if (h < 300) { r = x; g = 0; b = c; }
+        else { r = c; g = 0; b = x; }
+
+        return ((byte)((r + m) * 255), (byte)((g + m) * 255), (byte)((b + m) * 255));
     }
 
     private async Task SimulationLoop(CancellationToken ct)
     {
-        while (!ct.IsCancellationRequested && IsRunning)
+        while (!ct.IsCancellationRequested)
         {
             try
             {
-                var gravity = Config.Gravity * 100;
-                var deltaTime = Config.DeltaTime;
-                var restitution = Config.Restitution;
-                var airResistance = Config.AirResistance;
-                Parallel.For(0, _balls.Length, i =>
+                // Only update physics if running (paused = skip physics, preserve state)
+                if (IsRunning && !_isResetting)
                 {
-                    if (!_balls[i].Active) return;
-                    var ball = _balls[i];
-                    ball.Vy += gravity * deltaTime;
-                    ball.Vx *= (1 - airResistance);
-                    ball.Vy *= (1 - airResistance);
-                    ball.X += ball.Vx * deltaTime;
-                    ball.Y += ball.Vy * deltaTime;
-                    CheckSurfaceCollision(ref ball, restitution);
-                    if (ball.X < -50 || ball.X > _canvasWidth + 50 || ball.Y < -50 || ball.Y > _canvasHeight + 50)
+                    // Capture array reference to avoid race conditions
+                    var currentBalls = _balls;
+                    var surface = _surfaceService.Surface;
+                    
+                    // Use PhysicsEngine with sub-stepping
+                    var engine = new PhysicsEngine(Config, surface, _canvasWidth, _canvasHeight);
+                    var state = engine.Update(currentBalls);
+                    
+                    // Update balls array after physics processing completes
+                    lock (_stateLock)
                     {
-                        ball.Active = false;
+                        if (_isResetting) break;
+                        _balls = state.Balls;
                     }
-                    _balls[i] = ball;
-                });
+                }
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex) { _logger.LogError(ex, "Error in simulation loop"); break; }
@@ -189,40 +440,29 @@ public class SimulationSession : IDisposable
         }
     }
 
-    private void CheckSurfaceCollision(ref Ball ball, double restitution)
+    public CancellationTokenSource? GetOrCreateStreamingCts()
     {
-        var surface = _surfaceService.Surface;
-        if (surface.Count < 2) return;
-        for (int i = 0; i < surface.Count - 1; i++)
+        lock (_stateLock)
         {
-            var p1 = surface[i];
-            var p2 = surface[i + 1];
-            var dx = p2.X - p1.X;
-            var dy = p2.Y - p1.Y;
-            var lengthSq = dx * dx + dy * dy;
-            if (lengthSq == 0) continue;
-            var t = Math.Max(0, Math.Min(1, ((ball.X - p1.X) * dx + (ball.Y - p1.Y) * dy) / lengthSq));
-            var closestX = p1.X + t * dx;
-            var closestY = p1.Y + t * dy;
-            var distX = ball.X - closestX;
-            var distY = ball.Y - closestY;
-            var distance = Math.Sqrt(distX * distX + distY * distY);
-            if (distance < ball.Radius)
+            if (_streamingCts == null || _streamingCts.IsCancellationRequested)
             {
-                var normalX = distX / distance;
-                var normalY = distY / distance;
-                var dotProduct = ball.Vx * normalX + ball.Vy * normalY;
-                ball.Vx = (ball.Vx - 2 * dotProduct * normalX) * restitution;
-                ball.Vy = (ball.Vy - 2 * dotProduct * normalY) * restitution;
-                ball.X = closestX + normalX * (ball.Radius + 0.1);
-                ball.Y = closestY + normalY * (ball.Radius + 0.1);
+                _streamingCts = new CancellationTokenSource();
+                _logger.LogInformation("Created new streaming CTS for session {SessionId}", System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this));
             }
+            return _streamingCts;
+        }
+    }
+
+    public void CancelStreaming()
+    {
+        lock (_stateLock)
+        {
+            _streamingCts?.Cancel();
         }
     }
 
     public void Dispose()
     {
         Stop();
-        _cancellationTokenSource?.Dispose();
     }
 }

@@ -2,15 +2,15 @@
 
 ## Architecture
 
-Three-service microservices architecture:
-
+**Dev (single container):** All services run inside the devcontainer:
 ```
-frontend/        → React SPA (CRA)
-backend/         → Flask/Python ML API (port 5000)
-dotnet/          → ASP.NET Core microservice (port 5001)
+frontend/        → React SPA (Vite, port 3000) — runs via VS Code task
+backend/         → Flask/Python ML API (port 5000) — runs via VS Code task
+dotnet/          → ASP.NET Core 8.0 Web API (port 5001) — runs via VS Code task
 ```
+All three services start automatically via VS Code tasks when the workspace folder opens (configured in `.vscode/tasks.json`).
 
-The Flask backend serves the React build as static files. The .NET service is an independent REST API. All services communicate via Docker network `mywebsite-network`.
+**Prod (separate containers):** Root `Dockerfile` + `docker-compose.yml` builds separate images for each service.
 
 ## Key Paths
 
@@ -18,22 +18,30 @@ The Flask backend serves the React build as static files. The .NET service is an
 - Backend API: `backend/api/api.py` + `backend/api/routes/`
 - ML code: `backend/api/src/machine_learning/`
 - .NET API: `dotnet/Controllers/`
-- Dev container: `.devcontainer/`
+- Dev container: `.devcontainer/` (single Dockerfile, no docker-compose)
 - Prod Docker: root `Dockerfile` + `docker-compose.yml`
+- Logs: `logs/`
 
 ## Running
 
-- **Dev (recommended):** Reopen in devcontainer. Runs `docker-compose -f .devcontainer/docker-compose.yml up`.
+- **Dev (recommended):** Reopen in devcontainer. All 3 services start automatically via VS Code tasks (Flask 5000, dotnet 5001, React 3000).
 - **Prod:** `docker-compose up site dotnet-api` from root.
+- **Restart services:** Use `workbench.action.tasks.restartTask` with args `["Task Name"]` to restart a task cleanly (no UI prompt)
+
+## Logs
+
+- Logs of the running tasks are populated from the output of the running tasks in the `logs/` folder, filenames like `task-*.log`
+- Server logs of the dotnet service are stored in `logs/dotnet-*.log` files, with todays date.
+- IMPORTANT: Always check the logs when debugging work related to the services. Don't assume things are working.
 
 ## Frontend
 
-- React 18 with Create React App (ejected-free — uses `react-scripts`).
+- React 18 with Vite (port 3000, host: '0.0.0.0').
 - React Router v5 (`react-router-dom` BrowserRouter).
 - Pages: `/`, `/home`, `/machinelearner`, `/pathfinder`, `/dotnet-demo`.
 - Components live in `frontend/src/components/`.
 - CSS is per-component (module-style `.css` files).
-- Frontend is built (`npm run build`) and served by Flask as static files.
+- Runs using task "Start React Dev Server (Port 3000)".
 
 ## Backend (Flask)
 
@@ -43,6 +51,7 @@ The Flask backend serves the React build as static files. The .NET service is an
 - ML model types: `backend/api/src/machine_learning/models/model_types/` (decision_tree, k_nearest_neighbours, linear_regression, polynomial_regression).
 - CORS enabled globally via `flask-cors`.
 - Session-based ML state managed via `session_context_manager.py` — always validate session IDs exist before accessing.
+- Runs using task "Start Flask Server (Port 5000)".
 
 ## Backend (.NET)
 
@@ -50,15 +59,20 @@ The Flask backend serves the React build as static files. The .NET service is an
 - Route pattern: `/api/[controller]/[action]` (e.g., `/api/example/hello`).
 - CORS configured with "AllowAll" policy in `Program.cs`.
 - Controllers go in `dotnet/Controllers/`.
-- Use `dotnet watch run` for dev hot reload.
+- Runs using task "Start dotnet Service (Port 5001)".
 
 ## Docker / Devcontainer
 
-- Devcontainer uses `.devcontainer/docker-compose.yml` (2 services only: `site-dev`, `dotnet-api-dev`).
-- Backend volume mount: `../backend:/app/backend` (hot reload for Python code).
-- Frontend build is baked into the image (postStartCommand runs `npm run build`).
-- .NET volume mount: `../dotnet:/src` (hot reload for C# code).
-- Both services on `mywebsite-network` bridge network.
+- Devcontainer uses `docker-compose.yml` (single `site-dev` service with all components).
+- Volume mounts for hot reload: `./frontend`, `./backend`, `./dotnet`, `./notes` → `/app/`
+- Build artifact volumes (persist across rebuilds):
+  - `frontend-node_modules` → `/app/frontend/node_modules`
+  - `frontend-build` → `/app/frontend/build`
+  - `dotnet-obj` → `/app/dotnet/obj`
+  - `dotnet-bin` → `/app/dotnet/bin`
+  - `backend-pycache` → `/app/backend/__pycache__`
+- All services on `mywebsite-network` bridge network.
+- `.dockerignore` excludes build artifacts from Docker COPY commands.
 
 ## Conventions
 

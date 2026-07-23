@@ -9,13 +9,24 @@ import { ProjectHero } from '../common/ProjectHero';
 export default function ProjectsPage() {
     const projects = [
         {
+            title: '2D Physics Simulation',
+            description: 'An interactive physics sandbox with real-time ball-surface collision detection, gravity, and restitution. Draw surfaces, paint ball spawn areas, and watch thousands of balls bounce in parallel. Built with React, SignalR, and ASP.NET Core.',
+            link: '/physics-simulation',
+            label: 'Try It Out',
+            image: '/assets/projects/2d_physics_comp.webm',
+            imageColor: null,
+            imageIcon: null
+        },
+
+        {
             title: 'Machine Learner',
             description: 'A general-purpose machine learning platform that supports multiple model types including decision trees, k-nearest neighbours, and regression models. Features data preprocessing, scaling, and visualization tools. Deployed and running on this site.',
             link: '/machinelearner',
             label: 'Try It Out',
-            image: null,
-            imageColor: '#fe4203',
-            imageIcon: '🤖'
+            image: '/assets/projects/ml.webp',
+            imageColor: null,
+            imageIcon: null,
+            specialClass: 'ml-card'
         },
 
         {
@@ -60,10 +71,14 @@ export default function ProjectsPage() {
             <section className="section">
                 <div className="projects-grid">
                         {projects.map((project, index) => (
-                            <div key={index} className="project-card">
+                            <div key={index} className={`project-card${project.specialClass ? ' ' + project.specialClass : ''}`}>
                                 {project.image && (
                                     <div className="project-card-image">
-                                        <img src={project.image} alt={project.title} loading="lazy" />
+                                        {project.image.endsWith('.webm') || project.image.endsWith('.mp4') || project.image.endsWith('.ogg') ? (
+                                            <video src={project.image} alt={project.title} autoPlay loop muted playsInline />
+                                        ) : (
+                                            <img src={project.image} alt={project.title} loading="lazy" />
+                                        )}
                                     </div>
                                 )}
                                 {project.imageColor && (

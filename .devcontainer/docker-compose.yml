@@ -1,43 +1,33 @@
 version: '3.8'
 
-# Optional: Use this file to run only dev services
-# Usage: docker-compose -f .devcontainer/docker-compose.yml up
-# From root: docker-compose -f .devcontainer/docker-compose.yml up
+volumes:
+    frontend-node_modules:
+    frontend-build:
+    dotnet-obj:
+    dotnet-bin:
+    backend-pycache:
 
 services:
-    site-dev:
+    dev:
         build:
             context: ..
             dockerfile: .devcontainer/Dockerfile
-        image: mywebsite-dev
-        container_name: mywebsite-python-dev
+        container_name: mywebsite-dev
         ports:
-            - '5000:5000'
             - '3000:3000'
+            - '5000:5000'
+            - '5001:5001'
         volumes:
             - ../:/app
-            - /app/frontend/node_modules
-            - /app/frontend/build
+            - frontend-node_modules:/app/frontend/node_modules
+            - frontend-build:/app/frontend/build
+            - dotnet-obj:/app/dotnet/obj
+            - dotnet-bin:/app/dotnet/bin
+            - backend-pycache:/app/backend/__pycache__
         environment:
             - PYTHONUNBUFFERED=1
             - FLASK_APP=backend/api/api.py
             - STATIC_FOLDER=/app/frontend/build
-        depends_on:
-            - dotnet-api-dev
-        networks:
-            - mywebsite-network
-
-    dotnet-api-dev:
-        build:
-            context: ..
-            dockerfile: dotnet/Dockerfile.dev
-        image: mywebsite-dotnet-dev
-        container_name: mywebsite-dotnet-dev
-        ports:
-            - '5001:5001'
-        volumes:
-            - ../dotnet:/src
-        environment:
             - ASPNETCORE_URLS=http://+:5001
             - ASPNETCORE_ENVIRONMENT=Development
         networks:

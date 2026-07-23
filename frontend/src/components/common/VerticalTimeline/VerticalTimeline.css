@@ -5,7 +5,7 @@
     max-width: 800px;
     margin: 0 auto;
     position: relative;
-    gap: 20px;
+    gap: 24px;
 }
 
 .event {
@@ -20,53 +20,75 @@
 .event-date {
     grid-column: 1;
     justify-self: end;
-    font-weight: bold;
-    background-color: #fff;
-    padding: 5px 10px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #e0e0e0;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 6px 12px;
+    border-radius: 8px;
     white-space: nowrap;
-    padding-right: 10px;
-    margin-top: 6px;
+    padding-right: 12px;
+    margin-top: 4px;
 }
 
 .event-line {
     position: absolute;
     left: 50%;
     width: 2px;
-    height: calc(100% + 20px);
-    background-color: #ccc;
+    height: calc(100% + 24px);
+    background: linear-gradient(to bottom, rgba(254, 66, 3, 0.6), rgba(3, 191, 254, 0.6));
     transform: translateX(-50%);
-    top: 22px;
+    top: 20px;
     z-index: 0;
 }
 
 .event-circle {
     grid-column: 2;
     justify-self: center;
-    width: 20px;
-    height: 20px;
-    background-color: #fe4203;
-    border-radius: 100%;
+    width: 16px;
+    height: 16px;
+    background: radial-gradient(circle, #fe4203 0%, #e03500 100%);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
     margin-top: 12px;
     position: relative;
     z-index: 1;
+    box-shadow: 0 0 10px rgba(254, 66, 3, 0.4);
 }
 
 .event-description {
     grid-column: 3;
     text-align: left;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    background-color: #fff;
-    padding-left: 10px;
+    padding: 6px 16px 16px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 0;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.event-description:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateX(2px);
 }
 
 .event-description h3 {
     margin-top: 0;
+    margin-bottom: 6px;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
 }
 
 .event-description p {
     margin-bottom: 0;
+    color: #d0d0d0;
+    line-height: 1.5;
+    font-size: 0.9rem;
 }

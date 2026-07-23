@@ -8,6 +8,17 @@ public class PhysicsEngine
     private readonly List<SurfacePoint> _surface;
     private readonly int _canvasWidth;
     private readonly int _canvasHeight;
+    private readonly SpatialHashGrid _hashGrid;
+    
+    // Spatial hash grid cell size (matches ball diameter for efficient lookups)
+    private const int CellSize = 5;
+    
+    // Sub-stepping: split each frame into smaller steps to prevent tunneling
+    // 16 sub-steps with velocity clamping prevents tunneling while maintaining performance
+    private const int SubSteps = 16;
+    
+    // Max velocity clamp to prevent tunneling (px/s) — ~2x max fall speed from canvas top
+    private const double MaxVelocity = 1000.0;
 
     public PhysicsEngine(SimulationConfig config, List<SurfacePoint> surface, int canvasWidth, int canvasHeight)
     {
@@ -15,6 +26,9 @@ public class PhysicsEngine
         _surface = surface;
         _canvasWidth = canvasWidth;
         _canvasHeight = canvasHeight;
+        
+        // Pre-compute spatial hash grid for fast surface segment lookups
+        _hashGrid = new SpatialHashGrid(surface, CellSize);
     }
 
     public SimulationState Update(Ball[] balls)
@@ -22,7 +36,7 @@ public class PhysicsEngine
         var gravity = _config.Gravity * 100; // Scale gravity for pixel coordinates
         var deltaTime = _config.DeltaTime;
         var restitution = _config.Restitution;
-        var airResistance = _config.AirResistance;
+        var subDeltaTime = deltaTime / SubSteps;
 
         Parallel.For(0, balls.Length, i =>
         {
@@ -30,19 +44,28 @@ public class PhysicsEngine
 
             var ball = balls[i];
 
-            // Apply gravity
-            ball.Vy += gravity * deltaTime;
+            // Sub-stepping: run multiple smaller physics steps per frame
+            for (int step = 0; step < SubSteps; step++)
+            {
+                // Apply gravity
+                ball.Vy += gravity * subDeltaTime;
 
-            // Apply air resistance
-            ball.Vx *= (1 - airResistance);
-            ball.Vy *= (1 - airResistance);
+                // Clamp velocity to prevent tunneling
+                var speed = Math.Sqrt(ball.Vx * ball.Vx + ball.Vy * ball.Vy);
+                if (speed > MaxVelocity)
+                {
+                    var scale = MaxVelocity / speed;
+                    ball.Vx *= scale;
+                    ball.Vy *= scale;
+                }
 
-            // Update position
-            ball.X += ball.Vx * deltaTime;
-            ball.Y += ball.Vy * deltaTime;
+                // Update position
+                ball.X += ball.Vx * subDeltaTime;
+                ball.Y += ball.Vy * subDeltaTime;
 
-            // Check surface collision
-            CheckSurfaceCollision(ref ball, restitution);
+                // Simple overlap collision detection
+                CheckSurfaceCollision(ref ball, restitution, 0, subDeltaTime);
+            }
 
             // Check bounds (off-screen)
             if (ball.X < -50 || ball.X > _canvasWidth + 50 || 
@@ -61,14 +84,22 @@ public class PhysicsEngine
         };
     }
 
-    private void CheckSurfaceCollision(ref Ball ball, double restitution)
+    private bool CheckSurfaceCollision(ref Ball ball, double restitution, double gravity, double subDeltaTime)
     {
-        if (_surface.Count < 2) return;
+        if (_surface.Count < 2) return false;
 
-        for (int i = 0; i < _surface.Count - 1; i++)
+        bool collisionOccurred = false;
+
+        // Use spatial hash grid to only check segments near the ball
+        var ballMinX = ball.X - ball.Radius;
+        var ballMinY = ball.Y - ball.Radius;
+        var ballMaxX = ball.X + ball.Radius;
+        var ballMaxY = ball.Y + ball.Radius;
+
+        foreach (var segIndex in _hashGrid.GetSegmentsInRect(ballMinX, ballMinY, ballMaxX, ballMaxY, 0))
         {
-            var p1 = _surface[i];
-            var p2 = _surface[i + 1];
+            var p1 = _surface[segIndex];
+            var p2 = _surface[segIndex + 1];
 
             // Calculate distance from ball to line segment
             var dx = p2.X - p1.X;
@@ -76,6 +107,14 @@ public class PhysicsEngine
             var lengthSq = dx * dx + dy * dy;
 
             if (lengthSq == 0) continue;
+
+            // Quick bounding box check — skip if ball is clearly too far from segment
+            var minX = Math.Min(p1.X, p2.X) - ball.Radius;
+            var maxX = Math.Max(p1.X, p2.X) + ball.Radius;
+            var minY = Math.Min(p1.Y, p2.Y) - ball.Radius;
+            var maxY = Math.Max(p1.Y, p2.Y) + ball.Radius;
+            if (ball.X < minX || ball.X > maxX || ball.Y < minY || ball.Y > maxY)
+                continue;
 
             // Project ball onto line segment
             var t = Math.Max(0, Math.Min(1, ((ball.X - p1.X) * dx + (ball.Y - p1.Y) * dy) / lengthSq));
@@ -85,23 +124,59 @@ public class PhysicsEngine
 
             var distX = ball.X - closestX;
             var distY = ball.Y - closestY;
-            var distance = Math.Sqrt(distX * distX + distY * distY);
+            var distSq = distX * distX + distY * distY;
+            var radiusSq = ball.Radius * ball.Radius;
 
-            if (distance < ball.Radius)
+            // Squared distance check — avoids expensive Math.Sqrt for far-away segments
+            if (distSq >= radiusSq) continue;
+
+            // Use the segment's GEOMETRIC normal (constant for straight segments),
+            // NOT a position-dependent normal. This ensures balls at different
+            // positions on the same straight surface get identical bounce normals.
+            // In canvas coords, segment direction is (dx, dy). Perpendicular is (-dy, dx).
+            var geoNormalX = -dy;
+            var geoNormalY = dx;
+            var geoLen = Math.Sqrt(geoNormalX * geoNormalX + geoNormalY * geoNormalY);
+            geoNormalX /= geoLen;
+            geoNormalY /= geoLen;
+
+            // In canvas coords, Y increases downward.
+            // We want the normal pointing "upward" (toward the side balls bounce from).
+            // Check: if dot(geoNormal, ball-to-closest) < 0, the normal points away
+            // from the ball, so flip it to point toward the ball.
+            var dotToBall = geoNormalX * distX + geoNormalY * distY;
+            if (dotToBall < 0)
             {
-                // Calculate collision normal
-                var normalX = distX / distance;
-                var normalY = distY / distance;
-
-                // Reflect velocity: V = V - 2(V·N)N
-                var dotProduct = ball.Vx * normalX + ball.Vy * normalY;
-                ball.Vx = (ball.Vx - 2 * dotProduct * normalX) * restitution;
-                ball.Vy = (ball.Vy - 2 * dotProduct * normalY) * restitution;
-
-                // Push ball out of surface
-                ball.X = closestX + normalX * (ball.Radius + 0.1);
-                ball.Y = closestY + normalY * (ball.Radius + 0.1);
+                geoNormalX = -geoNormalX;
+                geoNormalY = -geoNormalY;
             }
+
+            var normalX = geoNormalX;
+            var normalY = geoNormalY;
+
+            // Only process collision if ball is above the surface (normal points upward).
+            if (normalY > -0.1) continue;
+
+            // Check if ball is moving toward the surface (velocity opposite to normal)
+            var dotProduct = ball.Vx * normalX + ball.Vy * normalY;
+            
+            // Only reflect if ball is moving toward the surface (dotProduct < 0 means velocity opposes normal)
+            // Reflect velocity: V = V - 2(V·N)N
+            if (dotProduct < 0)
+            {
+                // Reflect velocity: V = V - 2(V·N)N
+                ball.Vx = (ball.Vx - 2 * dotProduct * normalX) * _config.Restitution;
+                ball.Vy = (ball.Vy - 2 * dotProduct * normalY) * _config.Restitution;
+            }
+
+            // Push ball out of surface to prevent sinking (use exact radius, no extra offset)
+            ball.X = closestX + normalX * ball.Radius;
+            ball.Y = closestY + normalY * ball.Radius;
+                
+            collisionOccurred = true;
         }
+
+        return collisionOccurred;
     }
+
 }

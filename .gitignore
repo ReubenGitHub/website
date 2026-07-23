@@ -1,11 +1,36 @@
-todoList.txt
-notes/
-notes.md
+# Benchmark artifacts
+dotnet/Tests/dotnet.Benchmarks/BenchmarkDotNet.Artifacts/
 
+# Build artifacts
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+*.so
+*.dylib
+
+# IDE
+.vs/
+.vscode/settings.json
+.idea/
+.DS_Store
+
+# Node
 package-lock.json
 node_modules
 build
 
+# Python
 __pycache__
 custom_metric.c
 custom_metric.cpython-39-x86_64-linux-gnu.so
+
+# Logs
+logs/*
+logs/.*
+
+# Project files
+todoList.txt
+notes/
+notes.md

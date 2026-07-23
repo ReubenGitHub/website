@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+    site:
+        build: .
+        image: mywebsite
+        container_name: mywebsite-python-prod
+        ports:
+            - '5000:5000'
+        environment:
+            - PYTHONUNBUFFERED=1
+            - FLASK_APP=api/api.py
+            - FLASK_ENV=PRODUCTION
+        depends_on:
+            - dotnet-api
+        networks:
+            - mywebsite-network
+
+    dotnet-api:
+        build:
+            context: .
+            dockerfile: dotnet/Dockerfile
+        image: mywebsite-dotnet
+        container_name: mywebsite-dotnet-prod
+        ports:
+            - '5001:5001'
+        environment:
+            - ASPNETCORE_URLS=http://+:5001
+            - ASPNETCORE_ENVIRONMENT=Production
+        networks:
+            - mywebsite-network
+
+networks:
+    mywebsite-network:
+        driver: bridge

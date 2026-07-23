@@ -22,6 +22,7 @@ export function NavBar() {
                     <a href="/projects" className={`dropdown-btn ${isActive('projects')}`}>Projects ▾</a>
                     <div className="dropdown-content">
                         <a href="/projects" className={isActive('projects')}>All Projects</a>
+                        <a href="/physics-simulation" className={isActive('physics-simulation')}>Physics Simulation</a>
                         <a href="/machinelearner" className={isActive('machinelearner')}>Machine Learner</a>
                         <a href="/speedy-pv" className={isActive('speedy-pv')}>Speedy PV</a>
                         <a href="/ml-vehicle-emissions" className={isActive('ml-vehicle-emissions')}>ML Vehicle Emissions</a>
