@@ -95,11 +95,19 @@
     position: relative;
 }
 
-.project-card-image img {
+.project-card-image img,
+.project-card-image video {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+}
+
+.ml-card .project-card-image img,
+.ml-card .project-card-image video {
+    height: 100%;
+    object-fit: contain;
+    background-color: white;
 }
 
 .project-card-placeholder {
