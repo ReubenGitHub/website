@@ -18,7 +18,8 @@ const UnifiedCanvas = ({
   spawnPixels,
   setSpawnPixels,
   defaultSurface,
-  flatSurface
+  flatSurface,
+  onGetSpawnMask
 }) => {
   const canvasRef = useRef(null);
   const animationFrameRef = useRef(null);
@@ -40,6 +41,16 @@ const UnifiedCanvas = ({
   const paintingBoundsRef = useRef({ minX: 0, maxX: 0 }); // Bounding box during active painting
   const currentStrokeRef = useRef([]); // Batched points during active stroke
   const connectorEndRef = useRef(null); // End point of connector line (from old surface to new stroke start)
+
+  // Generate SVG data URL cursor for ball painting mode
+  const generateCursorSvg = useCallback((brushSize) => {
+    const size = Math.max(brushSize * 2, 2); // 2x brush size, min 2px
+    const half = size / 2;
+    const strokeWidth = 2;
+    const radius = Math.max(half - strokeWidth, 0.5);
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}'><circle cx='${half}' cy='${half}' r='${radius}' fill='none' stroke='white' stroke-width='${strokeWidth}'/></svg>`;
+    return `url("data:image/svg+xml,${encodeURIComponent(svg)}") ${half} ${half}, auto`;
+  }, []);
 
   useEffect(() => { surfaceRef.current = surface || []; }, [surface]);
   useEffect(() => { defaultSurfaceRef.current = defaultSurface || []; }, [defaultSurface]);
@@ -191,8 +202,8 @@ const UnifiedCanvas = ({
     const ctx = maskCanvas.getContext('2d');
     const imageData = ctx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
     const pixels = [];
-    // Sample every 4th pixel for performance
-    const step = 4;
+    // Sample every 2nd pixel for better thin-stroke coverage
+    const step = 2;
     for (let y = 0; y < maskCanvas.height; y += step) {
       for (let x = 0; x < maskCanvas.width; x += step) {
         const index = (y * maskCanvas.width + x) * 4;
@@ -203,6 +214,19 @@ const UnifiedCanvas = ({
     }
     console.log('[Canvas] extractSpawnPixels: found', pixels.length, 'painted pixels');
     return pixels;
+  }, []);
+
+  // Get raw spawn mask image data as byte array (1 byte per pixel: 0=empty, 255=painted)
+  const getSpawnMaskData = useCallback(() => {
+    const maskCanvas = spawnMaskCanvasRef.current;
+    if (!maskCanvas) return null;
+    const ctx = maskCanvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+    const bytes = new Uint8Array(imageData.data.length / 4);
+    for (let i = 0; i < bytes.length; i++) {
+      bytes[i] = imageData.data[i * 4 + 3] > 128 ? 255 : 0; // Use alpha channel
+    }
+    return Array.from(bytes);
   }, []);
 
   // Draw spawn mask overlay on main canvas with rainbow gradient
@@ -599,16 +623,21 @@ const UnifiedCanvas = ({
   }, [setDrawPoints, setIsDrawing, extractSpawnPixels, setSpawnPixels]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={1200}
-      height={600}
-      className="simulation-canvas"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={() => setIsDrawing(false)}
-    />
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <canvas
+        ref={canvasRef}
+        width={1200}
+        height={600}
+        className="simulation-canvas"
+        style={isBallPaintingEnabled ? { cursor: generateCursorSvg(brushSize) } : {}}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={() => {
+          setIsDrawing(false);
+        }}
+      />
+    </div>
   );
 };
 

@@ -31,6 +31,9 @@ const PhysicsSimulation = () => {
   
   // Simulation parameters
   const [restitution, setRestitution] = useState(1);
+  
+  // Ref to access spawn mask data from UnifiedCanvas
+  const canvasRef = useRef(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -266,12 +269,23 @@ const PhysicsSimulation = () => {
 
       console.log('[PhysicsSim] spawnPixelsToSend:', spawnPixelsToSend === null ? 'null' : `array with ${spawnPixelsToSend.length} pixels`, spawnPixelsToSend?.slice(0, 5));
 
+      // Get raw spawn mask image data if custom painted area
+      let spawnMaskToSend = null;
+      if (spawnPixels !== null && spawnPixels.length > 0 && canvasRef.current?.getMaskData) {
+        const maskData = canvasRef.current.getMaskData();
+        if (maskData) {
+          spawnMaskToSend = maskData;
+          console.log('[PhysicsSim] Spawn mask data: sent', maskData.length, 'bytes (1200x600)');
+        }
+      }
+
       const config = { 
         ballCount: ballCount, 
         gravity: 4.0, 
         restitution, 
         deltaTime: 1.0 / 30.0,
-        spawnPixels: spawnPixelsToSend
+        spawnPixels: spawnPixelsToSend,
+        spawnMask: spawnMaskToSend
       };
 
       if (isPaused) {
@@ -389,7 +403,25 @@ const PhysicsSimulation = () => {
     <div className="physics-simulation-page">
       <div className="simulation-header">
         <h1>2D Physics Simulation</h1>
-        <p>Draw a surface to bounce balls on</p>
+        <p>Bounce balls off surfaces</p>
+      </div>
+
+      <div className="simulation-info-card">
+        <h2>About</h2>
+        <p>
+          An interactive 2D physics simulation featuring real-time ball-surface collision detection,
+          gravity, and restitution. Draw custom surfaces or use preset shapes, paint the area where
+          balls will spawn, and start the simulation.
+        </p>
+        <p>
+          <strong>Stack:</strong> React + Vite frontend with SignalR client → ASP.NET Core 8.0 Web API
+          backend with SignalR hub → Parallel physics engine with spatial hash grid collision detection.
+        </p>
+        <p>
+          <strong>Features:</strong> 16 sub-step physics integration, ball-to-surface collision with
+          geometric normals, stratified ball spawning, pixel-based spawn area painting, and real-time
+          state streaming at 30fps.
+        </p>
       </div>
 
       {error && (
@@ -452,7 +484,7 @@ const PhysicsSimulation = () => {
             <span>Brush</span>
             <input
               type="range"
-              min="4"
+              min="1"
               max="20"
               value={brushSize}
               onChange={(e) => setBrushSize(Number(e.target.value))}
@@ -534,6 +566,7 @@ const PhysicsSimulation = () => {
               setSpawnPixels={setSpawnPixels}
               defaultSurface={defaultSurface}
               flatSurface={flatSurface}
+              onGetSpawnMask={(fn) => { canvasRef.current = { getMaskData: fn }; }}
             />
             <SimulationControls
               isRunning={isRunning}

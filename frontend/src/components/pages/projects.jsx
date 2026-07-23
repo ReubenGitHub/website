@@ -9,6 +9,16 @@ import { ProjectHero } from '../common/ProjectHero';
 export default function ProjectsPage() {
     const projects = [
         {
+            title: '2D Physics Simulation',
+            description: 'An interactive physics sandbox with real-time ball-surface collision detection, gravity, and restitution. Draw surfaces, paint ball spawn areas, and watch thousands of balls bounce in parallel. Built with React, SignalR, and ASP.NET Core.',
+            link: '/physics-simulation',
+            label: 'Try It Out',
+            image: null,
+            imageColor: '#03bffe',
+            imageIcon: '🎱'
+        },
+
+        {
             title: 'Machine Learner',
             description: 'A general-purpose machine learning platform that supports multiple model types including decision trees, k-nearest neighbours, and regression models. Features data preprocessing, scaling, and visualization tools. Deployed and running on this site.',
             link: '/machinelearner',

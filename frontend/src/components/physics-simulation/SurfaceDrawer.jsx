@@ -210,7 +210,7 @@ const SurfaceDrawer = ({ onSurfaceDrawn, defaultSurface }) => {
           <label>Brush Size: {brushSize}px</label>
           <input
             type="range"
-            min="4"
+            min="1"
             max="20"
             value={brushSize}
             onChange={(e) => setBrushSize(Number(e.target.value))}

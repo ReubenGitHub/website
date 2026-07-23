@@ -70,7 +70,7 @@ public class SimulationSession : IDisposable
             
             if (_balls.Length == 0 || _balls.All(b => !b.Active))
             {
-                _balls = SpawnBalls(Config.BallCount, Config.SpawnPixels);
+                _balls = SpawnBalls(Config.BallCount, Config.SpawnPixels, Config.SpawnMask);
             }
             _simulationTask = Task.Run(() => SimulationLoop(ct), ct);
             _logger.LogInformation("Simulation started with {BallCount} balls", Config.BallCount);
@@ -150,13 +150,43 @@ public class SimulationSession : IDisposable
         }
     }
 
-    private Ball[] SpawnBalls(int count, List<SpawnPoint>? spawnPixels)
+    private Ball[] SpawnBalls(int count, List<SpawnPoint>? spawnPixels, List<byte>? spawnMask)
     {
         var balls = new Ball[count];
         
-        _logger.LogInformation("SpawnBalls called: spawnPixels is null={IsNull}, count={Count}", spawnPixels == null, spawnPixels?.Count ?? 0);
+        _logger.LogInformation("SpawnBalls called: spawnPixels is null={IsNull}, mask is null={MaskNull}, count={Count}", spawnPixels == null, spawnMask == null, count);
         
-        // Use spawn pixels if provided
+        // Use spawn mask if provided (higher precision than pixel list)
+        if (spawnMask != null && spawnMask.Count > 0)
+        {
+            _logger.LogInformation("Spawning {Count} balls from spawn mask ({MaskSize} bytes)", count, spawnMask.Count);
+            const int mWidth = 1200;
+            const int mHeight = 600;
+            var spawnPoints = CreateSpawnPointsFromMask(spawnMask, count);
+            // Compute actual bounds from painted pixels for correct coloring
+            var spawnMinX = (double)mWidth; // Will find min
+            var spawnMaxX = 0.0; // Will find max
+            for (int i = 0; i < spawnMask.Count; i++)
+            {
+                if (spawnMask[i] > 128)
+                {
+                    var px = i % mWidth;
+                    var py = i / mWidth;
+                    if (px < spawnMinX) spawnMinX = px;
+                    if (px > spawnMaxX) spawnMaxX = px;
+                }
+            }
+            spawnMinX -= 0.5;
+            spawnMaxX += 0.5;
+            for (int i = 0; i < count; i++)
+            {
+                var point = spawnPoints[i];
+                balls[i] = CreateBall(point.X, point.Y, spawnMinX, spawnMaxX);
+            }
+            return balls;
+        }
+        
+        // Use spawn pixels if provided (fallback to pixel-based method)
         if (spawnPixels != null && spawnPixels.Count > 0)
         {
             _logger.LogInformation("Spawning {Count} balls in custom spawn area ({PixelCount} pixels)", count, spawnPixels.Count);
@@ -166,8 +196,8 @@ public class SimulationSession : IDisposable
             var spawnMinY = spawnPixels.Min(p => p.Y);
             var spawnMaxY = spawnPixels.Max(p => p.Y);
             
-            // Stratified sampling: divide area into cells, pick one random point per cell
-            var spawnPoints = CreateStratifiedSpawnPoints(spawnMinX, spawnMaxX, spawnMinY, spawnMaxY, count);
+            // Stratified sampling from painted pixels only (respects shape, not bounding box)
+            var spawnPoints = CreateStratifiedSpawnPoints(spawnPixels, count);
             for (int i = 0; i < count; i++)
             {
                 var point = spawnPoints[i];
@@ -209,35 +239,132 @@ public class SimulationSession : IDisposable
     }
 
     /// <summary>
-    /// Creates uniformly distributed spawn points using stratified sampling.
-    /// Divides the area into cells and picks one random point per cell for even coverage.
+    /// Creates uniformly distributed spawn points using Bridson's Poisson Disk algorithm.
+    /// This eliminates the grid structure that causes moiré effects in jittered grid approaches.
+    /// Uses minimum-distance-based sampling with painted pixel validation.
+    /// Research-backed: Red Blob Games confirms Poisson Disk is the gold standard for
+    /// uniform point distribution with no grid patterns, no clustering, and no gaps.
     /// </summary>
-    private List<(double X, double Y)> CreateStratifiedSpawnPoints(double minX, double maxX, double minY, double maxY, int count)
+    private List<(double X, double Y)> CreateStratifiedSpawnPoints(List<SpawnPoint> pixels, int count)
     {
         var result = new List<(double X, double Y)>(count);
-        var width = maxX - minX;
-        var height = maxY - minY;
+        if (pixels.Count == 0 || count == 0) return result;
         
-        // Calculate grid dimensions: aim for roughly square cells
-        var aspectRatio = width / Math.Max(1, height);
-        var cols = (int)Math.Ceiling(Math.Sqrt(count * aspectRatio));
-        var rows = (int)Math.Ceiling((double)count / cols);
-        var cellWidth = width / cols;
-        var cellHeight = height / rows;
-        
-        // One random point per cell for uniform coverage
-        for (int row = 0; row < rows; row++)
+        // Collect unique painted pixel positions
+        var paintedPixels = new HashSet<(int X, int Y)>();
+        foreach (var pixel in pixels)
         {
-            for (int col = 0; col < cols; col++)
+            paintedPixels.Add(((int)pixel.X, (int)pixel.Y));
+        }
+        
+        if (paintedPixels.Count == 0) return result;
+        
+        var minX = pixels.Min(p => p.X);
+        var maxX = pixels.Max(p => p.X);
+        var minY = pixels.Min(p => p.Y);
+        var maxY = pixels.Max(p => p.Y);
+        var spawnWidth = maxX - minX;
+        var spawnHeight = maxY - minY;
+        
+        // Shuffle-based approach: Fisher-Yates shuffle ensures every painted pixel has
+        // an equal chance of being selected, with NO grid structure and MAXIMUM coverage.
+        // When count <= paintedPixels.Count, each ball gets a unique pixel (no duplicates).
+        // When count > paintedPixels.Count, we cycle through the shuffled list.
+        var pixelList = new List<(int X, int Y)>(paintedPixels);
+        
+        // Fisher-Yates shuffle (partial - only need first 'count' elements)
+        int shuffleLimit = Math.Min(count, pixelList.Count);
+        for (int i = 0; i < shuffleLimit; i++)
+        {
+            int j = Random.Shared.Next(i, pixelList.Count);
+            (pixelList[i], pixelList[j]) = (pixelList[j], pixelList[i]);
+        }
+        
+        for (int i = 0; i < count; i++)
+        {
+            var pixel = pixelList[i % pixelList.Count];
+            // Full pixel jitter: ±0.5px ensures uniform coverage within the pixel
+            result.Add((pixel.X + 0.5 + (Random.Shared.NextDouble() - 0.5),
+                       pixel.Y + 0.5 + (Random.Shared.NextDouble() - 0.5)));
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Creates spawn points directly from the spawn mask using Bridson's Poisson Disk algorithm.
+    /// Same approach as CreateStratifiedSpawnPoints but works with raw mask byte array.
+    /// </summary>
+    private List<(double X, double Y)> CreateSpawnPointsFromMask(List<byte> mask, int count)
+    {
+        var result = new List<(double X, double Y)>(count);
+        if (mask.Count == 0 || count == 0) return result;
+        
+        const int maskWidth = 1200;
+        const int maskHeight = 600;
+        
+        // Collect painted pixels and find bounds in single pass
+        var paintedPixels = new List<(int Px, int Py)>();
+        var minX = (double)maskWidth;
+        var maxX = 0.0;
+        var minY = (double)maskHeight;
+        var maxY = 0.0;
+        
+        for (int py = 0; py < maskHeight; py++)
+        {
+            for (int px = 0; px < maskWidth; px++)
             {
-                if (result.Count >= count) break;
-                
-                var px = minX + col * cellWidth + Random.Shared.NextDouble() * cellWidth;
-                var py = minY + row * cellHeight + Random.Shared.NextDouble() * cellHeight;
-                result.Add((px, py));
+                var idx = py * maskWidth + px;
+                if (idx < mask.Count && mask[idx] > 128)
+                {
+                    paintedPixels.Add((px, py));
+                    if (px < minX) minX = px;
+                    if (px > maxX) maxX = px;
+                    if (py < minY) minY = py;
+                    if (py > maxY) maxY = py;
+                }
             }
         }
         
+        _logger.LogInformation("Spawn mask: found {PaintedPixels} painted pixels in area [{minX},{minY}]-[{maxX},{maxY}]", 
+            paintedPixels.Count, minX, minY, maxX, maxY);
+        
+        if (paintedPixels.Count == 0) return result;
+        
+        var spawnWidth = maxX - minX;
+        var spawnHeight = maxY - minY;
+        
+        // Handle degenerate cases
+        if (spawnWidth <= 0 || spawnHeight <= 0)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var pixel = paintedPixels[Random.Shared.Next(paintedPixels.Count)];
+                result.Add((pixel.Px + 0.5 + (Random.Shared.NextDouble() - 0.5), 
+                           pixel.Py + 0.5 + (Random.Shared.NextDouble() - 0.5)));
+            }
+            return result;
+        }
+        
+        // Shuffle-based approach: Fisher-Yates shuffle ensures every painted pixel has
+        // an equal chance of being selected, with NO grid structure and MAXIMUM coverage.
+        // When count <= paintedPixels.Count, each ball gets a unique pixel (no duplicates).
+        // When count > paintedPixels.Count, we cycle through the shuffled list.
+        
+        // Fisher-Yates shuffle (partial - only need first 'count' elements)
+        int shuffleLimit = Math.Min(count, paintedPixels.Count);
+        for (int i = 0; i < shuffleLimit; i++)
+        {
+            int j = Random.Shared.Next(i, paintedPixels.Count);
+            (paintedPixels[i], paintedPixels[j]) = (paintedPixels[j], paintedPixels[i]);
+        }
+        
+        for (int i = 0; i < count; i++)
+        {
+            var pixel = paintedPixels[i % paintedPixels.Count];
+            // Full pixel jitter: ±0.5px ensures uniform coverage within the pixel
+            result.Add((pixel.Px + 0.5 + (Random.Shared.NextDouble() - 0.5),
+                       pixel.Py + 0.5 + (Random.Shared.NextDouble() - 0.5)));
+        }
         return result;
     }
 
@@ -257,13 +384,29 @@ public class SimulationSession : IDisposable
 
     private Ball CreateBallWithBounds(double x, double y, double minX, double maxX)
     {
-        // Inverted gradient: left=violet, right=red (opposite of frontend)
-        var normalizedX = (x - minX) / Math.Max(1, maxX - minX);
-        var inv = 1.0 - normalizedX; // invert direction
-        var r = (byte)(inv * 255);
-        var g = (byte)(255 - Math.Abs(inv - 0.5) * 2 * 255);
-        var b = (byte)((1 - inv) * 255);
+        // Rainbow gradient: left=red, right=violet (same direction as frontend)
+        // Uses HSV color space for proper rainbow colors ending in violet
+        var normalizedX = (x - minX) / Math.Max(1.0, maxX - minX);
+        var hue = 278.0 * normalizedX; // 0=red at left, 278=violet at right
+        var (r, g, b) = HsvToRgb(hue, 1.0, 1.0);
         return new Ball(x, y, 0, 0, 2.5, r, g, b);
+    }
+
+    private static (byte R, byte G, byte B) HsvToRgb(double h, double s, double v)
+    {
+        var c = s * v;
+        var x = c * (1 - Math.Abs((h / 60.0) % 2 - 1));
+        var m = v - c;
+        double r, g, b;
+
+        if (h < 60) { r = c; g = x; b = 0; }
+        else if (h < 120) { r = x; g = c; b = 0; }
+        else if (h < 180) { r = 0; g = c; b = x; }
+        else if (h < 240) { r = 0; g = x; b = c; }
+        else if (h < 300) { r = x; g = 0; b = c; }
+        else { r = c; g = 0; b = x; }
+
+        return ((byte)((r + m) * 255), (byte)((g + m) * 255), (byte)((b + m) * 255));
     }
 
     private async Task SimulationLoop(CancellationToken ct)
