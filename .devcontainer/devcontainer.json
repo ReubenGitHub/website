@@ -3,9 +3,18 @@
     "dockerComposeFile": "docker-compose.yml",
     "service": "dev",
     "workspaceFolder": "/app",
+    "containerEnv": {
+        "AWS_CONFIG_FILE": "/app/aws.config"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+            "moby": false
+        },
+        "ghcr.io/devcontainers/features/aws-cli:1": {}
+    },
     "customizations": {
         "vscode": {
-            "extensions": [
+            "extensions": [ 
                 "ms-python.python",
                 "ms-python.vscode-pylance",
                 "ms-python.debugpy",

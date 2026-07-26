@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
 import HomePage from './components/pages/home';
 import {MLerPage} from './components/pages/machinelearner';
-import {DotNetDemo} from './components/pages/DotNetDemo';
+
 import ProjectsPage from './components/pages/projects';
 import SpeedyPVPage from './components/pages/speedypv';
 import MlVehicleEmissionsPage from './components/pages/mlevision';
@@ -14,7 +14,6 @@ function App() {
 
   const Home = <HomePage />;
   const MLer = <MLerPage />;
-  const DotNet = <DotNetDemo />;
   const Projects = <ProjectsPage />;
   const SpeedyPV = <SpeedyPVPage />;
   const MlEmissions = <MlVehicleEmissionsPage />;
@@ -37,7 +36,6 @@ function App() {
         <Route path="/" element = {Home} parentCallback = {callbackFunctionHome} />
         <Route path="/home" element = {Home} parentCallback = {callbackFunctionHome} />
         <Route path="/machinelearner" element = {MLer} />
-        <Route path="/dotnet-demo" element = {DotNet} />
         <Route path="/projects" element = {Projects} />
         <Route path="/speedy-pv" element = {SpeedyPV} />
         <Route path="/ml-vehicle-emissions" element = {MlEmissions} />

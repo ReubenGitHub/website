@@ -212,7 +212,7 @@ public struct Ball
 - ✅ Frontend component renders at `/physics-simulation`
 - ✅ Surface drawing UI functional
 - ✅ Spawn controls UI functional
-- ✅ REST endpoint `/api/example/hello` responds
+- ✅ REST endpoint `/api/simulation/health` responds
 - ✅ CORS configured for localhost:3000 + [::1]:3000
 - ✅ Serilog file logging to `/app/logs/dotnet-.log`
 - ✅ Task output logging to `/app/logs/task-{flask,dotnet,react}.log` (auto-cleared on restart)

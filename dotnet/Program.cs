@@ -1,20 +1,45 @@
 using DotnetApi.Hubs;
 using DotnetApi.Services;
 using Serilog;
+using AWS.Logger;
+using AWS.Logger.SeriLog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Serilog file logging
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
+// Add Serilog logging with environment-aware configuration
+var minimumLevel = builder.Environment.IsDevelopment()
+    ? Serilog.Events.LogEventLevel.Debug
+    : Serilog.Events.LogEventLevel.Information;
+
+var loggerConfig = new LoggerConfiguration()
+    .MinimumLevel.Is(minimumLevel);
+
+// In production, write to CloudWatch Logs and file
+// In development, write to file only
+if (builder.Environment.IsProduction())
+{
+    var awsConfig = new AWSLoggerConfig("/mywebsite/dotnet-api")
+    {
+        Region = "eu-west-2"
+    };
+    
+    loggerConfig
+        .WriteTo.AWSSeriLog(awsConfig);
+}
+
+loggerConfig
     .WriteTo.File(
         path: "/app/logs/dotnet-.log",
         rollingInterval: RollingInterval.Day,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
-        retainedFileCountLimit: 31)
-    .CreateLogger();
+        retainedFileCountLimit: 31);
+
+Log.Logger = loggerConfig.CreateLogger();
 
 builder.Host.UseSerilog();
+
+// Also add console logging via ASP.NET Core logging (for awslogs driver)
+builder.Logging.AddConsole();
 
 // Add services to the container
 builder.Services.AddControllers()
@@ -23,11 +48,37 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 builder.Services.AddSignalR();
+
+// Configure CORS based on environment
+// Production: Read from environment variables (DOMAIN, CORS_ORIGINS)
+// Development: Allow localhost
+string[] allowedOrigins;
+if (builder.Environment.IsProduction())
+{
+    var domain = builder.Configuration.GetValue<string>("DOMAIN") ?? "reubenhow.com";
+    var corsOrigins = builder.Configuration.GetValue<string>("CORS_ORIGINS");
+    
+    if (!string.IsNullOrEmpty(corsOrigins))
+    {
+        // Allow multiple origins separated by commas
+        allowedOrigins = corsOrigins.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+    }
+    else
+    {
+        // Default to domain-based origins
+        allowedOrigins = [$"https://{domain}", $"https://www.{domain}"];
+    }
+}
+else
+{
+    allowedOrigins = ["http://localhost:3000", "http://[::1]:3000"];
+}
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "http://[::1]:3000")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -48,7 +99,7 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 app.UseAuthorization();
 app.MapControllers();
 

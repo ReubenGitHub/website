@@ -23,7 +23,8 @@ RUN apt-get update && \
         curl \
         gnupg \
         ca-certificates \
-        apt-transport-https && \
+        apt-transport-https \
+        jq && \
     curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION_NUMBER}.x | bash - && \
     apt-get install -y nodejs && \
     # Install .NET SDK 8.0 using official install script (avoids apt repo signing issues on Debian 13)
