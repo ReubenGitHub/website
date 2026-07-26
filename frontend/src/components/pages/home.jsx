@@ -1,6 +1,6 @@
 import '../global.css';
 import '../headernavbar.css';
-import '../hero.css';
+import '../Hero.css';
 import '../home.css';
 import '../font_kanit.css'
 import { Link } from "react-router-dom";
@@ -14,10 +14,6 @@ export default function HomePage(props) {
             <div className="home-content">
                 <section className='section'>
                     <div className='card'>
-                        <p className="intro">
-                            I've also built a <Link to="/dotnet-demo">C# .NET microservice backend</Link> to demonstrate
-                            my ability to work with multiple tech stacks and microservices architecture.
-                        </p>
                         <p className="intro">
                             I am also working on a Next.js game app, where players answer questions about movies, which I hope to
                             release soon.
@@ -44,10 +40,6 @@ export default function HomePage(props) {
                         <p className="intro">
                             A previous project was building a <Link to="/machinelearner">general machine learner</Link>,
                             which is deployed on this site.
-                        </p>
-                        <p className="intro">
-                            I've also built a <Link to="/dotnet-demo">C# .NET microservice backend</Link> to demonstrate
-                            my ability to work with multiple tech stacks and microservices architecture.
                         </p>
                         <p className="intro">
                             I am also working on a Next.js game app, where players answer questions about movies, which I hope to

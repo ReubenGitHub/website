@@ -1,0 +1,157 @@
+{
+  "family": "mywebsite-production",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID_PLACEHOLDER:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID_PLACEHOLDER:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "frontend",
+      "image": "ACCOUNT_ID_PLACEHOLDER.dkr.ecr.eu-west-2.amazonaws.com/reubenhow/frontend:latest",
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "NGINX_ENVSUBST_OUTPUT_DIR",
+          "value": "/etc/nginx"
+        },
+        {
+          "name": "DOMAIN",
+          "value": "reubenhow.com"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/mywebsite/frontend",
+          "awslogs-region": "eu-west-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD", "curl", "-f", "http://localhost:80"],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    },
+    {
+      "name": "backend",
+      "image": "ACCOUNT_ID_PLACEHOLDER.dkr.ecr.eu-west-2.amazonaws.com/reubenhow/backend:latest",
+      "portMappings": [
+        {
+          "containerPort": 5000,
+          "hostPort": 5000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "PYTHONUNBUFFERED",
+          "value": "1"
+        },
+        {
+          "name": "FLASK_APP",
+          "value": "api/api.py"
+        },
+        {
+          "name": "FLASK_ENV",
+          "value": "production"
+        },
+        {
+          "name": "FRONTEND_URL",
+          "value": "https://reubenhow.com"
+        },
+        {
+          "name": "DOTNET_API_URL",
+          "value": "http://localhost:5001"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/mywebsite/backend",
+          "awslogs-region": "eu-west-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD", "curl", "-f", "http://localhost:5000/api/time"],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    },
+    {
+      "name": "dotnet-api",
+      "image": "ACCOUNT_ID_PLACEHOLDER.dkr.ecr.eu-west-2.amazonaws.com/reubenhow/dotnet-api:latest",
+      "portMappings": [
+        {
+          "containerPort": 5001,
+          "hostPort": 5001,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "DOTNET_CLI_HOME",
+          "value": "/app"
+        },
+        {
+          "name": "ASPNETCORE_URLS",
+          "value": "http://+:5001"
+        },
+        {
+          "name": "ASPNETCORE_ENVIRONMENT",
+          "value": "Production"
+        },
+        {
+          "name": "ASPNETCORE_HTTPS_PORT",
+          "value": "5002"
+        },
+        {
+          "name": "DOMAIN",
+          "value": "reubenhow.com"
+        },
+        {
+          "name": "Kestrel:Console:Enabled",
+          "value": "true"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/mywebsite/dotnet-api",
+          "awslogs-region": "eu-west-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD", "curl", "-f", "http://localhost:5001/api/simulation/health"],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ],
+  "tags": [
+    {
+      "key": "Project",
+      "value": "MyWebsite"
+    },
+    {
+      "key": "Environment",
+      "value": "Production"
+    }
+  ]
+}

@@ -39,7 +39,11 @@ public class SimulationStreamService : BackgroundService
         if (_activeStreams.TryAdd(connectionId, cts))
         {
             _ = Task.Run(() => StreamingLoop(connectionId, session, cts.Token));
+#if DEBUG
             _logger.LogInformation("Streaming started for {ConnectionId}", connectionId);
+#else
+            _logger.LogDebug("Streaming started for {ConnectionId}", connectionId);
+#endif
             return true;
         }
         return false;
@@ -51,7 +55,11 @@ public class SimulationStreamService : BackgroundService
         {
             cts.Cancel();
             cts.Dispose();
+#if DEBUG
             _logger.LogInformation("Streaming stopped for {ConnectionId}", connectionId);
+#else
+            _logger.LogDebug("Streaming stopped for {ConnectionId}", connectionId);
+#endif
         }
     }
 
@@ -60,8 +68,13 @@ public class SimulationStreamService : BackgroundService
         var tickCount = 0;
         try
         {
+#if DEBUG
             _logger.LogInformation("Streaming loop started for {ConnectionId}, session={SessionId}",
                 connectionId, System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(session));
+#else
+            _logger.LogDebug("Streaming loop started for {ConnectionId}, session={SessionId}",
+                connectionId, System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(session));
+#endif
 
             while (!ct.IsCancellationRequested)
             {
@@ -85,12 +98,17 @@ public class SimulationStreamService : BackgroundService
                     break;
                 }
 
+                // Only log tick progress in Development, not in Production
+#if DEBUG
                 if (++tickCount % 10 == 0)
                 {
                     var activeCount = state.Balls.Count(b => b.Active);
                     _logger.LogInformation("Tick {Tick} for {ConnectionId}: {Active} active balls (running={IsRunning})",
                         tickCount, connectionId, activeCount, session.IsRunning);
                 }
+#else
+                ++tickCount;
+#endif
 
                 // Check cancellation before delaying
                 if (ct.IsCancellationRequested)
@@ -110,7 +128,11 @@ public class SimulationStreamService : BackgroundService
             _activeStreams.TryRemove(connectionId, out _);
             // Note: SimulationPaused signal is sent by PauseSimulation hub method before stopping streaming.
             // We don't send it here to avoid sending after connection abort.
+#if DEBUG
             _logger.LogInformation("Streaming loop ended for {ConnectionId}", connectionId);
+#else
+            _logger.LogDebug("Streaming loop ended for {ConnectionId}", connectionId);
+#endif
         }
     }
 

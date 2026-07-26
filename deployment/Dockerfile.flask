@@ -1,23 +1,8 @@
-ARG NODE_VERSION_NUMBER=22
-ARG PYTHON_VERSION_NUMBER=3.9
-ARG PYTHON_IMAGE_VERSION=${PYTHON_VERSION_NUMBER}-slim
+ARG PYTHON_VERSION=3.9-slim
 
-# Step 1: Build the Node.js application
-FROM node:${NODE_VERSION_NUMBER} AS frontend-build
-# Set working directory for frontend
-WORKDIR /frontend
-# Copy the frontend packages (before source code so can keep dependencies cached through code changes)
-COPY frontend/package.json ./
-# Install dependencies for the frontend (React, etc.)
-RUN npm install
-# Copy the frontend source code
-COPY frontend/ ./
-# Build the frontend application
-RUN npm run build
-
-# Step 2: Build the Python (Flask) application
-FROM python:${PYTHON_IMAGE_VERSION} AS backend-build
-# Install global dependencies for compiling C, and .NET SDK for building C# microservice
+# Build stage
+FROM python:${PYTHON_VERSION} AS builder
+# Install global dependencies for compiling C extensions
 RUN apt-get update && \
     apt-get install -y \
         build-essential \
@@ -26,35 +11,33 @@ RUN apt-get update && \
         ca-certificates \
         apt-transport-https && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-# Set working directory for backend
+# Install Python build tools
+RUN pip install --no-cache-dir setuptools wheel
+# Set working directory
 WORKDIR /backend
 # Copy the backend requirements (before source code so can keep dependencies cached through code changes)
 COPY backend/requirements.txt ./
 # Install backend dependencies
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 # Copy the backend source code
 COPY backend/ ./
 # Run setup.py to build Cython custom metric module
 WORKDIR /backend/api/src/machine_learning/models/model_types/k_nearest_neighbours/custom_metric
 RUN python3 setup.py build_ext --inplace
 
-# Step 3: Final image with both Node.js and Python
-FROM python:${PYTHON_IMAGE_VERSION}
-ARG PYTHON_VERSION_NUMBER
-# Install global dependencies for running both backend and frontend
+# Runtime stage
+FROM python:${PYTHON_VERSION}
+# Install global dependencies
 RUN apt-get update && \
-    apt-get install -y graphviz && \
+    apt-get install -y graphviz curl && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-# Set working directories for both frontend and backend
-WORKDIR /app
-# Copy frontend build from the previous stage
-COPY --from=frontend-build /frontend/build/ /app/build/
-# Copy the backend source code and installed dependencies from the previous stage
-# Todo: remove the build artifacts .o and .c files from the custom_metric build stage
-COPY --from=backend-build /backend/api/ /app/api/
-COPY --from=backend-build /usr/local/lib/python${PYTHON_VERSION_NUMBER}/site-packages /usr/local/lib/python${PYTHON_VERSION_NUMBER}/site-packages
-COPY --from=backend-build /usr/local/bin /usr/local/bin
-# Expose the necessary ports
+# Set working directory
+WORKDIR /backend
+# Copy the backend source code and installed dependencies from the builder stage
+COPY --from=builder /backend/api/ /backend/api/
+COPY --from=builder /usr/local/lib/python${PYTHON_VERSION%.*}/site-packages /usr/local/lib/python${PYTHON_VERSION%.*}/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+# Expose the necessary port
 EXPOSE 5000
-# Command to run back end (which serves the front end files)
+# Command to run backend (Flask API only, no static file serving)
 CMD ["sh", "-c", "python3 -m flask run --host=0.0.0.0 --port=5000"]

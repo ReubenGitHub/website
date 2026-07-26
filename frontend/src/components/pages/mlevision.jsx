@@ -1,6 +1,6 @@
 import '../global.css';
 import '../headernavbar.css';
-import '../hero.css';
+import '../Hero.css';
 import '../home.css';
 
 export default function MlVehicleEmissionsPage() {

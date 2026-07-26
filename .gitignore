@@ -34,3 +34,29 @@ logs/.*
 todoList.txt
 notes/
 notes.md
+
+# Environment files with secrets (anywhere in repo)
+.env
+.env.*
+!.env.example
+!.env.template
+
+# AWS configuration
+aws.config
+.aws/
+
+# AWS credentials
+aws-credentials.json
+aws-config.json
+
+# Docker secrets
+docker-secrets.txt
+secrets.enc
+
+# Task definitions with account IDs (update before deploying)
+deployment/ecs-task-definition-*.json
+
+# SSL certificates (use ACM or Certbot instead)
+*.pem
+*.key
+*.crt
