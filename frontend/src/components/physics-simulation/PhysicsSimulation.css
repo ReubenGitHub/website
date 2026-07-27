@@ -1,28 +1,7 @@
 .physics-simulation-page {
   min-height: 100vh;
-  padding: 2rem;
+  padding: 0 20px 60px;
   color: #e0e0e0;
-}
-
-.simulation-header {
-  padding: 16px 15%;
-  text-align: center;
-  color: #e0e0e0;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.simulation-header h1 {
-  margin: 0 0 8px 0;
-  font-size: 2rem;
-  font-weight: 600;
-  color: #e0e0e0;
-}
-
-.simulation-header p {
-  margin: 0;
-  font-size: 1rem;
-  color: #8892b0;
 }
 
 .error-message {
@@ -38,31 +17,6 @@
 
 .error-message span {
   color: #ff4757;
-}
-.simulation-info-card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin: 0 auto 1.5rem auto;
-  max-width: 800px;
-}
-
-.simulation-info-card h2 {
-  margin: 0 0 12px 0;
-  font-size: 1.25rem;
-  color: #ffffff;
-  font-weight: 600;
-  text-align: center;
-}
-
-.simulation-info-card p {
-  margin: 0 0 10px 0;
-  font-size: 0.9rem;
-  color: #c0c8d8;
-  line-height: 1.55;
 }
 
 .simulation-info-card p:last-child {

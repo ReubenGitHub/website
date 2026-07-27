@@ -5,10 +5,15 @@ import '../home.css';
 
 export default function SpeedyPVPage() {
     return (
+        <>
+        <div className="simulation-header">
+            <h1>Speedy PV</h1>
+            <p>Solar PV lead generator</p>
+        </div>
         <div className="column-container project-page-wide">
             <section className="section">
-                <div className="card">
-                    <h2>Speedy PV</h2>
+                <div className="simulation-info-card">
+                    <h2>About</h2>
                     <p className="intro">
                         While working at <a href="https://midsummerwholesale.co.uk/" target="_blank" rel="noreferrer" className="external-link">Midsummer Energy</a>, I built a solar PV leads generator
                         to help homeowners quickly and easily get quotes for PV systems on their homes.
@@ -56,5 +61,6 @@ export default function SpeedyPVPage() {
                 </div>
             </section>
         </div>
+        </>
     );
 }

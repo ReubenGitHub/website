@@ -131,7 +131,35 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-wrap: wrap;
+}
+
+.hero-block-wrapper {
+    transform-origin: center center;
+    transition: transform 0.3s ease;
+}
+
+@media (max-width: 1200px) {
+    .hero-block-wrapper {
+        transform: scale(0.85);
+    }
+}
+
+@media (max-width: 950px) {
+    .hero-block-wrapper {
+        transform: scale(0.7);
+    }
+}
+
+@media (max-width: 750px) {
+    .hero-block-wrapper {
+        transform: scale(0.55);
+    }
+}
+
+@media (max-width: 582px) {
+    .hero-block-wrapper {
+        transform: scale(0.42);
+    }
 }
 
 .hero-block-letter {

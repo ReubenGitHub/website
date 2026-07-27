@@ -385,3 +385,52 @@ p.intro {
   background: linear-gradient(90deg, transparent, #03bffe, transparent);
   margin: 16px 0;
 }
+
+/* ============================================================
+   Simulation Header Styles (shared across project pages)
+   ============================================================ */
+.simulation-header {
+  padding: 40px 20px;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.simulation-header h1 {
+  margin: 0 0 8px 0;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.simulation-header p {
+  margin: 0;
+  font-size: 1rem;
+  color: #8892b0;
+}
+
+.simulation-info-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 0 auto 1.5rem auto;
+  max-width: 800px;
+}
+
+.simulation-info-card h2 {
+  margin: 0 0 12px 0;
+  font-size: 1.25rem;
+  color: #ffffff;
+  font-weight: 600;
+  text-align: center;
+}
+
+.simulation-info-card p {
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  color: #c0c8d8;
+  line-height: 1.55;
+}

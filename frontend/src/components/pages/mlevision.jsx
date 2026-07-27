@@ -5,10 +5,15 @@ import '../home.css';
 
 export default function MlVehicleEmissionsPage() {
     return (
+        <>
+        <div className="simulation-header">
+            <h1>Machine Learning: Vehicle Emissions Investigation</h1>
+            <p>Training models to predict emissions from vehicle data</p>
+        </div>
         <div className="column-container">
             <section className="section">
-                <div className="card project-page-card">
-                    <h2>Machine Learning Vehicle Emissions</h2>
+                <div className="simulation-info-card">
+                    <h2>About</h2>
                     <p className="intro">
                         An investigation into UK vehicle CO2 emissions using machine learning. 
                         I sourced, processed, and analysed UK government vehicle emissions data 
@@ -22,6 +27,17 @@ export default function MlVehicleEmissionsPage() {
                         models were compared and assessed through feature importance analysis 
                         and prediction error distributions.
                     </p>
+                    <div style={{textAlign: 'center', marginBottom: 16}}>
+                        <a
+                            href="https://github.com/ReubenGitHub/ML-Vehicle-Emissions"
+                            className="project-link external-link"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            View on GitHub
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor" style={{verticalAlign: 'middle', marginLeft: 4}}><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z"/></svg>
+                        </a>
+                    </div>
                     <div className="project-images">
                         <div className="image-caption-group">
                             <img 
@@ -40,17 +56,9 @@ export default function MlVehicleEmissionsPage() {
                             <span className="image-caption">Prediction Error Distribution (Full Model): Model errors across percentiles of the data</span>
                         </div>
                     </div>
-                    <a
-                        href="https://github.com/ReubenGitHub/ML-Vehicle-Emissions"
-                        className="project-link external-link"
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        View on GitHub
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 -960 960 960" fill="currentColor" style={{verticalAlign: 'middle', marginLeft: 4}}><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z"/></svg>
-                    </a>
                 </div>
             </section>
         </div>
+        </>
     );
 }

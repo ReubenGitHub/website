@@ -160,8 +160,9 @@ export function MLerPage(props) {
     return (
     <div className="ml-page">
 
-    <div className="about-section">
+    <div className="simulation-header">
             <h1>Machine Learner</h1>
+            <p>Upload data, train models, and make predictions</p>
         </div>
 
         {/* Instructions Card - kept as-is */}

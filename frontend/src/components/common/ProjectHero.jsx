@@ -72,11 +72,13 @@ export function ProjectHero() {
     return (
         <div ref={containerRef} className="hero">
             <div className="hero-content">
-                <BlockLetters
-                    text="Projects"
-                    mousePos={mousePos}
-                    containerRef={containerRef}
-                />
+                <div className="hero-block-wrapper">
+                    <BlockLetters
+                        text="Projects"
+                        mousePos={mousePos}
+                        containerRef={containerRef}
+                    />
+                </div>
                 <p className="hero-intro">
                     Things I've done.
                 </p>
