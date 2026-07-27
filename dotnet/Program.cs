@@ -90,8 +90,10 @@ builder.Services.AddCors(options =>
 });
 
 // Register simulation services
+// SurfaceService is singleton (no state shared between connections needed)
+// SimulationSession is created per-connection in PhysicsHub for isolation
+// SimulationStreamService is singleton (manages streaming for all connections)
 builder.Services.AddSingleton<SurfaceService>();
-builder.Services.AddSingleton<SimulationSession>();
 builder.Services.AddSingleton<SimulationStreamService>();
 builder.Services.AddHostedService(provider => provider.GetRequiredService<SimulationStreamService>());
 

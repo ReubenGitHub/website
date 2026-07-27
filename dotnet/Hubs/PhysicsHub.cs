@@ -6,33 +6,55 @@ namespace DotnetApi.Hubs;
 
 public class PhysicsHub : Hub
 {
-    private readonly IServiceProvider _services;
     private readonly ILogger<PhysicsHub> _logger;
+    private readonly ILogger<SimulationSession> _sessionLogger;
     private readonly SimulationStreamService _streamService;
-    private SimulationSession? _cachedSession;
 
-    public PhysicsHub(IServiceProvider services, ILogger<PhysicsHub> logger, SimulationStreamService streamService)
+    public PhysicsHub(
+        ILogger<PhysicsHub> logger,
+        ILogger<SimulationSession> sessionLogger,
+        SimulationStreamService streamService)
     {
-        _services = services;
         _logger = logger;
+        _sessionLogger = sessionLogger;
         _streamService = streamService;
     }
     
+    /// <summary>
+    /// Gets or creates a per-connection SimulationSession.
+    /// Each SignalR connection gets its own independent session with isolated state.
+    /// </summary>
     private SimulationSession GetOrCreateSession()
     {
-        // SimulationSession is registered as singleton — same instance for all connections
-        var session = _services.GetRequiredService<SimulationSession>();
-        return session;
+        var key = $"session_{Context.ConnectionId}";
+        if (Context.Items[key] is SimulationSession session)
+        {
+            return session;
+        }
+        
+        // Create a new independent session for this connection
+        var surfaceService = new SurfaceService();
+        var newSession = new SimulationSession(surfaceService, _sessionLogger);
+        Context.Items[key] = newSession;
+        
+        _logger.LogInformation("Created new session for client {ClientId}, session={SessionId}",
+            Context.ConnectionId, System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(newSession));
+        return newSession;
     }
     
-    private (SimulationSession Session, IDisposable Scope)? GetSessionWithScope()
+    /// <summary>
+    /// Disposes the session for a connection (called on disconnect).
+    /// </summary>
+    private void DisposeSessionForConnection()
     {
         var key = $"session_{Context.ConnectionId}";
-        if (Context.Items[key] is Tuple<SimulationSession, IDisposable> tuple)
+        if (Context.Items[key] is SimulationSession session)
         {
-            return (tuple.Item1, tuple.Item2);
+            _logger.LogInformation("Disposing session for client {ClientId}, session={SessionId}, wasRunning={IsRunning}",
+                Context.ConnectionId, System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(session), session.IsRunning);
+            session.Dispose();
+            Context.Items[key] = null!;
         }
-        return null;
     }
 
     public async Task StartSimulation(SimulationConfig config, List<SurfacePoint> surface)
@@ -40,7 +62,6 @@ public class PhysicsHub : Hub
         var session = GetOrCreateSession();
         session.SetConfig(config);
         session.SetSurface(surface);
-        _cachedSession = session;
 
         _logger.LogInformation("StartSimulation called for client {ClientId}, session={SessionId}, isRunning={IsRunning}",
             Context.ConnectionId, System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(session), session.IsRunning);
@@ -101,7 +122,6 @@ public class PhysicsHub : Hub
         var session = GetOrCreateSession();
         session.Reset();
         _streamService.StopStreaming(Context.ConnectionId);
-        _cachedSession = null;
         var state = session.GetState();
         await Clients.Caller.SendAsync("SimulationReset", state);
     }
@@ -128,12 +148,11 @@ public class PhysicsHub : Hub
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var session = GetOrCreateSession();
-        _logger.LogInformation("Client disconnected: {ClientId}, session={SessionId}, isRunning={IsRunning}, exception={Exception}",
-            Context.ConnectionId, System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(session), session.IsRunning, exception?.Message);
-        // Stop streaming for this client, but DO NOT dispose the session
-        // Session persists across disconnects (singleton lifetime)
+        _logger.LogInformation("Client disconnected: {ClientId}, exception={Exception}",
+            Context.ConnectionId, exception?.Message);
+        // Stop streaming and dispose session for this client
         _streamService.StopStreaming(Context.ConnectionId);
+        DisposeSessionForConnection();
         await base.OnDisconnectedAsync(exception);
     }
 }
