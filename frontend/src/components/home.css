@@ -282,3 +282,57 @@
     text-align: center;
     margin-top: 20px;
 }
+
+/* Centered section titles */
+.section-title-centered {
+    text-align: center;
+}
+
+/* Website stack icons - rows centered */
+.stack-icons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    margin: 24px 0;
+}
+
+.stack-icon-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px;
+}
+
+.stack-icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s ease;
+}
+
+.stack-icon-item:hover {
+    transform: translateY(-4px);
+}
+
+.stack-icon {
+    width: 48px;
+    height: 48px;
+}
+
+/* Center intro text */
+.intro {
+    text-align: center;
+}
+
+/* Remove hover effects from stack icons */
+.stack-icon-item {
+    transition: none;
+}
+
+.stack-icon-item:hover {
+    transform: none;
+}
+
+

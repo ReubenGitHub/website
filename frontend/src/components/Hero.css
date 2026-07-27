@@ -273,3 +273,8 @@
         justify-content: center;
     }
 }
+
+/* Contact Me button cursor */
+.hero-btn-secondary {
+    cursor: pointer;
+}
