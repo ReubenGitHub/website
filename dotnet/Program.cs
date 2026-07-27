@@ -47,7 +47,11 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    // Increase max message size to accommodate spawn mask data (1200x600 = 720KB)
+    options.MaximumReceiveMessageSize = 4 * 1024 * 1024; // 4MB
+});
 
 // Configure CORS based on environment
 // Production: Read from environment variables (DOMAIN, CORS_ORIGINS)

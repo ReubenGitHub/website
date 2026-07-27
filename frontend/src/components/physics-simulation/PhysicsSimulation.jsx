@@ -5,6 +5,20 @@ import SimulationControls from './SimulationControls';
 import UnifiedCanvas from './UnifiedCanvas';
 import './PhysicsSimulation.css';
 
+// Compress spawn mask data using CompressionStream (deflate)
+// Spawn masks are mostly zeros (empty space), so compression is very effective
+async function compressSpawnMask(rawData) {
+  const stream = new Blob([rawData]).stream();
+  const compressedStream = stream.pipeThrough(new CompressionStream('deflate'));
+  const compressedBlob = await new Response(compressedStream).blob();
+  const compressedArray = new Uint8Array(await compressedBlob.arrayBuffer());
+  // Prefix with 'C' to indicate compressed data (for backend to know how to decode)
+  const result = new Uint8Array(compressedArray.length + 1);
+  result[0] = 67; // 'C' ASCII
+  result.set(compressedArray, 1);
+  return Array.from(result);
+}
+
 const PhysicsSimulation = () => {
   const ballsRef = useRef([]);
   const mountedRef = useRef(false);
@@ -269,13 +283,21 @@ const PhysicsSimulation = () => {
 
       console.log('[PhysicsSim] spawnPixelsToSend:', spawnPixelsToSend === null ? 'null' : `array with ${spawnPixelsToSend.length} pixels`, spawnPixelsToSend?.slice(0, 5));
 
-      // Get raw spawn mask image data if custom painted area
+      // Get and compress spawn mask image data if custom painted area
       let spawnMaskToSend = null;
       if (spawnPixels !== null && spawnPixels.length > 0 && canvasRef.current?.getMaskData) {
         const maskData = canvasRef.current.getMaskData();
         if (maskData) {
-          spawnMaskToSend = maskData;
-          console.log('[PhysicsSim] Spawn mask data: sent', maskData.length, 'bytes (1200x600)');
+          console.log('[PhysicsSim] Spawn mask raw data:', maskData.length, 'bytes (1200x600)');
+          // Compress using CompressionStream (deflate) - spawn masks are mostly zeros, so compression is very effective
+          try {
+            const compressed = await compressSpawnMask(maskData);
+            spawnMaskToSend = compressed;
+            console.log('[PhysicsSim] Spawn mask compressed:', compressed.length, 'bytes (', Math.round(compressed.length / maskData.length * 100), '% of original)');
+          } catch (compressErr) {
+            console.warn('[PhysicsSim] Failed to compress spawn mask, sending raw:', compressErr.message);
+            spawnMaskToSend = maskData;
+          }
         }
       }
 

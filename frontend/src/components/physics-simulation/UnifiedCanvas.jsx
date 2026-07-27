@@ -231,8 +231,6 @@ const UnifiedCanvas = ({
 
   // Draw spawn mask overlay on main canvas with rainbow gradient
   const drawSpawnMaskOverlay = useCallback((ctx, maskCanvas) => {
-    if (!maskCanvas) return;
-    
     // Check if we have spawnPixels (null = default, [] = cleared, array = custom)
     const currentSpawnPixels = spawnPixelsRef.current;
     const hasSpawnArea = currentSpawnPixels !== null && currentSpawnPixels.length > 0;
@@ -242,6 +240,12 @@ const UnifiedCanvas = ({
     
     if (hasSpawnArea || isBallPaintingRef.current) {
       // Custom painted area: draw rainbow gradient using mask as stencil
+      // Requires mask canvas to exist
+      if (!maskCanvas) {
+        ctx.restore();
+        return;
+      }
+      
       ctx.save();
       
       // Draw the mask canvas first (white pixels = painted areas)
@@ -280,8 +284,9 @@ const UnifiedCanvas = ({
       ctx.restore();
     } else if (currentSpawnPixels === null) {
       // Default spawn area: draw rainbow gradient rectangle
-      const width = maskCanvas.width;
-      const height = maskCanvas.height;
+      // Does NOT require mask canvas - uses main canvas dimensions
+      const width = ctx.canvas.width;
+      const height = ctx.canvas.height;
       const rectWidth = width * 0.2;
       const rectHeight = height * 0.2;
       const rectX = (width - rectWidth) / 2;

@@ -1,4 +1,6 @@
 using DotnetApi.Models;
+using System.IO.Compression;
+using System.IO;
 
 namespace DotnetApi.Services;
 
@@ -156,19 +158,44 @@ public class SimulationSession : IDisposable
         
         _logger.LogInformation("SpawnBalls called: spawnPixels is null={IsNull}, mask is null={MaskNull}, count={Count}", spawnPixels == null, spawnMask == null, count);
         
-        // Use spawn mask if provided (higher precision than pixel list)
-        if (spawnMask != null && spawnMask.Count > 0)
+        // Decompress spawn mask if compressed (prefix byte 67 = 'C')
+        byte[]? rawMaskBytes = null;
+        if (spawnMask != null && spawnMask.Count > 0 && spawnMask[0] == 67) // 'C' = compressed
         {
-            _logger.LogInformation("Spawning {Count} balls from spawn mask ({MaskSize} bytes)", count, spawnMask.Count);
+            _logger.LogInformation("Spawn mask is compressed ({CompressedSize} bytes), decompressing...", spawnMask.Count - 1);
+            try
+            {
+                var compressedBytes = spawnMask.Skip(1).ToArray();
+                using var decompressedStream = new MemoryStream();
+                using var deflateStream = new DeflateStream(new MemoryStream(compressedBytes), CompressionMode.Decompress);
+                deflateStream.CopyTo(decompressedStream);
+                rawMaskBytes = decompressedStream.ToArray();
+                _logger.LogInformation("Spawn mask decompressed to {DecompressedSize} bytes", rawMaskBytes.Length);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to decompress spawn mask, using raw data");
+                rawMaskBytes = spawnMask.ToArray();
+            }
+        }
+        else if (spawnMask != null && spawnMask.Count > 0)
+        {
+            rawMaskBytes = spawnMask.ToArray();
+        }
+        
+        // Use spawn mask if provided (higher precision than pixel list)
+        if (rawMaskBytes != null && rawMaskBytes.Length > 0)
+        {
+            _logger.LogInformation("Spawning {Count} balls from spawn mask ({MaskSize} bytes)", count, rawMaskBytes.Length);
             const int mWidth = 1200;
             const int mHeight = 600;
-            var spawnPoints = CreateSpawnPointsFromMask(spawnMask, count);
+            var spawnPoints = CreateSpawnPointsFromMask(rawMaskBytes.ToList(), count);
             // Compute actual bounds from painted pixels for correct coloring
             var spawnMinX = (double)mWidth; // Will find min
             var spawnMaxX = 0.0; // Will find max
-            for (int i = 0; i < spawnMask.Count; i++)
+            for (int i = 0; i < rawMaskBytes.Length; i++)
             {
-                if (spawnMask[i] > 128)
+                if (rawMaskBytes[i] > 128)
                 {
                     var px = i % mWidth;
                     var py = i / mWidth;
