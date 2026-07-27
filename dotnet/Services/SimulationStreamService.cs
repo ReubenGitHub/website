@@ -119,6 +119,10 @@ public class SimulationStreamService : BackgroundService
                 await Task.Delay((int)(session.Config.DeltaTime * 1000), ct);
             }
         }
+        catch (OperationCanceledException)
+        {
+            // Expected during normal stop (reset, connection close) - no logging needed
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in streaming loop for {ConnectionId}", connectionId);

@@ -189,7 +189,7 @@ public class SimulationSession : IDisposable
             _logger.LogInformation("Spawning {Count} balls from spawn mask ({MaskSize} bytes)", count, rawMaskBytes.Length);
             const int mWidth = 1200;
             const int mHeight = 600;
-            var spawnPoints = CreateSpawnPointsFromMask(rawMaskBytes.ToList(), count);
+            var spawnPoints = CreateSpawnPointsFromMask(new List<byte>(rawMaskBytes), count);
             // Compute actual bounds from painted pixels for correct coloring
             var spawnMinX = (double)mWidth; // Will find min
             var spawnMaxX = 0.0; // Will find max
