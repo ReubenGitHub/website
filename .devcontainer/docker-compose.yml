@@ -19,6 +19,7 @@ services:
             - '5001:5001'
         volumes:
             - ../:/app
+            - C:\Users\Reube\.agents\skills\:/root/.agents/skills
             - frontend-node_modules:/app/frontend/node_modules
             - frontend-build:/app/frontend/build
             - dotnet-obj:/app/dotnet/obj
