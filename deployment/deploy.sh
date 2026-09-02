@@ -738,7 +738,7 @@ with open('$temp_file', 'w') as f:
             --service-name $SERVICE \
             --task-definition "$task_def_arn" \
             --desired-count 1 \
-            --launch-type FARGATE \
+            --capacity-provider-strategy capacityProvider=FARGATE_SPOT,weight=1 \
             --network-configuration file:///tmp/network-config.json \
             --load-balancers "targetGroupArn=$tg_arn,containerName=frontend,containerPort=80" \
             --region $AWS_REGION \
@@ -755,6 +755,7 @@ with open('$temp_file', 'w') as f:
         --cluster $CLUSTER \
         --service $SERVICE \
         --task-definition "$task_def_arn" \
+        --capacity-provider-strategy capacityProvider=FARGATE_SPOT,weight=1 \
         --force-new-deployment \
         --region $AWS_REGION \
         --output text \
